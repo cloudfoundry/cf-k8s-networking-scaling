@@ -1,36 +1,38 @@
+# kubetpl:syntax:$
+
 apiVersion: v1
 kind: Service
 metadata:
-  name: httpbin
+  name: $NAME
   labels:
-    app: httpbin
+    app: $NAME
 spec:
   ports:
   - name: http
     port: 8000
     targetPort: 80
   selector:
-    app: httpbin
+    app: $NAME
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: httpbin
+  name: $NAME
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: httpbin
+      app: $NAME
       version: v1
   template:
     metadata:
       labels:
-        app: httpbin
+        app: $NAME
         version: v1
     spec:
       containers:
       - image: docker.io/kennethreitz/httpbin
         imagePullPolicy: IfNotPresent
-        name: httpbin
+        name: $NAME
         ports:
         - containerPort: 80
