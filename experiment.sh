@@ -13,7 +13,7 @@ trap "kill 0" EXIT
 # ====== UTILITIES =====
 
 # rm -rf tmp
-filename="$(udate)-$1-$DATAPLANE_RPS-$USER_RPS"
+filename="$(udate)-$1"
 mkdir $filename
 
 cp vars.sh $filename/
@@ -104,6 +104,7 @@ pushd $filename
   fortio load -qps $DATAPLANE_RPS -p 68,90,99,99.9,99.99,100 -t 0 -a http://${GATEWAY_URL}/productpage &
   fortio_pid=$!
 
+  wlog "Starting user factory..."
   ./../userfactory.sh > user.log 2>&1 # run in foreground for now so we wait til they're done
 
   sleep 60
@@ -127,7 +128,7 @@ pushd $filename
 
   wlog "====== TEARDOWN ======"
 
-  # gcloud container clusters delete $CLUSTER_NAME --zone us-central1-f
+  gcloud container clusters delete $CLUSTER_NAME --zone us-central1-f
 popd
 
 wait

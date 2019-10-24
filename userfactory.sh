@@ -8,3 +8,5 @@ do
   ./../user.sh $n &
   sleep $USER_DELAY
 done
+
+wait
