@@ -7,7 +7,7 @@ udate ()
 
 wlog ()
 {
-  echo "$(udate): $1"
+  echo "$(udate) $1"
 }
 
 forever ()

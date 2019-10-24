@@ -3,11 +3,11 @@
 source ../vars.sh
 source ../utils.sh
 
-wlog "I am user $1 and I exist!"
+wlog "USER $1 STARTED"
 
-kubectl apply -f ../yaml/httpbin-gateway.yaml
-kubectl apply -f ../yaml/httpbin-virtualservice.yaml
+kubetpl render ../yaml/httpbin-gateway.yaml -s NAME=httpbin-$1 | kubectl apply -f -
+kubetpl render ../yaml/httpbin-virtualservice.yaml -s NAME=httpbin-$1 | kubectl apply -f -
 
-until [ $(curl -s -o /dev/null -w "%{http_code}" -HHost:httpbin.example.com http://$INGRESS_HOST:$INGRESS_PORT/status/200) -eq 200 ]; do true; done
+until [ $(curl -s -o /dev/null -w "%{http_code}" -HHost:httpbin-$1.example.com http://$INGRESS_HOST:$INGRESS_PORT/status/200) -eq 200 ]; do true; done
 
-wlog "Got a success!"
+wlog "USER $1 COMPLETED"
