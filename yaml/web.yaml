@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: astandke
+  labels:
+    app: astandke
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: astandke
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: astandke
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: astandke
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: astandke
+        version: v1
+    spec:
+      containers:
+      - image: xanderstrike/web
+        imagePullPolicy: IfNotPresent
+        name: astandke
+        ports:
+        - containerPort: 80
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: astandke-gateway
+spec:
+  selector:
+    istio: ingressgateway # use Istio default gateway implementation
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "astandke.example.com"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: astandke
+spec:
+  hosts:
+  - "astandke.example.com"
+  gateways:
+  - astandke-gateway
+  http:
+  - route:
+    - destination:
+        port:
+          number: 80
+        host: astandke
