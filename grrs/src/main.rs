@@ -20,6 +20,7 @@ struct User {
 }
 
 fn print_gram(msg: &str, gram: Histogram) {
+    assert_ne!(gram.entries(), 0, "It is not possible to print a histogram with no data");
     println!(
         "{}: p68: {}, p90: {}, p99: {}, p99.9: {}, p99.99: {}, max: {}",
         msg,
@@ -79,13 +80,9 @@ fn main() -> io::Result<()> {
     let mut diff_gram = Histogram::new();
     let mut total = 0;
     let mut succeeded = 0;
+    println!("Building histogram...");
     for (index, times) in users.iter() {
         total += 1;
-        // println!(
-        //     "user {} took {} seconds",
-        //     index,
-        //     times.end_time - times.start_time
-        // );
         if times.end_time == 0 || times.success_time == 0 {
             println!("User {} did not complete.", index.to_string());
         } else if times.start_time == 0 {
@@ -97,15 +94,18 @@ fn main() -> io::Result<()> {
             diff_gram.increment((times.end_time - times.success_time) as u64);
         }
     }
+    println!("Histograms built");
 
-    print_gram("First success", success_gram);
-    print_gram("Last failure", complete_gram);
-    print_gram("Difference", diff_gram);
+    if succeeded != 0 {
+      print_gram("First success", success_gram);
+      print_gram("Last failure", complete_gram);
+      print_gram("Propogation time: difference between first success and last failure", diff_gram);
+    }
 
     println!(
         "{} of {} users successfully completed their tasks",
-        total.to_string(),
-        succeeded.to_string()
+        succeeded.to_string(),
+        total.to_string()
     );
 
     Ok(())
