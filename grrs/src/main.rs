@@ -89,9 +89,9 @@ fn main() -> io::Result<()> {
             println!("Something terrible happened to User {}", index.to_string());
         } else {
             succeeded += 1;
-            success_gram.increment((times.success_time - times.start_time) as u64);
-            complete_gram.increment((times.end_time - times.start_time) as u64);
-            diff_gram.increment((times.end_time - times.success_time) as u64);
+            success_gram.increment((times.success_time - times.start_time) as u64).expect("could not increment");
+            complete_gram.increment((times.end_time - times.start_time) as u64).expect("could not increment");
+            diff_gram.increment((times.end_time - times.success_time) as u64).expect("could not increment");
         }
     }
     println!("Histograms built");

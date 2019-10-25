@@ -23,7 +23,10 @@ monpods ()
 {
     pods=$(kubectl get pods -n "$1" --field-selector="status.phase!=Running" -o json)
     if [ $(echo "$pods" | jq '.items | length') -ne 0 ]; then
-        wlog "Pod failure event!"
-        wlog "$pods"
+        podname="$(echo "$pods" | jq -r '.items[0].metadata.name')"
+        wlog "UNREADINESS EVENT"
+        wlog "EVENT $podname $(echo "$pods" | jq ".items[] | .status.containerStatuses[] | .state.waiting.reason")"
+        wlog "JSON $pods"
+        wlog "DESCRIBE $(kubectl describe pod -n istio-system $podname)"
     fi
 }
