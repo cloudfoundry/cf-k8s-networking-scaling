@@ -1,7 +1,7 @@
 #!/bin/bash
 
 source ../vars.sh
-source ../utils.sh
+source ../scripts/utils.sh
 
 wlog "USER $1 STARTED"
 

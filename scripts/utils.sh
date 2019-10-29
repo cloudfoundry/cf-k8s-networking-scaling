@@ -10,6 +10,12 @@ wlog ()
   echo "$(udate) $1"
 }
 
+iwlog ()
+{
+  echo "$1,$(udate)" >> importanttimes.csv
+  wlog "====== $1 ======"
+}
+
 forever ()
 {
     wlog "Started loop"

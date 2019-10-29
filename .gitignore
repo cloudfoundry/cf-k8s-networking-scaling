@@ -3,3 +3,8 @@ grrs/Cargo.lock
 **/*.rs.bk
 
 *157*
+
+.DS_Store
+
+.Rdata
+
