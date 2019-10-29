@@ -1,0 +1,41 @@
+<head>
+<style>
+body {
+  max-width: 950px;
+  margin: 20px auto;
+  padding: 0 15px;
+  font-size: 22px;
+  line-height: 1.4;
+}
+a {
+  text-decoration: none;
+  color: #2874A6;
+}
+a:hover {
+  text-decoration: underline;
+}
+</style>
+</head>
+
+<body>
+  <h1>Experiment Results</h1>
+
+  <p>{{ success }} of {{ total }} users completed their tasks in {{ total_time }} seconds.</p>
+
+  <p>Achieved a control-plane goodput qps of {{ cp_cps }}.</p>
+
+  <h3>Percentiles</h3>
+  <p>Values in seconds.</p>
+  <pre>
+    Success:    {{ sgram }}
+    Complete:   {{ cgram }}
+    Difference: {{ dgram}}
+  </pre>
+
+  <hr>
+
+  <img src="dataload.svg"><hr>
+  <img src="sidecar.svg"><hr>
+  <img src="gateway.svg"><hr>
+
+</body>

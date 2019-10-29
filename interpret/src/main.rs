@@ -1,9 +1,25 @@
+extern crate askama;
+
 use histogram::Histogram;
 use regex::Regex;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, prelude::*, BufReader};
 use structopt::StructOpt;
+
+use askama::Template;
+#[derive(Template)]
+#[template(path = "index.html")]
+
+struct IndexTemplate<'a> {
+    success: i32,
+    total: i32,
+    sgram: &'a str,
+    cgram: &'a str,
+    dgram: &'a str,
+    total_time: u64,
+    cp_cps: f64,
+}
 
 #[derive(StructOpt)]
 struct Cli {
@@ -17,15 +33,14 @@ struct User {
     end_time: i32,
 }
 
-fn print_gram(msg: &str, gram: Histogram) {
+fn gram_to_string(gram: Histogram) -> String {
     assert_ne!(
         gram.entries(),
         0,
         "It is not possible to print a histogram with no data"
     );
-    println!(
-        "{}: p68: {}, p90: {}, p99: {}, p99.9: {}, p99.99: {}, max: {}",
-        msg,
+    return format!(
+        "p68: {}, p90: {}, p99: {}, p99.9: {}, p99.99: {}, max: {}",
         gram.percentile(68.0).unwrap(),
         gram.percentile(90.0).unwrap(),
         gram.percentile(99.0).unwrap(),
@@ -79,15 +94,27 @@ fn process_users(path: std::path::PathBuf) -> io::Result<()> {
     let mut diff_gram = Histogram::new();
     let mut total = 0;
     let mut succeeded = 0;
-    println!("Building histogram...");
+    let mut start: f64 = 9999999999.0;
+    let mut end = 0;
     for (index, times) in users.iter() {
         total += 1;
+
         if times.end_time == 0 || times.success_time == 0 {
             println!("User {} did not complete.", index.to_string());
         } else if times.start_time == 0 {
             println!("Something terrible happened to User {}", index.to_string());
         } else {
             succeeded += 1;
+
+            if end < times.end_time {
+                println!("fuck");
+                end = times.end_time;
+            }
+            if start > times.start_time as f64 {
+                println!("numberwang");
+                start = times.start_time as f64;
+            }
+
             success_gram
                 .increment((times.success_time - times.start_time) as u64)
                 .expect("could not increment");
@@ -99,22 +126,25 @@ fn process_users(path: std::path::PathBuf) -> io::Result<()> {
                 .expect("could not increment");
         }
     }
-    println!("Histograms built");
 
-    if succeeded != 0 {
-        print_gram("First success", success_gram);
-        print_gram("Last failure", complete_gram);
-        print_gram(
-            "Propogation time: difference between first success and last failure",
-            diff_gram,
-        );
-    }
+    println!("{} {}", start, end);
 
-    println!(
-        "{} of {} users successfully completed their tasks",
-        succeeded.to_string(),
-        total.to_string()
-    );
+    let sgram = gram_to_string(success_gram);
+    let cgram = gram_to_string(complete_gram);
+    let dgram = gram_to_string(diff_gram);
+
+    let index = IndexTemplate {
+        cp_cps: (total as f64 / (end as f64 - start)),
+        total_time: (end as u64 - start as u64),
+        success: succeeded,
+        total: total,
+        sgram: sgram.as_str(),
+        cgram: cgram.as_str(),
+        dgram: dgram.as_str(),
+    };
+
+    let mut file = File::create("index.html")?;
+    file.write_all(index.render().unwrap().as_bytes())?;
 
     Ok(())
 }
