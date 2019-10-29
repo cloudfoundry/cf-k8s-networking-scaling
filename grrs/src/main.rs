@@ -5,10 +5,8 @@ use std::fs::File;
 use std::io::{self, prelude::*, BufReader};
 use structopt::StructOpt;
 
-/// Search for a pattern in a file and display the lines that contain it.
 #[derive(StructOpt)]
 struct Cli {
-    /// The path to the file to read
     #[structopt(parse(from_os_str))]
     path: std::path::PathBuf,
 }
@@ -20,7 +18,11 @@ struct User {
 }
 
 fn print_gram(msg: &str, gram: Histogram) {
-    assert_ne!(gram.entries(), 0, "It is not possible to print a histogram with no data");
+    assert_ne!(
+        gram.entries(),
+        0,
+        "It is not possible to print a histogram with no data"
+    );
     println!(
         "{}: p68: {}, p90: {}, p99: {}, p99.9: {}, p99.99: {}, max: {}",
         msg,
@@ -33,12 +35,9 @@ fn print_gram(msg: &str, gram: Histogram) {
     );
 }
 
-fn main() -> io::Result<()> {
-    let args = Cli::from_args();
-
-    let file = File::open(&args.path).unwrap();
+fn process_users(path: std::path::PathBuf) -> io::Result<()> {
+    let file = File::open(path).unwrap();
     let reader = BufReader::new(file);
-    // let content = std::fs::read_to_string(&args.path).expect("could not read file");
 
     let mut users: HashMap<String, User> = HashMap::new();
 
@@ -89,17 +88,26 @@ fn main() -> io::Result<()> {
             println!("Something terrible happened to User {}", index.to_string());
         } else {
             succeeded += 1;
-            success_gram.increment((times.success_time - times.start_time) as u64).expect("could not increment");
-            complete_gram.increment((times.end_time - times.start_time) as u64).expect("could not increment");
-            diff_gram.increment((times.end_time - times.success_time) as u64).expect("could not increment");
+            success_gram
+                .increment((times.success_time - times.start_time) as u64)
+                .expect("could not increment");
+            complete_gram
+                .increment((times.end_time - times.start_time) as u64)
+                .expect("could not increment");
+            diff_gram
+                .increment((times.end_time - times.success_time) as u64)
+                .expect("could not increment");
         }
     }
     println!("Histograms built");
 
     if succeeded != 0 {
-      print_gram("First success", success_gram);
-      print_gram("Last failure", complete_gram);
-      print_gram("Propogation time: difference between first success and last failure", diff_gram);
+        print_gram("First success", success_gram);
+        print_gram("Last failure", complete_gram);
+        print_gram(
+            "Propogation time: difference between first success and last failure",
+            diff_gram,
+        );
     }
 
     println!(
@@ -109,4 +117,9 @@ fn main() -> io::Result<()> {
     );
 
     Ok(())
+}
+
+fn main() {
+    let args = Cli::from_args();
+    process_users(args.path).expect("Something went wrong with user logs");
 }
