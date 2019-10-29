@@ -4,7 +4,9 @@ grrs/Cargo.lock
 
 *157*
 
+
 .DS_Store
 
-.Rdata
-
+.RData
+.Rhistory
+*.pdf

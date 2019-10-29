@@ -11,7 +11,7 @@ trap "kill 0" EXIT
 filename="$1-$(udate)"
 mkdir $filename
 
-cp vars.sh $filename/
+cp index.html vars.sh $filename/
 
 pushd $filename
 
