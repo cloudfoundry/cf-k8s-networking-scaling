@@ -24,8 +24,8 @@ forever monpods default >> default_pods.log 2>&1 &
 forever monpods istio-system >> istio_pods.log 2>&1 &
 forever monpods kube-system >> system_pods.log 2>&1 &
 
-echo "stamp,count" > howmanypilots.log
-forever howmanypilots >> howmanypilots.log &
+echo "stamp,count" > howmanypilots.csv
+forever howmanypilots >> howmanypilots.csv &
 
 iwlog "GENERATE DP LOAD"
 

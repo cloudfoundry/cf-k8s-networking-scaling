@@ -61,4 +61,13 @@ ggplot(gathered.dataload) +
 
 ggsave(paste(filename, "dataload.svg", sep=""))
 
+dataload = read_csv(paste(filename, "howmanypilots.csv", sep=""))
+
+ggplot(dataload) +
+  geom_line(mapping=aes(x=stamp,y=count)) +
+  lines() + lineLabels() +
+  labs(title = "Number of Pilots over time")
+
+ggsave(paste(filename, "howmanypilots.svg", sep=""))
+
 print("All done.")
