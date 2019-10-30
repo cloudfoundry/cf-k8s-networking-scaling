@@ -42,6 +42,7 @@ ggplot(sidecar) +
   facet_wrap(vars(podname),strip.position = "bottom") +
   theme(strip.background = element_blank(), strip.placement = "outside") +
   lines() +
+  theme(axis.text.x = element_text(angle = 90)) +
   labs(title = "Envoy Sidecar Memory Usage Over Time") +
 
 ggsave(paste(filename, "sidecar.svg", sep=""))

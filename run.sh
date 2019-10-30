@@ -15,7 +15,7 @@ cp vars.sh $filename/
 
 pushd $filename
 
-time ../scripts/experiment.sh $1 | tee experiment.log
+time ../scripts/experiment.sh $1 2>&1 | tee experiment.log
 
 popd
 
