@@ -1,5 +1,5 @@
-grrs/target/
-grrs/Cargo.lock
+interpret/target/
+interpret/Cargo.lock
 **/*.rs.bk
 
 *157*

@@ -42,7 +42,7 @@ pushd istio-$ISTIO_VERSION
   export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
 
   curl -s http://${GATEWAY_URL}/productpage | grep -o "<title>.*</title>"
-  open http://${GATEWAY_URL}/productpage
+  # open http://${GATEWAY_URL}/productpage
   kubectl apply -f samples/bookinfo/networking/destination-rule-all.yaml
 
 popd

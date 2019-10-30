@@ -57,7 +57,7 @@ fn process_users(path: std::path::PathBuf) -> io::Result<()> {
     let mut users: HashMap<String, User> = HashMap::new();
 
     for line in reader.lines() {
-        let re = Regex::new(r"(\d{10}) USER (\d+) (\w+)").unwrap();
+        let re = Regex::new(r"(\d{10}),(\d+),(\w+)").unwrap();
         let line = line.unwrap();
         match re.captures(line.as_str()) {
             Some(caps) => {
@@ -107,11 +107,9 @@ fn process_users(path: std::path::PathBuf) -> io::Result<()> {
             succeeded += 1;
 
             if end < times.end_time {
-                println!("fuck");
                 end = times.end_time;
             }
             if start > times.start_time as f64 {
-                println!("numberwang");
                 start = times.start_time as f64;
             }
 

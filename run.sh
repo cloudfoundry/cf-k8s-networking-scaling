@@ -11,10 +11,11 @@ trap "kill 0" EXIT
 filename="$1-$(udate)"
 mkdir $filename
 
-cp index.html vars.sh $filename/
+cp vars.sh $filename/
 
 pushd $filename
 
 time ../scripts/experiment.sh $1 | tee experiment.log
 
 popd
+

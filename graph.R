@@ -1,11 +1,10 @@
 library(tidyverse)
-# library(gdata)
 
 
-filename <- "./refactoredexperiment4-1572373492/"
+filename <- "./"
 
 humanReadable <- function(x) {
-  return(paste(round(x/(1024*1024)), "mb"))
+  return(paste(round(x/(1024*1024), digits=2), "mb"))
 }
 
 times=read_csv(paste(filename, "importanttimes.csv", sep=""))
