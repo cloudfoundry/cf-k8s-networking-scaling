@@ -33,7 +33,24 @@ struct User {
     end_time: i32,
 }
 
-fn gram_to_string(gram: Histogram) -> String {
+fn gram_to_csv(gram: Histogram) -> String {
+    assert_ne!(
+        gram.entries(),
+        0,
+        "It is not possible to print a histogram with no data"
+    );
+    return format!(
+        "{},{},{},{},{},{}",
+        gram.percentile(68.0).unwrap(),
+        gram.percentile(90.0).unwrap(),
+        gram.percentile(99.0).unwrap(),
+        gram.percentile(99.9).unwrap(),
+        gram.percentile(99.99).unwrap(),
+        gram.maximum().unwrap(),
+    );
+}
+
+fn gram_to_string(gram: &Histogram) -> String {
     assert_ne!(
         gram.entries(),
         0,
@@ -127,9 +144,9 @@ fn process_users(path: std::path::PathBuf) -> io::Result<()> {
 
     println!("{} {}", start, end);
 
-    let sgram = gram_to_string(success_gram);
-    let cgram = gram_to_string(complete_gram);
-    let dgram = gram_to_string(diff_gram);
+    let sgram = gram_to_string(&success_gram);
+    let cgram = gram_to_string(&complete_gram);
+    let dgram = gram_to_string(&diff_gram);
 
     let index = IndexTemplate {
         cp_cps: (total as f64 / (end as f64 - start)),
@@ -143,6 +160,11 @@ fn process_users(path: std::path::PathBuf) -> io::Result<()> {
 
     let mut file = File::create("index.html")?;
     file.write_all(index.render().unwrap().as_bytes())?;
+
+    let mut file = File::create("controlplane_latency.csv")?;
+    file.write(b"event, 68, 90, 99, 99.9, 99.99, 100\n")?;
+    write!(file, "success, {}\n", gram_to_csv(success_gram))?;
+    write!(file, "complete, {}\n", gram_to_csv(complete_gram))?;
 
     Ok(())
 }

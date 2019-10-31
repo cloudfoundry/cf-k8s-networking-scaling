@@ -1,4 +1,5 @@
 library(tidyverse)
+library(gridExtra)
 
 
 filename <- "./"
@@ -19,6 +20,19 @@ lineLabels <- function() {
     geom_text(data=times, mapping=aes(x=stamp, y=0, label=event), size=2, angle=90, vjust=-0.4, hjust=0, color="grey")
   )
 }
+
+controlplane = read_csv(paste(filename, "controlplane_latency.csv", sep=""))
+gathered.controlplane = gather(controlplane, percentile, latency, -event, convert=TRUE)
+ggplot(gathered.controlplane, aes(x=percentile, y=latency)) +
+  geom_line(mapping = aes(group=event)) +
+  geom_point() +
+  facet_wrap(vars(event), ncol=1,
+             labeller=as_labeller(c(`success` = "First Successful Route", `complete` = "Last Error on Route"))) +
+  labs(title="Control Plane Latency (sec) by Percentile") +
+  ylab("Time from VirtualService Creation to Event (seconds)") +
+  xlab("Percentile") + scale_x_log10()
+
+ggsave(paste(filename, "controlplane.svg", sep=""))
 
 gateway = read_csv(paste(filename, "gatewaystats.csv", sep=""))
 
@@ -47,20 +61,35 @@ ggplot(sidecar) +
 
 ggsave(paste(filename, "sidecar.svg", sep=""))
 
+# Timestamp vs Latency (ms)
 dataload = read_csv(paste(filename, "dataload.csv", sep=""))
-
 selected.dataload <- select(dataload, Name,
-                            `Avg. Latency`, `Min. latency`, `Max. latency`,
-                            `50% Latency`,`90% Latency`,`98% Latency`,`99% Latency`)
+                            `Min. latency`, `Max. latency`,
+                            `50% Latency`,`90% Latency`,`99% Latency`)
 gathered.dataload <- gather(selected.dataload, key, milliseconds, -Name)
-
-ggplot(gathered.dataload) +
+overtime <- ggplot(gathered.dataload) +
   geom_line(mapping = aes(x=Name,y=milliseconds,group=key,colour=key)) +
   theme(legend.position="bottom") +
   lines() + lineLabels() +
-  labs(title = "Dataplane Latency (ms) over Time")
+  labs(title = "Dataplane Latency (ms) over Time") +
+  xlab("Unix Timestamp (seconds)") +
+  ylab("Latency (ms)")
 
-ggsave(paste(filename, "dataload.svg", sep=""))
+# Latency (ms) by Percentile
+dataload = read_csv(paste(filename, "rawlatencies.txt", sep=""))
+quantiles = c(0.68, 0.90, 0.99, 0.999, 1)
+percentiles = c(68, 90, 99, 99.9, 100)
+values = quantile(dataload$latency, quantiles)
+dataload = tibble(percentiles, values)
+
+bypercent <- ggplot(dataload, aes(x=percentiles, y=values)) +
+  geom_line() + geom_point() +
+  labs(title = "Dataplane Latency (ms) by Percentile") +
+  ylab("Latency (ms)") +  xlab("Percentile") +
+  scale_y_continuous(limits=layer_scales(overtime)$y$range$range) + # make scales match
+  scale_x_log10()
+
+ggsave(paste(filename, "dataload.svg", sep=""), arrangeGrob(overtime, bypercent))
 
 dataload = read_csv(paste(filename, "howmanypilots.csv", sep=""))
 
