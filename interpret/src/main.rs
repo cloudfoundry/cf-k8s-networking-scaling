@@ -106,6 +106,8 @@ fn process_users(path: std::path::PathBuf) -> io::Result<()> {
         }
     }
 
+    let mut file = File::create("user_data.csv")?;
+    file.write(b"user id, start time, success time, seconds to first success, completion time, seconds to first completion\n")?;
     let mut success_gram = Histogram::new();
     let mut complete_gram = Histogram::new();
     let mut diff_gram = Histogram::new();
@@ -130,6 +132,8 @@ fn process_users(path: std::path::PathBuf) -> io::Result<()> {
                 start = times.start_time as f64;
             }
 
+            write!(file, "{}, {}, {}, {}, {}, {}\n", index,
+                times.start_time, times.success_time, times.success_time - times.start_time, times.end_time, times.end_time - times.start_time)?;
             success_gram
                 .increment((times.success_time - times.start_time) as u64)
                 .expect("could not increment");
