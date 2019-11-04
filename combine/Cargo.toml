@@ -1,5 +1,5 @@
 [package]
-name = "interpret"
+name = "combine"
 version = "0.1.0"
 authors = ["Alex Standke <astandke@pivotal.io>", "Leah Hanson <lhanson@pivotal.io>"]
 edition = "2018"
@@ -10,5 +10,4 @@ edition = "2018"
 structopt = "0.2.10"
 regex = "1"
 file = "1"
-histogram = "0.6.9"
 askama = "0.8"

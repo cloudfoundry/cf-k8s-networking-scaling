@@ -3,6 +3,7 @@ library(gridExtra)
 
 filename <- "./"
 
+## Conversion Functions
 mb_from_bytes <- function(x) {
   return(round(x/(1024*1024), digits=1))
 }
@@ -11,48 +12,46 @@ secondsFromNanoseconds <- function(x) {
   return(round(x/(1000*1000*1000), digits=1))
 }
 
-times=read_csv(paste(filename, "importanttimes.csv", sep=""))
-zeroPoint = min(times$stamp)
-maxSec = max(times$stamp)
+## TODO need max values
+maxSec = 10 * 60 * 1000 * 1000 * 1000 # 10 minutes in nanoseconds
 
-breaksFromZero <- seq(from=zeroPoint, to=maxSec, by=120 * 1000 * 1000 * 1000)
+breaksFromZero <- seq(from=0, to=maxSec, by=120 * 1000 * 1000 * 1000)
 
-secondsFromZero <- function(x) {
-  return (secondsFromNanoseconds(x - zeroPoint))
-}
-
+# Apply to charts with time as x-axis
 experiment_time_x_axis <- function(p) {
   return(
          p + lines() + xlab("Time (seconds)") +
-         scale_x_continuous(labels=secondsFromZero, breaks=breaksFromZero)
+         scale_x_continuous(labels=secondsFromNanoseconds, breaks=breaksFromZero)
        )
 }
 
+## Quantiles and Labels for charts with percentils on x-axis
+quantiles = c(0.68, 0.90, 0.99, 0.999, 1)
+mylabels = c("p68", "p90", "p99", "p999", "max")
+fiveSecondsInNanoseconds = 5 * 1000 * 1000 * 1000
+
+## TODO vertical lines and labels
 lines <- function() {
   return(
     geom_vline(data=times, mapping=aes(xintercept=stamp), color="grey80")
   )
 }
-
 lineLabels <- function() {
   return(
     geom_text(data=times, mapping=aes(x=stamp, y=0, label=event), size=2, angle=90, vjust=-0.4, hjust=0, color="grey25")
   )
 }
 
+## Common Theme (apply to all graphs)
 our_theme <- function() {
   return(
          theme_linedraw()
   )
 }
 
-quantiles = c(0.68, 0.90, 0.99, 0.999, 1)
-mylabels = c("p68", "p90", "p99", "p999", "max")
-fiveSecondsInNanoseconds = 5 * 1000 * 1000 * 1000
-
 # Control Plane Latency by Percentile
 controlplane = read_csv(paste(filename, "user_data.csv", sep=""))
-selected.controlplane <- select(controlplane, `user id`, `nanoseconds to first success`, `nanoseconds to last error`)
+selected.controlplane <- select(controlplane, `runID`, `user id`, `nanoseconds to first success`, `nanoseconds to last error`)
 first_values = quantile(selected.controlplane$`nanoseconds to first success`, quantiles)
 last_values = quantile(selected.controlplane$`nanoseconds to last error`, quantiles)
 controlplane = tibble(quantiles = mylabels, `time to first success` = first_values, `time to last error` = last_values)
@@ -75,7 +74,7 @@ ggsave(paste(filename, "controlplane.svg", sep=""), width=7, height = 3.5)
 
 # Timestamp vs Latency (ms)
 dataload = read_csv(paste(filename, "dataload.csv", sep=""))
-selected.dataload <- select(dataload, Name,
+selected.dataload <- select(dataload, runID, Name,
                             `Min. latency`, `Max. latency`,
                             `68% Latency`,`90% Latency`,`99% Latency`)
 gathered.dataload <- gather(selected.dataload, key, milliseconds, -Name)

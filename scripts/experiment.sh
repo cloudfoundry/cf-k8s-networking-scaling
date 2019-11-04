@@ -11,10 +11,16 @@ forever cpustats > cpustats.log &
 ifstat -t -n -i ens4 -b > networkstats.log &
 forever memstats  >> memstats.log &
 
-echo "event,stamp" > importanttimes.csv
+echo "stamp,event" > importanttimes.csv
 
 ./../scripts/build-cluster.sh $CLUSTER_NAME
 ./../scripts/install-istio.sh
+
+# use httpbin instead of bookinfo to apply load to
+kubetpl render ../yaml/httpbin.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
+kubetpl render ../yaml/httpbin-gateway-wildcard-host.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
+kubetpl render ../yaml/httpbin-virtualservice-wildcard-host.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
+kubectl wait --for=condition=available deployment $(kubectl get deployments | grep httpbin | awk '{print $1}')
 
 export INGRESS_HOST=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].port}')
@@ -35,7 +41,7 @@ iwlog "GENERATE DP LOAD"
 ./../scripts/sidecarstats.sh istio-system ingressgateway > gatewaystats.csv &
 
 # create data plane load with apib
-./../scripts/dataload.sh http://${GATEWAY_URL}/productpage > dataload.csv 2>&1 &
+./../scripts/dataload.sh http://${GATEWAY_URL}/anything > dataload.csv 2>&1 &
 
 sleep 60 # idle cluster, very few pods
 

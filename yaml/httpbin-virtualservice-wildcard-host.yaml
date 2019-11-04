@@ -1,0 +1,20 @@
+# kubetpl:syntax:$
+
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: $NAME
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - $NAME-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /anything
+    route:
+    - destination:
+        port:
+          number: 8000
+        host: $NAME

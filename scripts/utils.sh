@@ -2,7 +2,7 @@
 
 udate ()
 {
-  date -u +%s
+  date +%s%N
 }
 
 wlog ()
@@ -12,7 +12,7 @@ wlog ()
 
 iwlog ()
 {
-  echo "$1,$(udate)" >> importanttimes.csv
+  echo "$(udate),$1" >> importanttimes.csv
   wlog "====== $1 ======"
 }
 
@@ -36,4 +36,14 @@ monpods ()
 
 howmanypilots () {
   echo "$(udate),$(kubectl get pods -n istio-system | grep pilot | wc -l)"
+}
+
+cpustats ()
+{
+  echo "$(udate),$(mpstat -P ON -o JSON | jq ".sysstat.hosts[0].statistics[0]" -c)"
+}
+
+memstats ()
+{
+  echo "$(udate),$(free -m | head -n2 | tail -n1)"
 }

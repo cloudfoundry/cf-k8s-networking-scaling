@@ -1,6 +1,5 @@
 extern crate askama;
 
-use histogram::Histogram;
 use regex::Regex;
 use std::collections::HashMap;
 use std::fs::File;
@@ -11,12 +10,9 @@ use askama::Template;
 #[derive(Template)]
 #[template(path = "index.html")]
 
-struct IndexTemplate<'a> {
+struct IndexTemplate {
     success: i32,
     total: i32,
-    sgram: &'a str,
-    cgram: &'a str,
-    dgram: &'a str,
     total_time: u64,
     cp_cps: f64,
 }
@@ -28,43 +24,9 @@ struct Cli {
 }
 
 struct User {
-    start_time: i32,
-    success_time: i32,
-    end_time: i32,
-}
-
-fn gram_to_csv(gram: Histogram) -> String {
-    assert_ne!(
-        gram.entries(),
-        0,
-        "It is not possible to print a histogram with no data"
-    );
-    return format!(
-        "{},{},{},{},{},{}",
-        gram.percentile(68.0).unwrap(),
-        gram.percentile(90.0).unwrap(),
-        gram.percentile(99.0).unwrap(),
-        gram.percentile(99.9).unwrap(),
-        gram.percentile(99.99).unwrap(),
-        gram.maximum().unwrap(),
-    );
-}
-
-fn gram_to_string(gram: &Histogram) -> String {
-    assert_ne!(
-        gram.entries(),
-        0,
-        "It is not possible to print a histogram with no data"
-    );
-    return format!(
-        "p68: {}, p90: {}, p99: {}, p99.9: {}, p99.99: {}, max: {}",
-        gram.percentile(68.0).unwrap(),
-        gram.percentile(90.0).unwrap(),
-        gram.percentile(99.0).unwrap(),
-        gram.percentile(99.9).unwrap(),
-        gram.percentile(99.99).unwrap(),
-        gram.maximum().unwrap(),
-    );
+    start_time: u64,
+    success_time: u64,
+    end_time: u64,
 }
 
 fn process_users(path: std::path::PathBuf) -> io::Result<()> {
@@ -74,11 +36,11 @@ fn process_users(path: std::path::PathBuf) -> io::Result<()> {
     let mut users: HashMap<String, User> = HashMap::new();
 
     for line in reader.lines() {
-        let re = Regex::new(r"(\d{10}),(\d+),(\w+)").unwrap();
+        let re = Regex::new(r"(\d+),(\d+),(\w+)").unwrap();
         let line = line.unwrap();
         match re.captures(line.as_str()) {
             Some(caps) => {
-                let this_time = caps.get(1).unwrap().as_str().parse::<i32>().unwrap();
+                let this_time = caps.get(1).unwrap().as_str().parse::<u64>().unwrap();
                 let user = users
                     .entry(caps.get(2).unwrap().as_str().to_string())
                     .or_insert(User {
@@ -107,13 +69,10 @@ fn process_users(path: std::path::PathBuf) -> io::Result<()> {
     }
 
     let mut file = File::create("user_data.csv")?;
-    file.write(b"user id, start time, success time, seconds to first success, completion time, seconds to first completion\n")?;
-    let mut success_gram = Histogram::new();
-    let mut complete_gram = Histogram::new();
-    let mut diff_gram = Histogram::new();
+    file.write(b"user id, start time, success time, nanoseconds to first success, completion time, nanoseconds to last error\n")?;
     let mut total = 0;
     let mut succeeded = 0;
-    let mut start: f64 = 9999999999.0;
+    let mut start = std::u64::MAX;
     let mut end = 0;
     for (index, times) in users.iter() {
         total += 1;
@@ -128,47 +87,26 @@ fn process_users(path: std::path::PathBuf) -> io::Result<()> {
             if end < times.end_time {
                 end = times.end_time;
             }
-            if start > times.start_time as f64 {
-                start = times.start_time as f64;
+            if start > times.start_time  {
+                start = times.start_time;
             }
 
             write!(file, "{}, {}, {}, {}, {}, {}\n", index,
                 times.start_time, times.success_time, times.success_time - times.start_time, times.end_time, times.end_time - times.start_time)?;
-            success_gram
-                .increment((times.success_time - times.start_time) as u64)
-                .expect("could not increment");
-            complete_gram
-                .increment((times.end_time - times.start_time) as u64)
-                .expect("could not increment");
-            diff_gram
-                .increment((times.end_time - times.success_time) as u64)
-                .expect("could not increment");
         }
     }
 
     println!("{} {}", start, end);
 
-    let sgram = gram_to_string(&success_gram);
-    let cgram = gram_to_string(&complete_gram);
-    let dgram = gram_to_string(&diff_gram);
-
     let index = IndexTemplate {
-        cp_cps: (total as f64 / (end as f64 - start)),
-        total_time: (end as u64 - start as u64),
+        cp_cps: ((total as f64 / (end - start) as f64) * 1000.0 * 1000.0 * 1000.0 * 100.0).round() / 100.0,
+        total_time: (end - start) / (1000 * 1000 * 1000),
         success: succeeded,
         total: total,
-        sgram: sgram.as_str(),
-        cgram: cgram.as_str(),
-        dgram: dgram.as_str(),
     };
 
     let mut file = File::create("index.html")?;
     file.write_all(index.render().unwrap().as_bytes())?;
-
-    let mut file = File::create("controlplane_latency.csv")?;
-    file.write(b"event, 68, 90, 99, 99.9, 99.99, 100\n")?;
-    write!(file, "success, {}\n", gram_to_csv(success_gram))?;
-    write!(file, "complete, {}\n", gram_to_csv(complete_gram))?;
 
     Ok(())
 }
