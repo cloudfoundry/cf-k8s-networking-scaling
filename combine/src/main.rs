@@ -118,7 +118,7 @@ fn add_runid_and_normalize_timestamp(
     filenames: [&str; 5],
     run_id: u32,
 ) -> Result<(), Box<dyn Error>> {
-    let zero_timestamp = match get_start_time(input_folder){
+    let zero_timestamp = match get_start_time(input_folder) {
         Ok(t) => t,
         Err(e) => return Err(format!("failed to get zero timestamp because {}", e))?,
     };
@@ -127,16 +127,29 @@ fn add_runid_and_normalize_timestamp(
         source_path.push(filename);
         let mut dest_path = output_folder.clone();
         dest_path.push(filename);
-        let mut dest_file = match OpenOptions::new().append(true).open(&dest_path) {
-            Ok(f) => f,
-            Err(e) => return Err(format!("failed to open {} because {}; expected headers to have already been inserted",
-                    dest_path.to_str().ok_or("could not print filepath we couldn't open")?, e))?
-        };
+        let mut dest_file =
+            match OpenOptions::new().append(true).open(&dest_path) {
+                Ok(f) => f,
+                Err(e) => return Err(format!(
+                    "failed to open {} because {}; expected headers to have already been inserted",
+                    dest_path
+                        .to_str()
+                        .ok_or("could not print filepath we couldn't open")?,
+                    e
+                ))?,
+            };
 
         let source_file = match File::open(&source_path) {
             Ok(f) => f,
-            Err(e) => return Err(format!("failed to open source file {} because {}",
-                    dest_path.to_str().ok_or("could not print filepath we couldn't open")?, e))?
+            Err(e) => {
+                return Err(format!(
+                    "failed to open source file {} because {}",
+                    dest_path
+                        .to_str()
+                        .ok_or("could not print filepath we couldn't open")?,
+                    e
+                ))?
+            }
         };
         let reader = BufReader::new(source_file);
         for (index, line) in reader.lines().enumerate() {
@@ -172,17 +185,26 @@ fn add_runid_and_normalize_timestamp(
                 }
             };
 
-           match write!(
+            match write!(
                 dest_file,
                 "{}, {}, {}\n",
                 run_id, converted_timestamp, rest_of_line
             ) {
-               Ok(()) => (),
-               Err(e) => return Err(format!("failed to write line {} to {} because {}", index, dest_path.to_str().ok_or("could not print filepath we couldn't open")?, e))?,
-           };
+                Ok(()) => (),
+                Err(e) => {
+                    return Err(format!(
+                        "failed to write line {} to {} because {}",
+                        index,
+                        dest_path
+                            .to_str()
+                            .ok_or("could not print filepath we couldn't open")?,
+                        e
+                    ))?
+                }
+            };
         }
     }
-        Ok(())
+    Ok(())
 }
 
 // For each filename, take the matching file in the input folder and prepend each line with the
@@ -214,6 +236,141 @@ fn add_runid(
     Ok(())
 }
 
+fn combine_userdata(
+    output_folder: &std::path::PathBuf,
+    input_folder: &std::fs::DirEntry,
+    run_id: u32,
+) -> Result<(), Box<dyn Error>> {
+    // shamelessly copypasta'd
+    let zero_timestamp = match get_start_time(input_folder) {
+        Ok(t) => t,
+        Err(e) => return Err(format!("failed to get zero timestamp because {}", e))?,
+    };
+
+    let filename = "user_data.csv";
+    let mut source_path = input_folder.path();
+    source_path.push(filename);
+    let mut dest_path = output_folder.clone();
+    dest_path.push(filename);
+    let mut dest_file = match OpenOptions::new().append(true).open(&dest_path) {
+        Ok(f) => f,
+        Err(e) => {
+            return Err(format!(
+                "failed to open {} because {}; expected headers to have already been inserted",
+                dest_path
+                    .to_str()
+                    .ok_or("could not print filepath we couldn't open")?,
+                e
+            ))?
+        }
+    };
+
+    let source_file = match File::open(&source_path) {
+        Ok(f) => f,
+        Err(e) => {
+            return Err(format!(
+                "failed to open source file {} because {}",
+                dest_path
+                    .to_str()
+                    .ok_or("could not print filepath we couldn't open")?,
+                e
+            ))?
+        }
+    };
+    let reader = BufReader::new(source_file);
+    for (index, line) in reader.lines().enumerate() {
+        let line = line?;
+        if index == 0 {
+            continue;
+        }
+
+        // ACTUAL NEW CODE HERE WE GO
+        //user id, start time, success time, nanoseconds to first success, completion time, nanoseconds to last error
+        let re = Regex::new(r"(\d+), (\d+), (\d+), (\d+), (\d+), (\d+)")?;
+        let captures = re.captures(line.as_str()).ok_or("yikes")?;
+
+        // do all of these need to be parsed as u64? no they do not next question
+        let user_id = captures
+            .get(1)
+            .ok_or("missing user_id")?
+            .as_str()
+            .parse::<u64>()?;
+        let start_time = captures
+            .get(2)
+            .ok_or("missing start_time")?
+            .as_str()
+            .parse::<u64>()?;
+        let success_time = captures
+            .get(3)
+            .ok_or("missing success_time")?
+            .as_str()
+            .parse::<u64>()?;
+        let tt_first_success = captures
+            .get(4)
+            .ok_or("missing tt_first_success")?
+            .as_str()
+            .parse::<u64>()?;
+        let complete_time = captures
+            .get(5)
+            .ok_or("missing complete_time")?
+            .as_str()
+            .parse::<u64>()?;
+        let tt_last_err = captures
+            .get(6)
+            .ok_or("missing tt_last_err")?
+            .as_str()
+            .parse::<u64>()?;
+
+        let converted_start_time = convert_or_warn(zero_timestamp, start_time);
+        let converted_success_time = convert_or_warn(zero_timestamp, success_time);
+        let converted_complete_time = convert_or_warn(zero_timestamp, complete_time);
+
+        match write!(
+            dest_file,
+            "{},{},{},{},{},{},{}\n",
+            run_id,
+            user_id,
+            converted_start_time,
+            converted_success_time,
+            tt_first_success,
+            converted_complete_time,
+            tt_last_err
+        ) {
+            Ok(()) => (),
+            Err(e) => {
+                return Err(format!(
+                    "failed to write line {} to {} because {}",
+                    index,
+                    dest_path
+                        .to_str()
+                        .ok_or("could not print filepath we couldn't open")?,
+                    e
+                ))?
+            }
+        };
+    }
+
+    Ok(())
+}
+
+// Converts an absolute timestamp to a timestamp relative to a given zero time
+//   If the timestamp happens before the provided zero, print a warning to stdout
+//   and return 0 because time travel is illegal round these parts
+fn convert_or_warn(zero: u64, time: u64) -> u64 {
+    match time.overflowing_sub(zero) {
+        (result, false) => return result,
+        (wrapped, true) => {
+            println!(
+                "Warning: timestamp ({}) was {} milliseconds before the start of the experiment ({})",
+                time,
+                (std::u64::MAX - wrapped) / (1000 * 1000),
+                zero
+            );
+            return 0;
+        }
+    };
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let filenames_that_start_with_timestamps = [
         //"cpustats.csv",
@@ -229,7 +386,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let filenames_without_timestamps = ["rawlatencies.txt"];
 
     let filenames_with_many_timestamps = [
-        "user_data.csv",      // contains multipe timestamps per line
+        "user_data.csv", // contains multipe timestamps per line
     ];
 
     // special files
@@ -283,8 +440,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             )
             .as_str(),
         );
-        //combine_userdata(&toppath, &folder);
-        //combine_importanttimes(&toppath, &folder);
+        combine_userdata(&toppath, &folder, index as u32)
+            .expect("Something went wrong processing user_data.csv");
     }
 
     Ok(())
