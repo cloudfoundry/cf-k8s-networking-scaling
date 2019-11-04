@@ -1,5 +1,7 @@
 interpret/target/
 interpret/Cargo.lock
+combine/target/
+combine/Cargo.lock
 **/*.rs.bk
 
 *157*
