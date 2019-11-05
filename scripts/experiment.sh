@@ -37,6 +37,9 @@ forever monpods kube-system >> system_pods.log 2>&1 &
 echo "stamp,count" > howmanypilots.csv
 forever howmanypilots >> howmanypilots.csv &
 
+until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -eq 200 ]; do true; done
+sleep 10
+
 iwlog "GENERATE DP LOAD"
 ./../scripts/sidecarstats.sh istio-system ingressgateway > gatewaystats.csv &
 

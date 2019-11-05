@@ -22,3 +22,11 @@ for ((i=0;i<$COUNT;i++)); do
 
   popd
 done
+
+mkdir $1
+mv $1-* $1/
+
+pushd $1
+  ./../combine/target/debug/combine .
+  Rscript ../graphManyToo.R
+popd
