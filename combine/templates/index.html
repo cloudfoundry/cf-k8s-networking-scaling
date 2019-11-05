@@ -20,17 +20,28 @@ a:hover {
 <body>
   <h1>Experiment Results</h1>
 
-  <p>{{ success }} of {{ total }} users completed their tasks in {{ total_time }} seconds.</p>
-
-  <p>Achieved a control-plane goodput qps of {{ cp_cps }}.</p>
-
   <hr>
 
   <img src="controlplane.svg"></hr>
-  <img src="dataload.svg"><hr>
+  <img src="dataload_time.svg"><hr>
+  <img src="dataload_percentile.svg"><hr>
   <img src="sidecar.svg"><hr>
   <img src="gateway.svg"><hr>
   <img src="howmanypilots.svg"><hr>
-  <img src="nodemon.svg"><hr>
 
+  <h3>Individual Results</h3>
+
+  <ul>
+  {% for t in tests %}
+    <li><a href={{t}}>{{t}}</a></li>
+  {% endfor %}
+  </ul>
+
+  <h3>Raw Data for Download</h3>
+
+  <ul>
+  {% for f in files %}
+    <li><a href={{f}}>{{f}}</a></li>
+  {% endfor %}
+  </ul>
 </body>

@@ -127,7 +127,7 @@ experiment_time_x_axis(ggplot(gateway) +
   lineLabels() +
   scale_colour_brewer(palette = "Set1") +
   our_theme() %+replace%
-    theme(legend.position="bottom"))
+    theme(legend.position="none"))
 ggsave(paste(filename, "gateway.svg", sep=""), width=7, height=3.5)
 
 
@@ -138,5 +138,15 @@ experiment_time_x_axis(ggplot(dataload) +
   lineLabels() +
   our_theme())
 ggsave(paste(filename, "howmanypilots.svg", sep=""), width=7, height=3.5)
+
+dataload = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(cpupercent=col_number(), memorypercent=col_number()))
+experiment_time_x_axis(ggplot(dataload, aes(group=nodename,color=nodename)) +
+  labs(title = "Node utilization percent") +
+  geom_line(mapping=aes(x=timestamp,y=cpupercent)) +
+  geom_line(mapping=aes(x=timestamp,y=memorypercent)) +
+  scale_colour_brewer(palette = "Set1") +
+  our_theme() %+replace%
+    theme(legend.position="none"))
+ggsave(paste(filename, "nodemon.svg", sep=""), width=7, height=3.5)
 
 print("All done.")

@@ -41,12 +41,13 @@ until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -
 sleep 10
 
 iwlog "GENERATE DP LOAD"
+./../scripts/nodemon.sh > nodemon.csv &
 ./../scripts/sidecarstats.sh istio-system ingressgateway > gatewaystats.csv &
 
 # create data plane load with apib
 ./../scripts/dataload.sh http://${GATEWAY_URL}/anything > dataload.csv 2>&1 &
 
-sleep 60 # idle cluster, very few pods
+sleep 120 # idle cluster, very few pods
 
 iwlog "GENERATE TEST PODS"
 for ((n=0;n<$NUM_USERS;n++))

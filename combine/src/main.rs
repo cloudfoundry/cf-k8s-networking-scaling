@@ -411,6 +411,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         "howmanypilots.csv",
         "sidecarstats.csv",
         "importanttimes.csv",
+        "nodemon.csv",
     ];
 
     let filenames_without_timestamps = ["rawlatencies.txt"];
