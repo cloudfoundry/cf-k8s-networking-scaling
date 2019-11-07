@@ -27,6 +27,8 @@ export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
 until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -eq 200 ]; do true; done
 sleep 10
 
+iwlog "GENERATE DP LOAD"
+
 echo "stamp,cpuid,usr,nice,sys,iowate,irq,soft,steal,guest,gnice,idle" > cpustats.csv
 forever cpustats >> cpustats.csv &
 
@@ -35,7 +37,6 @@ forever ifstats >> ifstats.csv &
 
 echo "stamp,total,used,free,shared,buff,available" > memstats.csv
 forever memstats  >> memstats.csv &
-
 
 echo "stamp,podname,event" > default_pods.log
 echo "stamp,podname,event" > istio_pods.log
@@ -50,7 +51,6 @@ forever howmanypilots >> howmanypilots.csv &
 until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -eq 200 ]; do true; done
 sleep 10
 
-iwlog "GENERATE DP LOAD"
 ./../scripts/nodemon.sh > nodemon.csv &
 ./../scripts/sidecarstats.sh istio-system ingressgateway > gatewaystats.csv &
 

@@ -145,7 +145,6 @@ experiment_time_x_axis(ggplot(dataload, aes(group=nodename,color=nodename)) +
   ylab("Utilization %") + ylim(0,100) +
   geom_line(mapping=aes(x=timestamp,y=cpupercent)) +
   geom_line(mapping=aes(x=timestamp,y=memorypercent)) +
-  scale_colour_brewer(palette = "Set1") +
   our_theme() %+replace%
     theme(legend.position="none"))
 ggsave(paste(filename, "nodemon.svg", sep=""), width=7, height=3.5)
