@@ -217,7 +217,7 @@ fn add_runid_and_normalize_file(
 fn add_runid_and_normalize_timestamp(
     output_folder: &std::path::PathBuf,
     input_folder: &std::fs::DirEntry,
-    filenames: [&str; 5],
+    filenames: [&str; 9],
     run_id: u32,
 ) -> Result<(), Box<dyn Error>> {
     let zero_timestamp = match get_start_time(input_folder) {
@@ -403,9 +403,9 @@ fn convert_or_warn(zero: u64, time: u64) -> u64 {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let filenames_that_start_with_timestamps = [
-        //"cpustats.csv",
-        //"memstats.csv",
-        //"networkstats.csv",
+        "cpustats.csv",
+        "memstats.csv",
+        "ifstats.csv",
         "dataload.csv",
         "gatewaystats.csv",
         "howmanypilots.csv",

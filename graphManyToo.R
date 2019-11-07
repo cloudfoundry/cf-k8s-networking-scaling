@@ -51,10 +51,10 @@ mylabels = c("p68", "p90", "p99", "p999", "max")
 fiveSecondsInNanoseconds = 5 * 1000 * 1000 * 1000
 
 # Control Plane Latency by Percentile
-controlplane = read_csv(paste(filename, "user_data.csv", sep=""))
-selected.controlplane <- select(controlplane, `user id`, `nanoseconds to first success`, `nanoseconds to last error`)
-first_values = quantile(selected.controlplane$`nanoseconds to first success`, quantiles)
-last_values = quantile(selected.controlplane$`nanoseconds to last error`, quantiles)
+controlplane = read_csv(paste(filename, "user_data.csv", sep="")) %>%
+  select(`user id`, `nanoseconds to first success`, `nanoseconds to last error`)
+first_values = quantile(controlplane$`nanoseconds to first success`, quantiles)
+last_values = quantile(controlplane$`nanoseconds to last error`, quantiles)
 controlplane = tibble(quantiles = mylabels, `time to first success` = first_values, `time to last error` = last_values)
 gathered.controlplane <- gather(controlplane, event, latency, -quantiles)
 ggplot(gathered.controlplane, aes(x=quantiles, y=latency)) +
@@ -105,18 +105,20 @@ ggplot(dataload, aes(x=mylabels, y=values)) +
 
 ggsave(paste(filename, "dataload_percentile.svg", sep=""), width=7, height=3.5)
 
-sidecar = read_csv(paste(filename, "sidecarstats.csv", sep=""))
+sidecar = read_csv(paste(filename, "sidecarstats.csv", sep="")) %>%
+  group_by(runID) %>%
+  mutate(dummy_var = as.character(x = factor(x = podname,
+                                             labels = seq_len(length.out = n_distinct(x = podname))))) %>%
+  ungroup()
 experiment_time_x_axis(ggplot(sidecar) +
   labs(title = "Envoy Sidecar Memory Usage Over Time") +
   ylab("Memory (mb)") +
-  geom_line(rename(sidecar, pod=podname),
-            mapping = aes(x=timestamp, y=memory, group=pod),
-            colour="grey85") +
-  geom_line(mapping = aes(x=timestamp, y=memory, group=podname)) +
+  geom_line(mapping = aes(x=timestamp, y=memory, group=podname, color=dummy_var, alpha=0.95)) +
   scale_y_continuous(labels=mb_from_bytes) +
-  facet_wrap(vars(podname),strip.position = "bottom") +
+  facet_wrap(vars(runID),strip.position="bottom",ncol=1) +
+  scale_colour_brewer(palette = "Set1") +
   our_theme() %+replace%
-    theme(strip.background = element_blank(), strip.placement = "outside"))
+    theme(strip.placement = "outside", legend.position="none"))
 ggsave(paste(filename, "sidecar.svg", sep=""), width=7, height=5)
 
 gateway = read_csv(paste(filename, "gatewaystats.csv", sep="")) %>%
@@ -129,7 +131,7 @@ experiment_time_x_axis(ggplot(gateway) +
   ylab("Memory (mb)") +
   geom_line(rename(gateway, pod=podname), mapping = aes(x=timestamp, y = memory, group=pod, color=dummy_var)) +
   scale_y_continuous(labels=mb_from_bytes) +
-  facet_wrap(vars(runID),strip.position = "bottom", ncol=2) +
+  facet_wrap(vars(runID),strip.position = "bottom", ncol=1) +
   lineLabels() +
   scale_colour_brewer(palette = "Set1") +
   our_theme() %+replace%
@@ -140,11 +142,51 @@ ggsave(paste(filename, "gateway.svg", sep=""), width=7, height=7)
 dataload = read_csv(paste(filename, "howmanypilots.csv", sep=""))
 experiment_time_x_axis(ggplot(dataload) +
   labs(title = "Number of Pilots over time") +
-  geom_line(mapping=aes(x=stamp,y=count, group=runID, color=factor(runID), alpha=0.1, size=2)) +
+  geom_line(mapping=aes(x=stamp,y=count, group=runID, color=factor(runID), alpha=0.1, size=2), show.legend=FALSE) +
   # lineLabels() +
   scale_colour_brewer(palette = "Set1") +
   our_theme() %+replace%
     theme(legend.position="bottom"))
 ggsave(paste(filename, "howmanypilots.svg", sep=""), width=7, height=3.5)
+
+
+dataload = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(cpupercent=col_number(), memorypercent=col_number()))
+experiment_time_x_axis(ggplot(dataload, aes(group=runID)) +
+  labs(title = "Node utilization percent") +
+  stat_summary(aes(x=timestamp,y=cpupercent, colour="CPU% Max"),fun.y="max", geom="line", linetype=1) +
+  stat_summary(aes(x=timestamp,y=cpupercent, colour="CPU% Mean"),fun.y="mean", geom="line", linetype=1) +
+  stat_summary(aes(x=timestamp,y=memorypercent, colour="Memory% Max"),fun.y="max", geom="line", linetype=2) +
+  stat_summary(aes(x=timestamp,y=memorypercent, colour="Memory% Mean"),fun.y="mean", geom="line", linetype=2, key_glyph="timeseries") +
+  scale_colour_brewer(palette = "Set1") +
+  guides(colour = guide_legend(title = "Key")) +
+  our_theme() %+replace%
+    theme(legend.position="bottom"))
+ggsave(paste(filename, "nodemon.svg", sep=""), width=7, height=3.5)
+
+memstats = read_csv(paste(filename, "memstats.csv", sep=""))
+cpustats = read_csv(paste(filename, "cpustats.csv", sep=""))
+
+cpustats.selected <- cpustats[which(cpustats$cpuid=='all'),]
+
+experiment_time_x_axis(ggplot(memstats) +
+  labs(title = "Client Resource Usage") +
+  ylab("Utilization %") + ylim(0,100) +
+  geom_line(mapping=aes(x=stamp,y=(used/total)*100, colour="memory")) +
+  geom_line(data=cpustats.selected,mapping=aes(x=stamp,y=(100-idle), group=interaction(runID, cpuid), colour=interaction(runID, cpuid))) +
+  guides(colour = guide_legend(title = "CPU #")) +
+  our_theme() %+replace%
+     theme(legend.position="bottom"))
+ggsave(paste(filename, "resources.svg", sep=""), width=7, height=3.5)
+
+ifstats = read_csv(paste(filename, "ifstats.csv", sep=""))
+experiment_time_x_axis(ggplot(ifstats) +
+  labs(title = "Client Network Usage") +
+  ylab("Speed (kb/s)") +
+  geom_line(mapping=aes(x=stamp,y=down, colour=interaction(runID, "down"), group=runID)) +
+  geom_line(mapping=aes(x=stamp,y=up, colour=interaction(runID, "up"), group=runID)) +
+  guides(colour = guide_legend(title = "Key")) +
+  our_theme() %+replace%
+     theme(legend.position="bottom"))
+ggsave(paste(filename, "ifstats.svg", sep=""), width=7, height=3.5)
 
 print("All done.")

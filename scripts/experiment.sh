@@ -7,9 +7,6 @@ source ../scripts/utils.sh
 
 CLUSTER_NAME=$1
 
-forever cpustats > cpustats.log &
-ifstat -t -n -i ens4 -b > networkstats.log &
-forever memstats  >> memstats.log &
 
 echo "stamp,event" > importanttimes.csv
 
@@ -26,6 +23,19 @@ export INGRESS_HOST=$(kubectl -n istio-system get service istio-ingressgateway -
 export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].port}')
 export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].port}')
 export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
+
+until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -eq 200 ]; do true; done
+sleep 10
+
+echo "stamp,cpuid,usr,nice,sys,iowate,irq,soft,steal,guest,gnice,idle" > cpustats.csv
+forever cpustats >> cpustats.csv &
+
+echo "stamp,down,up" > ifstats.csv
+forever ifstats >> ifstats.csv &
+
+echo "stamp,total,used,free,shared,buff,available" > memstats.csv
+forever memstats  >> memstats.csv &
+
 
 echo "stamp,podname,event" > default_pods.log
 echo "stamp,podname,event" > istio_pods.log
@@ -77,6 +87,8 @@ kill $(jobs -p)
 iwlog "TEST COMPLETE"
 
 sleep 2 # let them quit
+# make extra sure they quit
+kill -9 $(jobs -p)
 
 # go/rust run collate program
 ./../interpret/target/debug/interpret user.log
@@ -88,4 +100,6 @@ wlog "=== TEARDOWN ===="
 
 gcloud -q container clusters delete $CLUSTER_NAME --zone us-central1-f --async
 
-wait
+exit
+
+kill $$

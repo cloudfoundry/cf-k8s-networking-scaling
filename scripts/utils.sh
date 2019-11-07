@@ -40,10 +40,15 @@ howmanypilots () {
 
 cpustats ()
 {
-  echo "$(udate),$(mpstat -P ON -o JSON | jq ".sysstat.hosts[0].statistics[0]" -c)"
+  mpstat -P ON 1 1 | grep -v CPU | awk '/Average/ {$1=systime(); print $1 "000000000," $2 "," $3 "," $4 "," $5 "," $6 "," $7 "," $8 "," $9 "," $10 "," $11 "," $12}'
 }
 
 memstats ()
 {
-  echo "$(udate),$(free -m | head -n2 | tail -n1)"
+  free -m | awk '/Mem/ {$1=systime(); print $1 "000000000," $2 "," $3 "," $4 "," $5 "," $6 "," $7}'
+}
+
+ifstats ()
+{
+  ifstat -q -t -n -i ens4 1 1 | awk 'NR > 2 {$1=systime(); print $1 "000000000," $2 "," $3}'
 }
