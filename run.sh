@@ -5,7 +5,7 @@ source scripts/utils.sh
 
 CLUSTER_NAME=$1
 
-COUNT=${2:-1}
+COUNT=${2:-3}
 
 trap "exit" INT TERM ERR
 trap "kill 0" EXIT

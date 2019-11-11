@@ -4,9 +4,11 @@ source ../vars.sh
 source ../scripts/utils.sh
 
 # download istio at $ISTIO_VERSION
-curl -L https://git.io/getLatestIstio | ISTIO_VERSION=$ISTIO_VERSION sh -
+# curl -L https://git.io/getLatestIstio | ISTIO_VERSION=$ISTIO_VERSION sh -
 
-pushd istio-$ISTIO_VERSION
+# pushd istio-$ISTIO_VERSION
+
+pushd /home/pivotal/istio-1.3.3/
   kubectl apply -f install/kubernetes/helm/helm-service-account.yaml
 
   helm template install/kubernetes/helm/istio-init --name istio-init --namespace istio-system | kubectl apply -f -

@@ -11,6 +11,11 @@ CLUSTER_NAME=$1
 echo "stamp,event" > importanttimes.csv
 
 ./../scripts/build-cluster.sh $CLUSTER_NAME
+
+nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | head -n10)
+kubectl taint nodes $nodes istio=pool:NoSchedule
+kubectl label nodes $nodes scalers.istio=dedicated
+
 ./../scripts/install-istio.sh
 
 # use httpbin instead of bookinfo to apply load to
@@ -28,6 +33,9 @@ until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -
 sleep 10
 
 iwlog "GENERATE DP LOAD"
+
+echo "stamp,node,pod" > nodes4pods.csv
+slow_forever nodes4pods >> nodes4pods.csv &
 
 echo "stamp,cpuid,usr,nice,sys,iowate,irq,soft,steal,guest,gnice,idle" > cpustats.csv
 forever cpustats >> cpustats.csv &
@@ -60,7 +68,7 @@ sleep 10
 sleep 120 # idle cluster, very few pods
 
 iwlog "GENERATE TEST PODS"
-for ((n=0;n<$NUM_USERS;n++))
+for ((n=0;n<$NUM_APPS;n++))
 do
   kubetpl render ../yaml/httpbin.yaml -s NAME=httpbin-$n | kubectl apply -f -
 done

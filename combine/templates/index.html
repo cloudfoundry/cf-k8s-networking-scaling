@@ -20,16 +20,22 @@ a:hover {
 <body>
   <h1>Experiment Results</h1>
 
-  <hr>
+  <p>Variables used for this series of tests:</p>
 
-  <img src="controlplane.svg"></hr>
-  <img src="dataload_time.svg"><hr>
+  <pre>{{vars}}</pre>
+
+  <h3> Check if we hit our goal of 5sec at 95% for creating new routes </h3>
+  <img src="controlplane.svg"><hr>
+  <h3> Check if the dataplane latency is around 20ms and in-line with published Istio numbers</h3>
+  <img src="dataload_time.svg">
   <img src="dataload_percentile.svg"><hr>
-  <img src="sidecar.svg"><hr>
-  <img src="gateway.svg"><hr>
+  <h3> Check that autoscaling is working and that the resource usage isn't crazy</h3>
+  <img src="sidecar.svg">
+  <img src="gateway.svg">
   <img src="howmanypilots.svg"><hr>
-  <img src="nodemon.svg"><hr>
-  <img src="resources.svg"><hr>
+  <h3> Check that our client VM and k8s cluster are big enough</h3>
+  <img src="nodemon.svg">
+  <img src="resources.svg">
   <img src="ifstats.svg"><hr>
 
   <h3>Individual Results</h3>

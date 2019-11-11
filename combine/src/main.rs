@@ -12,6 +12,7 @@ use askama::Template;
 struct IndexTemplate {
     tests: Vec<String>,
     files: Vec<String>,
+    vars: String,
 }
 
 // This script will take several folders of results (up to about 100) and combine them into a
@@ -217,7 +218,7 @@ fn add_runid_and_normalize_file(
 fn add_runid_and_normalize_timestamp(
     output_folder: &std::path::PathBuf,
     input_folder: &std::fs::DirEntry,
-    filenames: [&str; 9],
+    filenames: [&str; 10],
     run_id: u32,
 ) -> Result<(), Box<dyn Error>> {
     let zero_timestamp = match get_start_time(input_folder) {
@@ -412,6 +413,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         "sidecarstats.csv",
         "importanttimes.csv",
         "nodemon.csv",
+        "nodes4pods.csv",
     ];
 
     let filenames_without_timestamps = ["rawlatencies.txt"];
@@ -430,6 +432,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut testnames: Vec<String> = vec![];
     let mut filenames: Vec<String> = vec![];
 
+    let mut vars: String = String::new();
+
     // Get list of folders
     for (index, folder) in fs::read_dir(&toppath)?.enumerate() {
         let folder = folder?;
@@ -438,6 +442,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         if !folder.metadata()?.is_dir() {
             continue;
         }
+
+        let mut vars_path = folder_path.clone();
+        vars_path.push("vars.sh");
+        vars = fs::read_to_string(vars_path)?;
 
         testnames.push(format!(
             "{}",
@@ -506,6 +514,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let index = IndexTemplate {
         tests: testnames,
         files: filenames,
+        vars: vars,
     };
     let mut file = File::create("index.html")?;
     file.write_all(index.render().unwrap().as_bytes())?;

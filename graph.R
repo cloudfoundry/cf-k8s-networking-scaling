@@ -139,15 +139,17 @@ experiment_time_x_axis(ggplot(dataload) +
   our_theme())
 ggsave(paste(filename, "howmanypilots.svg", sep=""), width=7, height=3.5)
 
-dataload = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(cpupercent=col_number(), memorypercent=col_number()))
+dataload = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(cpupercent=col_number(), memorypercent=col_number())) %>%
+  select(timestamp, nodename, cpupercent, memorypercent) %>%
+  gather(type, percent, -nodename, -timestamp)
 experiment_time_x_axis(ggplot(dataload, aes(group=nodename,color=nodename)) +
-  labs(title = "Node utilization percent") +
-  ylab("Utilization %") + ylim(0,100) +
-  geom_line(mapping=aes(x=timestamp,y=cpupercent)) +
-  geom_line(mapping=aes(x=timestamp,y=memorypercent)) +
+  labs(title = "Node Utilization") +
+  ylab("Utilization %") +
+  facet_wrap(vars(type), ncol=1) +
+  geom_line(mapping=aes(x=timestamp,y=percent)) +
   our_theme() %+replace%
     theme(legend.position="none"))
-ggsave(paste(filename, "nodemon.svg", sep=""), width=7, height=3.5)
+ggsave(paste(filename, "nodemon.svg", sep=""), width=7, height=5)
 
 memstats = read_csv(paste(filename, "memstats.csv", sep=""))
 cpustats = read_csv(paste(filename, "cpustats.csv", sep=""))

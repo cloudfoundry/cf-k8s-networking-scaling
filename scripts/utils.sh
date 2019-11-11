@@ -24,6 +24,14 @@ forever ()
     done
 }
 
+slow_forever ()
+{
+    while true; do
+        $@;
+        sleep 15;
+    done
+}
+
 monpods ()
 {
     pods=$(kubectl get pods -n "$1" --field-selector="status.phase!=Running" -o json)
@@ -51,4 +59,9 @@ memstats ()
 ifstats ()
 {
   ifstat -q -t -n -i ens4 1 1 | awk 'NR > 2 {$1=systime(); print $1 "000000000," $2 "," $3}'
+}
+
+nodes4pods ()
+{
+  kubectl get pod -o=custom-columns=NODE:.spec.nodeName,NAME:.metadata.name --all-namespaces | awk 'NR > 1 {$3 = systime(); print $3 "000000000," $1 "," $2}'
 }
