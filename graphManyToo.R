@@ -85,7 +85,7 @@ overtime.max <- ggplot(gathered.dataload) +
   geom_hline(yintercept = 20, color="gray75", linetype=2) +
   geom_text(mapping = aes(y=20, x=fiveSecondsInNanoseconds * 14, label="GOAL 20ms added latency"), size=2, vjust=1.5, hjust=1, color="grey25") +
   facet_wrap(vars(key), ncol=1, scales="free_y") +
-  geom_line(mapping = aes(x=Name,y=milliseconds,group=runID), color="grey85") +
+  geom_line(mapping = aes(x=Name,y=milliseconds,group=runID), color="gray15", alpha=0.15) +
   stat_summary_bin(aes(x=Name, y=milliseconds, colour="max"), fun.y = "max", bins=100, geom="line") +
   stat_summary_bin(aes(x=Name, y=milliseconds, colour="median"), fun.y = "median", bins=100, geom="line") +
   scale_colour_brewer(palette = "Set1") +
@@ -121,7 +121,7 @@ experiment_time_x_axis(ggplot(sidecar) +
   labs(title = "Envoy Sidecar Memory Usage Over Time") +
   ylab("Memory (mb)") +
   lines() + lineLabels() +
-  geom_line(mapping = aes(x=timestamp, y=memory, group=podname), color="grey85") +
+  geom_line(mapping = aes(x=timestamp, y=memory, group=podname), color="gray15", alpha=0.15) +
   stat_summary_bin(aes(x=timestamp,y=memory, colour = "max"), fun.y = "max", bins=100, geom="line") +
   stat_summary_bin(aes(x=timestamp,y=memory, colour = "median"), fun.y = "median", bins=100, geom="line") +
   scale_y_continuous(labels=mb_from_bytes) +
@@ -137,7 +137,7 @@ experiment_time_x_axis(ggplot(gateway) +
   labs(title = "Gateway Memory Usage over Time") +
   ylab("Memory (mb)") +
   lines() + lineLabels() +
-  geom_line(mapping = aes(x=timestamp, y=memory, group=podname), color="grey85") +
+  geom_line(mapping = aes(x=timestamp, y=memory, group=podname), color="gray15", alpha=0.15) +
   stat_summary_bin(aes(x=timestamp,y=memory, colour = "max"), fun.y = "max", bins=100, geom="line") +
   stat_summary_bin(aes(x=timestamp,y=memory, colour = "median"), fun.y = "median", bins=100, geom="line") +
   scale_y_continuous(labels=mb_from_bytes) +
@@ -150,7 +150,7 @@ pilotdata = read_csv(paste(filename, "howmanypilots.csv", sep=""))
 experiment_time_x_axis(ggplot(pilotdata, aes(x=stamp,y=count)) +
   labs(title = "Number of Pilots over time") +
   lines() + lineLabels() +
-  geom_line(mapping=aes(x=stamp,y=count, group=runID), color="grey85", show.legend=FALSE) +
+  geom_line(mapping=aes(x=stamp,y=count, group=runID), color="gray15", alpha=0.15, show.legend=FALSE) +
   stat_summary_bin(fun.y = "max", aes(colour = "max"), bins=100, geom="line")  +
   stat_summary_bin(fun.y = "median", aes(colour = "median"), bins=100, geom="line")  +
   scale_colour_brewer(palette = "Set1") +
@@ -159,16 +159,15 @@ experiment_time_x_axis(ggplot(pilotdata, aes(x=stamp,y=count)) +
 )
 ggsave(paste(filename, "howmanypilots.svg", sep=""), width=7, height=3.5)
 
-dataload = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(cpupercent=col_number(), memorypercent=col_number()))
-print(dataload)
-dataload =  select(dataload, runID, timestamp, nodename, cpupercent, memorypercent) %>%
-  gather(metric, percent, -timestamp, -runID, -nodename)
+dataload = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(cpupercent=col_number(), memorypercent=col_number())) %>%
+            select(runID, timestamp, nodename, cpupercent, memorypercent) %>%
+            gather(metric, percent, -timestamp, -runID, -nodename)
 experiment_time_x_axis(ggplot(dataload) +
   labs(title = "Node Utilization") +
   lines() + lineLabels() +
   geom_hline(yintercept = 100, color="grey45") +
   facet_wrap(vars(metric), ncol=1) +
-  geom_line(mapping=aes(x=timestamp, y=percent, group=interaction(runID, nodename)), color="grey85", show.legend=FALSE) +
+  geom_line(mapping=aes(x=timestamp, y=percent, group=interaction(runID, nodename)), color="gray15", alpha=0.15, show.legend=FALSE) +
   stat_summary_bin(aes(x=timestamp, y=percent, colour="max"),fun.y="max", bins=100, geom="line") +
   stat_summary_bin(aes(x=timestamp, y=percent, colour="median"),fun.y="median", bins=100, geom="line") +
   scale_colour_brewer(palette = "Set1") +
@@ -186,7 +185,7 @@ cpu = experiment_time_x_axis(ggplot(clientstats, aes(x=stamp, y=percent)) +
   lines() + lineLabels() +
   geom_hline(yintercept = 100, color="grey45") +
   facet_wrap(vars(metric), ncol=1, scales="free_y") +
-  geom_line(aes(group=interaction(runID, cpuid)), color="grey80") +
+  geom_line(aes(group=interaction(runID, cpuid)), color="gray15", alpha=0.15) +
   stat_summary_bin(aes(colour="max"),fun.y="max", geom="line", bins=100) +
   stat_summary_bin(aes(colour="median"),fun.y="median", bins=100, geom="line") +
   scale_colour_brewer(palette = "Set1") +
@@ -201,7 +200,7 @@ experiment_time_x_axis(ggplot(ifstats) +
   ylab("Speed (mb/s)") +
   lines() + lineLabels() +
   facet_wrap(vars(direction), ncol=1, scales="free_y") +
-  geom_line(mapping=aes(x=stamp,y=rate,group=runID), color="grey80") +
+  geom_line(mapping=aes(x=stamp,y=rate,group=runID), color="grey15", alpha=0.15) +
   stat_summary_bin(aes(x=stamp,y=rate, colour="max"),fun.y="max", geom="line", bins=100) +
   stat_summary_bin(aes(x=stamp,y=rate, colour="median"),fun.y="median", bins=100, geom="line") +
   scale_colour_brewer(palette = "Set1") +
