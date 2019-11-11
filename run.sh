@@ -7,6 +7,15 @@ CLUSTER_NAME=$1
 
 COUNT=${2:-3}
 
+# make sure we always have current builds of rust programs
+pushd combine
+  cargo build
+popd
+
+pushd interpret
+  cargo build
+popd
+
 trap "exit" INT TERM ERR
 trap "kill 0" EXIT
 
