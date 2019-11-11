@@ -39,3 +39,5 @@ pushd $1
   ./../combine/target/debug/combine .
   Rscript ../graphManyToo.R
 popd
+
+mv $1 experiments/
