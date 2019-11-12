@@ -9,11 +9,11 @@ gcloud container clusters create $CLUSTER_NAME \
   --cluster-version $CLUSTER_VERSION \
   --num-nodes $NUM_NODES \
   --machine-type=$MACHINE_TYPE \
-  --zone us-central1-f \
+  --zone $AVAILABILITY_ZONE \
   --project cf-routing-desserts
 
 gcloud container clusters get-credentials $CLUSTER_NAME \
-    --zone us-central1-f \
+    --zone $AVAILABILITY_ZONE \
     --project cf-routing-desserts
 
 kubectl create clusterrolebinding cluster-admin-binding \
