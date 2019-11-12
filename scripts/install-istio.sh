@@ -8,7 +8,7 @@ source ../scripts/utils.sh
 
 # pushd istio-$ISTIO_VERSION
 
-pushd /home/pivotal/istio-1.3.3/
+pushd /home/pivotal/istio-1.3.5/
   kubectl apply -f install/kubernetes/helm/helm-service-account.yaml
 
   helm template install/kubernetes/helm/istio-init --name istio-init --namespace istio-system | kubectl apply -f -
