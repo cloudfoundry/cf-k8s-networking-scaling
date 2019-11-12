@@ -74,7 +74,7 @@ iwlog "GENERATE TEST PODS"
 # do
 #   kubetpl render ../yaml/httpbin.yaml -s NAME=httpbin-$n | kubectl apply -f -
 # done
-kubectl apply -f $NUM_APPS-bins.yaml
+kubectl apply -f ../yaml/$NUM_APPS-bins.yaml
 
 # wait for all httpbins to be ready
 kubectl wait --for=condition=available deployment $(kubectl get deployments | grep httpbin | awk '{print $1}')
