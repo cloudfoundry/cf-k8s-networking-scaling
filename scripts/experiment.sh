@@ -13,7 +13,7 @@ echo "stamp,event" > importanttimes.csv
 ./../scripts/build-cluster.sh $CLUSTER_NAME
 
 nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | head -n10)
-kubectl taint nodes $nodes istio=pool:NoSchedule
+kubectl taint nodes $nodes scalers.istio=dedicated:NoSchedule
 kubectl label nodes $nodes scalers.istio=dedicated
 
 ./../scripts/install-istio.sh
@@ -70,10 +70,11 @@ sleep 10
 sleep 120 # idle cluster, very few pods
 
 iwlog "GENERATE TEST PODS"
-for ((n=0;n<$NUM_APPS;n++))
-do
-  kubetpl render ../yaml/httpbin.yaml -s NAME=httpbin-$n | kubectl apply -f -
-done
+# for ((n=0;n<$NUM_APPS;n++))
+# do
+#   kubetpl render ../yaml/httpbin.yaml -s NAME=httpbin-$n | kubectl apply -f -
+# done
+kubectl apply -f $NUM_APPS-bins.yaml
 
 # wait for all httpbins to be ready
 kubectl wait --for=condition=available deployment $(kubectl get deployments | grep httpbin | awk '{print $1}')

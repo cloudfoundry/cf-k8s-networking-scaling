@@ -12,3 +12,5 @@ combine/Cargo.lock
 .RData
 .Rhistory
 *.pdf
+
+experiments
