@@ -12,9 +12,11 @@ echo "stamp,event" > importanttimes.csv
 
 ./../scripts/build-cluster.sh $CLUSTER_NAME
 
-nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | head -n10)
-kubectl taint nodes $nodes scalers.istio=dedicated:NoSchedule
-kubectl label nodes $nodes scalers.istio=dedicated
+if [$ISTIO_TAINT -eq 1]; then
+  nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | head -n10)
+  kubectl taint nodes $nodes scalers.istio=dedicated:NoSchedule
+  kubectl label nodes $nodes scalers.istio=dedicated
+fi
 
 ./../scripts/install-istio.sh
 
