@@ -100,16 +100,11 @@ sleep 2 # let them quit
 # make extra sure they quit
 kill -9 $(jobs -p)
 
-# go/rust run collate program
-./../interpret/target/debug/interpret user.log
-
-# generate graphs with r
-Rscript ../graph.R
+# collate and graph in the background
+./../interpret/target/debug/interpret user.log && Rscript ../graph.R &
 
 wlog "=== TEARDOWN ===="
 
 gcloud -q container clusters delete $CLUSTER_NAME --zone us-central1-f --async
 
 exit
-
-kill $$
