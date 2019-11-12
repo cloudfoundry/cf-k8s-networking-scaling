@@ -1,0 +1,4200 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-0
+  name: httpbin-0
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-0
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-0
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-0
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-1
+  name: httpbin-1
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-1
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-1
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-1
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-2
+  name: httpbin-2
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-2
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-2
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-2
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-2
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-3
+  name: httpbin-3
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-3
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-3
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-3
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-4
+  name: httpbin-4
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-4
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-4
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-4
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-4
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-4
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-5
+  name: httpbin-5
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-5
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-5
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-5
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-5
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-5
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-6
+  name: httpbin-6
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-6
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-6
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-6
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-6
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-6
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-7
+  name: httpbin-7
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-7
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-7
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-7
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-7
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-7
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-8
+  name: httpbin-8
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-8
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-8
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-8
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-8
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-8
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-9
+  name: httpbin-9
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-9
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-9
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-9
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-9
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-9
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-10
+  name: httpbin-10
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-10
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-10
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-10
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-10
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-11
+  name: httpbin-11
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-11
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-11
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-11
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-11
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-11
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-12
+  name: httpbin-12
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-12
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-12
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-12
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-12
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-12
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-13
+  name: httpbin-13
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-13
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-13
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-13
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-13
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-13
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-14
+  name: httpbin-14
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-14
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-14
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-14
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-14
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-14
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-15
+  name: httpbin-15
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-15
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-15
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-15
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-15
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-15
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-16
+  name: httpbin-16
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-16
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-16
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-16
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-16
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-16
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-17
+  name: httpbin-17
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-17
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-17
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-17
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-17
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-17
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-18
+  name: httpbin-18
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-18
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-18
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-18
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-18
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-18
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-19
+  name: httpbin-19
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-19
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-19
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-19
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-19
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-19
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-20
+  name: httpbin-20
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-20
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-20
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-20
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-20
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-20
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-21
+  name: httpbin-21
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-21
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-21
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-21
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-21
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-21
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-22
+  name: httpbin-22
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-22
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-22
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-22
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-22
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-22
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-23
+  name: httpbin-23
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-23
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-23
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-23
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-23
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-23
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-24
+  name: httpbin-24
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-24
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-24
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-24
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-24
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-24
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-25
+  name: httpbin-25
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-25
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-25
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-25
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-25
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-25
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-26
+  name: httpbin-26
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-26
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-26
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-26
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-26
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-26
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-27
+  name: httpbin-27
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-27
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-27
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-27
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-27
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-27
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-28
+  name: httpbin-28
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-28
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-28
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-28
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-28
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-28
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-29
+  name: httpbin-29
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-29
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-29
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-29
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-29
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-29
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-30
+  name: httpbin-30
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-30
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-30
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-30
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-30
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-30
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-31
+  name: httpbin-31
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-31
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-31
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-31
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-31
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-31
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-32
+  name: httpbin-32
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-32
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-32
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-32
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-32
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-32
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-33
+  name: httpbin-33
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-33
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-33
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-33
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-33
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-33
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-34
+  name: httpbin-34
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-34
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-34
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-34
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-34
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-34
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-35
+  name: httpbin-35
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-35
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-35
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-35
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-35
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-35
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-36
+  name: httpbin-36
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-36
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-36
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-36
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-36
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-36
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-37
+  name: httpbin-37
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-37
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-37
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-37
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-37
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-37
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-38
+  name: httpbin-38
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-38
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-38
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-38
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-38
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-38
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-39
+  name: httpbin-39
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-39
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-39
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-39
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-39
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-39
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-40
+  name: httpbin-40
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-40
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-40
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-40
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-40
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-40
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-41
+  name: httpbin-41
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-41
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-41
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-41
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-41
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-41
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-42
+  name: httpbin-42
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-42
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-42
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-42
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-42
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-42
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-43
+  name: httpbin-43
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-43
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-43
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-43
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-43
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-43
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-44
+  name: httpbin-44
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-44
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-44
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-44
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-44
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-44
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-45
+  name: httpbin-45
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-45
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-45
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-45
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-45
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-45
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-46
+  name: httpbin-46
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-46
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-46
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-46
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-46
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-46
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-47
+  name: httpbin-47
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-47
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-47
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-47
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-47
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-47
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-48
+  name: httpbin-48
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-48
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-48
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-48
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-48
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-48
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-49
+  name: httpbin-49
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-49
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-49
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-49
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-49
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-49
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-50
+  name: httpbin-50
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-50
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-50
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-50
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-50
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-50
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-51
+  name: httpbin-51
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-51
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-51
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-51
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-51
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-51
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-52
+  name: httpbin-52
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-52
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-52
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-52
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-52
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-52
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-53
+  name: httpbin-53
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-53
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-53
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-53
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-53
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-53
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-54
+  name: httpbin-54
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-54
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-54
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-54
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-54
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-54
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-55
+  name: httpbin-55
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-55
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-55
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-55
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-55
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-55
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-56
+  name: httpbin-56
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-56
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-56
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-56
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-56
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-56
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-57
+  name: httpbin-57
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-57
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-57
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-57
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-57
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-57
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-58
+  name: httpbin-58
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-58
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-58
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-58
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-58
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-58
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-59
+  name: httpbin-59
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-59
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-59
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-59
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-59
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-59
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-60
+  name: httpbin-60
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-60
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-60
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-60
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-60
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-60
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-61
+  name: httpbin-61
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-61
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-61
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-61
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-61
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-61
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-62
+  name: httpbin-62
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-62
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-62
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-62
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-62
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-62
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-63
+  name: httpbin-63
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-63
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-63
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-63
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-63
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-63
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-64
+  name: httpbin-64
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-64
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-64
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-64
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-64
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-64
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-65
+  name: httpbin-65
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-65
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-65
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-65
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-65
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-65
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-66
+  name: httpbin-66
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-66
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-66
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-66
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-66
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-66
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-67
+  name: httpbin-67
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-67
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-67
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-67
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-67
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-67
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-68
+  name: httpbin-68
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-68
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-68
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-68
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-68
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-68
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-69
+  name: httpbin-69
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-69
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-69
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-69
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-69
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-69
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-70
+  name: httpbin-70
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-70
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-70
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-70
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-70
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-70
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-71
+  name: httpbin-71
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-71
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-71
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-71
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-71
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-71
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-72
+  name: httpbin-72
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-72
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-72
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-72
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-72
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-72
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-73
+  name: httpbin-73
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-73
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-73
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-73
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-73
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-73
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-74
+  name: httpbin-74
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-74
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-74
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-74
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-74
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-74
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-75
+  name: httpbin-75
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-75
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-75
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-75
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-75
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-75
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-76
+  name: httpbin-76
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-76
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-76
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-76
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-76
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-76
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-77
+  name: httpbin-77
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-77
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-77
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-77
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-77
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-77
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-78
+  name: httpbin-78
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-78
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-78
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-78
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-78
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-78
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-79
+  name: httpbin-79
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-79
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-79
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-79
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-79
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-79
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-80
+  name: httpbin-80
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-80
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-80
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-80
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-80
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-81
+  name: httpbin-81
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-81
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-81
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-81
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-81
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-81
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-82
+  name: httpbin-82
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-82
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-82
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-82
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-82
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-82
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-83
+  name: httpbin-83
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-83
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-83
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-83
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-83
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-83
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-84
+  name: httpbin-84
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-84
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-84
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-84
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-84
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-84
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-85
+  name: httpbin-85
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-85
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-85
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-85
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-85
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-85
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-86
+  name: httpbin-86
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-86
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-86
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-86
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-86
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-86
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-87
+  name: httpbin-87
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-87
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-87
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-87
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-87
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-87
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-88
+  name: httpbin-88
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-88
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-88
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-88
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-88
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-88
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-89
+  name: httpbin-89
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-89
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-89
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-89
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-89
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-89
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-90
+  name: httpbin-90
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-90
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-90
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-90
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-90
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-90
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-91
+  name: httpbin-91
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-91
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-91
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-91
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-91
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-91
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-92
+  name: httpbin-92
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-92
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-92
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-92
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-92
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-92
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-93
+  name: httpbin-93
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-93
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-93
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-93
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-93
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-93
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-94
+  name: httpbin-94
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-94
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-94
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-94
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-94
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-94
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-95
+  name: httpbin-95
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-95
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-95
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-95
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-95
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-95
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-96
+  name: httpbin-96
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-96
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-96
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-96
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-96
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-96
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-97
+  name: httpbin-97
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-97
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-97
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-97
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-97
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-97
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-98
+  name: httpbin-98
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-98
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-98
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-98
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-98
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-98
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin-99
+  name: httpbin-99
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: httpbin-99
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-99
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-99
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 10
+      maxUnavailable: 10
+  template:
+    metadata:
+      labels:
+        app: httpbin-99
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin-99
+        ports:
+        - containerPort: 80
+
