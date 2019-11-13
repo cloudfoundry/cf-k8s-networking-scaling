@@ -156,6 +156,8 @@ fn add_runid_and_normalize_file(
             ))?
         }
     };
+    println!("Processing {}", dest_path.to_str().ok_or("could not print filepath we couldn't open")?);
+
     let reader = BufReader::new(source_file);
     for (index, line) in reader.lines().enumerate() {
         let line = line?;
@@ -164,48 +166,53 @@ fn add_runid_and_normalize_file(
             continue;
         }
         let re = Regex::new(r"(\d+),(.+)")?;
-        let captures = re.captures(line.as_str()).ok_or(format!(
-            "regex ({}) did not match on line {}: {}",
-            re.as_str(),
-            index,
-            line.as_str()
-        ))?;
-        let this_time = captures
-            .get(1)
-            .ok_or("missing first capture group (the timestamp)")?
-            .as_str()
-            .parse::<u64>()?;
-        let rest_of_line = captures
-            .get(2)
-            .ok_or("missing rest of line (after timestamp)")?
-            .as_str();
-        let converted_timestamp = match this_time.overflowing_sub(zero_timestamp) {
-            (result, false) => result,
-            (wrapped, true) => {
-                println!(
-                    "Warning: timestamp was {} milliseconds before the start of the experiment",
-                    (std::u64::MAX - wrapped) / (1000 * 1000)
-                );
-                0
-            }
-        };
+        match re.captures(line.as_str()) {
+            Some(captures) => {
+                let this_time = captures
+                    .get(1)
+                    .ok_or("missing first capture group (the timestamp)")?
+                    .as_str()
+                    .parse::<u64>()?;
+                let rest_of_line = captures
+                    .get(2)
+                    .ok_or("missing rest of line (after timestamp)")?
+                    .as_str();
+                let converted_timestamp = match this_time.overflowing_sub(zero_timestamp) {
+                    (result, false) => result,
+                    (wrapped, true) => {
+                        if (std::u64::MAX - wrapped) > (1000 * 1000 * 1000) {
+                            println!("Warning: timestamp was {} milliseconds before the start of the experiment",
+                                     (std::u64::MAX - wrapped) / (1000 * 1000))
+                        };
+                        0
+                    }
+                };
 
-        match write!(
-            dest_file,
-            "{}, {}, {}\n",
-            run_id, converted_timestamp, rest_of_line
-        ) {
-            Ok(()) => (),
-            Err(e) => {
-                return Err(format!(
-                    "failed to write line {} to {} because {}",
-                    index,
-                    dest_path
-                        .to_str()
-                        .ok_or("could not print filepath we couldn't open")?,
-                    e
-                ))?
-            }
+                match write!(
+                    dest_file,
+                    "{}, {}, {}\n",
+                    run_id, converted_timestamp, rest_of_line
+                ) {
+                    Ok(()) => (),
+                    Err(e) => {
+                        return Err(format!(
+                            "failed to write line {} to {} because {}",
+                            index,
+                            dest_path
+                                .to_str()
+                                .ok_or("could not print filepath we couldn't open")?,
+                            e
+                        ))?
+                    }
+                }
+            },
+
+            None => println!(
+                "regex({}) did not match on line {}, which is '{}'",
+                re.as_str(),
+                index,
+                line.as_str()
+            ),
         };
     }
 
@@ -519,5 +526,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut file = File::create("index.html")?;
     file.write_all(index.render().unwrap().as_bytes())?;
 
+    println!("All done.");
     Ok(())
 }
