@@ -12,7 +12,7 @@ echo "stamp,event" > importanttimes.csv
 
 ./../scripts/build-cluster.sh $CLUSTER_NAME
 
-if [$ISTIO_TAINT -eq 1]; then
+if ["$ISTIO_TAINT" -eq 1]; then
   nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | head -n10)
   kubectl taint nodes $nodes scalers.istio=dedicated:NoSchedule
   kubectl label nodes $nodes scalers.istio=dedicated
@@ -32,7 +32,13 @@ export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressga
 export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
 
 wlog "Curling to see if load test container is up"
-until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -eq 200 ]; do sleep 1; done
+until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -eq 200 ]; do
+  export INGRESS_HOST=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].port}')
+  export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].port}')
+  export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
+  sleep 1
+done
 wlog "Load container up"
 sleep 10
 
