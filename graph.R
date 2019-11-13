@@ -139,17 +139,49 @@ experiment_time_x_axis(ggplot(dataload) +
   our_theme())
 ggsave(paste(filename, "howmanypilots.svg", sep=""), width=7, height=3.5)
 
-dataload = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(cpupercent=col_number(), memorypercent=col_number())) %>%
+# Read in timestamp-node-pod data
+nodes4pods = read_csv(paste(filename, "nodes4pods.csv", sep="")) %>%
+  extract(pod, "podtype", "([A-Za-z][A-Za-z0-9]+-?[A-Za-z]+)", remove=FALSE) %>%
+  extract(node, "nodename", "gke-.+-([A-Za-z0-9]+)")
+podcountsbynodetime = nodes4pods %>% select(-pod) %>% group_by(nodename, podtype, stamp) %>% summarize(n=n())
+podtypesbynode = nodes4pods %>% select(nodename, podtype) %>% distinct() %>% group_by(nodename) %>% summarize(podtypes = str_c(podtype, collapse=":"))
+print(podtypesbynode)
+
+# Read in timestamp-node-cpu-mem data
+nodeusage = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(cpupercent=col_number(), memorypercent=col_number())) %>%
+  extract(nodename, "nodename", "gke-.+-([A-Za-z0-9]+)") %>%
   select(timestamp, nodename, cpupercent, memorypercent) %>%
-  gather(type, percent, -nodename, -timestamp)
-experiment_time_x_axis(ggplot(dataload, aes(group=nodename,color=nodename)) +
+  left_join(podtypesbynode, by="nodename", name="podtypes") %>%
+  mutate(hasIstio = if_else(str_detect(podtypes, "istio"), "with istio", "without istio"))
+
+busynodenames = nodeusage %>% group_by(nodename) %>% summarize(maxcpu = max(cpupercent)) %>% filter(maxcpu > 50)
+busynodes = busynodenames %>% left_join(nodeusage) %>% select(timestamp, nodename, cpupercent, memorypercent, hasIstio)
+
+nodeusage = nodeusage %>% gather(type, percent, -nodename, -timestamp, -hasIstio, -podtypes)
+busynodes = busynodes %>% gather(type, percent, -nodename, -timestamp, -hasIstio)
+experiment_time_x_axis(ggplot(nodeusage, aes(group=nodename)) +
   labs(title = "Node Utilization") +
   ylab("Utilization %") +
-  facet_wrap(vars(type), ncol=1) +
-  geom_line(mapping=aes(x=timestamp,y=percent)) +
+  facet_wrap(vars(hasIstio, type), ncol=1) +
+  geom_line(mapping = aes(x=timestamp,y=percent), color="gray15", alpha=0.15) +
+  geom_line(busynodes, mapping=aes(x=timestamp,y=percent, color=nodename)) +
   our_theme() %+replace%
-    theme(legend.position="none"))
-ggsave(paste(filename, "nodemon.svg", sep=""), width=7, height=5)
+    theme(legend.position="bottom"))
+ggsave(paste(filename, "nodemon.svg", sep=""), width=7, height=12)
+
+podcountsbusynodes = podcountsbynodetime %>% right_join(busynodenames) %>%
+  filter(podtype != "prometheus-to", podtype != "kube-proxy", podtype != "fluentd-gcp") %>%
+  mutate(podcategory = if_else(str_detect(podtype, "httpbin"), "workload", "system"))
+print(podcountsbusynodes)
+
+experiment_time_x_axis(ggplot(podcountsbusynodes) +
+  labs(title = "Pods by Node over Time") +
+  facet_wrap(vars(nodename), ncol=1) +
+  geom_count(mapping=aes(x=stamp,y=podtype,size=n,color=podtype), alpha=0.5) +
+  scale_size_area() +
+  our_theme() %+replace%
+    theme(legend.position="bottom"))
+ggsave(paste(filename, "nodes4pods.svg", sep=""), width=7, height=14)
 
 memstats = read_csv(paste(filename, "memstats.csv", sep=""))
 cpustats = read_csv(paste(filename, "cpustats.csv", sep=""))
