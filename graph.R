@@ -50,7 +50,7 @@ quantiles = c(0.68, 0.90, 0.99, 0.999, 1)
 mylabels = c("p68", "p90", "p99", "p999", "max")
 fiveSecondsInNanoseconds = 5 * 1000 * 1000 * 1000
 
-# Control Plane Latency by Percentile
+print("Control Plane Latency by Percentile")
 controlplane = read_csv(paste(filename, "user_data.csv", sep=""))
 selected.controlplane <- select(controlplane, `user id`, `nanoseconds to first success`, `nanoseconds to last error`)
 first_values = quantile(selected.controlplane$`nanoseconds to first success`, quantiles)
@@ -73,8 +73,8 @@ ggplot(gathered.controlplane, aes(x=quantiles, y=latency)) +
     theme(legend.position="bottom")
 ggsave(paste(filename, "controlplane.svg", sep=""), width=7, height = 3.5)
 
-# Timestamp vs Latency (ms)
-dataload = read_csv(paste(filename, "dataload.csv", sep=""))
+print("Timestamp vs Latency (ms)")
+dataload = read_csv(paste(filename, "dataload.csv", sep=""), col_types=cols(Name=col_number()))
 selected.dataload <- select(dataload, Name,
                             `Min. latency`, `Max. latency`,
                             `68% Latency`,`90% Latency`,`99% Latency`)
@@ -89,7 +89,7 @@ overtime <- ggplot(gathered.dataload) +
     theme(legend.position="bottom")
 overtime <- experiment_time_x_axis(overtime)
 
-# Latency (ms) by Percentile
+print("Latency (ms) by Percentile")
 dataload = read_csv(paste(filename, "rawlatencies.txt", sep=""))
 values = quantile(dataload$latency, quantiles)
 dataload = tibble(mylabels, values)
@@ -104,6 +104,7 @@ bypercent <- ggplot(dataload, aes(x=mylabels, y=values)) +
 
 ggsave(paste(filename, "dataload.svg", sep=""), arrangeGrob(overtime, bypercent))
 
+print("Sidecar Memory")
 sidecar = read_csv(paste(filename, "sidecarstats.csv", sep=""))
 experiment_time_x_axis(ggplot(sidecar) +
   labs(title = "Envoy Sidecar Memory Usage Over Time") +
@@ -118,6 +119,7 @@ experiment_time_x_axis(ggplot(sidecar) +
     theme(strip.background = element_blank(), strip.placement = "outside"))
 ggsave(paste(filename, "sidecar.svg", sep=""), width=7, height=5)
 
+print("Gateway Memory")
 gateway = read_csv(paste(filename, "gatewaystats.csv", sep=""))
 experiment_time_x_axis(ggplot(gateway) +
   labs(title = "Gateway Memory Usage over Time") +
@@ -130,7 +132,7 @@ experiment_time_x_axis(ggplot(gateway) +
     theme(legend.position="none"))
 ggsave(paste(filename, "gateway.svg", sep=""), width=7, height=3.5)
 
-
+print("Pilot Count")
 dataload = read_csv(paste(filename, "howmanypilots.csv", sep=""))
 experiment_time_x_axis(ggplot(dataload) +
   labs(title = "Number of Pilots over time") +
