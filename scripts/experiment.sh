@@ -32,7 +32,7 @@ export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressga
 export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
 
 wlog "Curling to see if load test container is up"
-until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -eq 200 ]; do true; done
+until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -eq 200 ]; do sleep 1; done
 wlog "Load container up"
 sleep 10
 
