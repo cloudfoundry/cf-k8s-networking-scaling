@@ -18,14 +18,20 @@ if ["$ISTIO_TAINT" = "1"]; then
 fi
 kubectl label nodes $nodes scalers.istio=dedicated
 
-nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | tail -n1)
-kubectl taint nodes $nodes scalers.istio=httpbin:NoSchedule
-kubectl label nodes $nodes scalers.istio=httpbin:NoSchedule
+if ["$ISOLATE_DATAPLANE" -eq 1]; then
+  nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | tail -n1)
+  kubectl taint nodes $nodes scalers.istio=httpbin:NoSchedule
+  kubectl label nodes $nodes scalers.istio=httpbin:NoSchedule
+fi
 
 ./../scripts/install-istio.sh
 
-# use httpbin instead of bookinfo to apply load to
-kubetpl render ../yaml/httpbin.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
+if ["$ISOLATE_DATAPLANE" -eq 1]; then
+  kubetpl render ../yaml/httpbin-nodeselector.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
+else
+  kubetpl render ../yaml/httpbin.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
+fi
+
 kubetpl render ../yaml/httpbin-gateway-wildcard-host.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
 kubetpl render ../yaml/httpbin-virtualservice-wildcard-host.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
 kubectl wait --for=condition=available deployment $(kubectl get deployments | grep httpbin | awk '{print $1}')

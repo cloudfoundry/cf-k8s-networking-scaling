@@ -12,3 +12,5 @@ NUM_USERS=100
 USER_DELAY=1
 
 NAMESPACES=1 # NUM_APPS will be overridden when this is true (with 1000)
+
+ISOLATE_DATAPLANE=1
