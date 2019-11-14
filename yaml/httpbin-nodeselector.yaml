@@ -1,0 +1,49 @@
+# kubetpl:syntax:$
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: $NAME
+  labels:
+    app: $NAME
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 80
+  selector:
+    app: $NAME
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $NAME
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 10
+      maxSurge: 10
+  selector:
+    matchLabels:
+      app: $NAME
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: $NAME
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: $NAME
+        ports:
+        - containerPort: 80
+      nodeSelector:
+        scalers.dataplane: httpbin
+      tolerations:
+      - key: "scalers.dataplane"
+        operator: "Equal"
+        value: "httpbin"
+        effect: "NoSchedule"

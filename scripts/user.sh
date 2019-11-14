@@ -5,7 +5,7 @@ source ../scripts/utils.sh
 
 echo "$(udate),$1,STARTED"
 
-if ["$NAMESPACES" = "1"]; then
+if [ "$NAMESPACES" = "1" ]; then
   kubetpl render ../yaml/namespace/httpbin-gateway.yaml -s NAME=httpbin-0-$1 -s NAMESPACE=ns-0 | kubectl apply -f -
   kubetpl render ../yaml/namespace/httpbin-virtualservice.yaml -s NAME=httpbin-0-$1 -s NAMESPACE=ns-0 | kubectl apply -f -
 else
