@@ -82,6 +82,7 @@ iwlog "GENERATE TEST PODS"
 # do
 #   kubetpl render ../yaml/httpbin.yaml -s NAME=httpbin-$n | kubectl apply -f -
 # done
+# kubectl apply -f ../yaml/namespace/10sidecars.yaml never mind i put it in namespaced1k
 kubectl apply -f ../yaml/namespace/namespaced1k.yaml
 
 # wait for all httpbins to be ready

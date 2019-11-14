@@ -76,6 +76,123 @@ metadata:
   labels:
     name: ns-10
 ---
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: default
+  namespace: ns-0
+spec:
+  egress:
+  - hosts:
+    - ns-0/*
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: default
+  namespace: ns-1
+spec:
+  egress:
+  - hosts:
+    - ns-1/*
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: default
+  namespace: ns-2
+spec:
+  egress:
+  - hosts:
+    - ns-2/*
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: default
+  namespace: ns-3
+spec:
+  egress:
+  - hosts:
+    - ns-3/*
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: default
+  namespace: ns-4
+spec:
+  egress:
+  - hosts:
+    - ns-4/*
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: default
+  namespace: ns-5
+spec:
+  egress:
+  - hosts:
+    - ns-5/*
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: default
+  namespace: ns-6
+spec:
+  egress:
+  - hosts:
+    - ns-6/*
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: default
+  namespace: ns-7
+spec:
+  egress:
+  - hosts:
+    - ns-7/*
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: default
+  namespace: ns-8
+spec:
+  egress:
+  - hosts:
+    - ns-8/*
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: default
+  namespace: ns-9
+spec:
+  egress:
+  - hosts:
+    - ns-9/*
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: default
+  namespace: ns-10
+spec:
+  egress:
+  - hosts:
+    - ns-10/*
+
+---
 apiVersion: v1
 kind: Service
 metadata:
