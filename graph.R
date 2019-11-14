@@ -162,7 +162,7 @@ busynodes = busynodenames %>% left_join(nodeusage) %>% select(timestamp, nodenam
 nodeusage = nodeusage %>% gather(type, percent, -nodename, -timestamp, -hasIstio, -podtypes)
 busynodes = busynodes %>% gather(type, percent, -nodename, -timestamp, -hasIstio)
 experiment_time_x_axis(ggplot(nodeusage, aes(group=nodename)) +
-  labs(title = "Node Utilization") +
+  labs(title = "Node Utilization", subtitle="100% = utilizing the whole machine") +
   ylab("Utilization %") + lines() +
   facet_wrap(vars(hasIstio, type), ncol=1) +
   geom_line(mapping = aes(x=timestamp,y=percent), color="gray15", alpha=0.15) +
