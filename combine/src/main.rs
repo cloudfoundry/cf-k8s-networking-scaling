@@ -156,7 +156,7 @@ fn add_runid_and_normalize_file(
             ))?
         }
     };
-    println!("Processing {}", dest_path.to_str().ok_or("could not print filepath we couldn't open")?);
+    println!("    - {}", dest_path.to_str().ok_or("could not print filepath we couldn't open")?);
 
     let reader = BufReader::new(source_file);
     for (index, line) in reader.lines().enumerate() {

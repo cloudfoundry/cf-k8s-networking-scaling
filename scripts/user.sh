@@ -13,7 +13,7 @@ until [ $(curl -s -o /dev/null -w "%{http_code}" -HHost:httpbin-0-$1.example.com
 echo "$(udate),$1,SUCCESS"
 
 lastfail=$(udate)
-for ((i=30; i>0; i--)); do
+for ((i=60; i>0; i--)); do
   sleep 1 &
   if [ $(curl -s -o /dev/null -w "%{http_code}" -HHost:httpbin-0-$1.example.com http://$INGRESS_HOST:$INGRESS_PORT/status/200) -ne 200 ]; then
     lastfail=$(udate)

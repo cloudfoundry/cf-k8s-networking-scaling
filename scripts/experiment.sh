@@ -12,11 +12,11 @@ echo "stamp,event" > importanttimes.csv
 
 ./../scripts/build-cluster.sh $CLUSTER_NAME
 
+nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | head -n10)
 if ["$ISTIO_TAINT" -eq 1]; then
-  nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | head -n10)
   kubectl taint nodes $nodes scalers.istio=dedicated:NoSchedule
-  kubectl label nodes $nodes scalers.istio=dedicated
 fi
+kubectl label nodes $nodes scalers.istio=dedicated
 
 ./../scripts/install-istio.sh
 
@@ -70,6 +70,7 @@ until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -
 sleep 10
 
 ./../scripts/nodemon.sh > nodemon.csv &
+./../scripts/podmon.sh > podmon.csv &
 ./../scripts/sidecarstats.sh istio-system ingressgateway > gatewaystats.csv &
 
 # create data plane load with apib
