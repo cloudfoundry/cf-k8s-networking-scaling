@@ -10,3 +10,5 @@ ISTIO_TAINT=1
 NUM_APPS=1000 # must be equal to or larger than NUM_USERS
 NUM_USERS=100
 USER_DELAY=1
+
+NAMESPACES=1 # NUM_APPS will be overridden when this is true (with 1000)
