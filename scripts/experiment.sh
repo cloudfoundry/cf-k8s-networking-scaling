@@ -12,7 +12,8 @@ echo "stamp,event" > importanttimes.csv
 
 ./../scripts/build-cluster.sh $CLUSTER_NAME
 
-nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | head -n10)
+#NODES_FOR_ISTIO=10
+nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | head -n$NODES_FOR_ISTIO)
 if [ "$ISTIO_TAINT" -eq 1 ]; then
   kubectl taint nodes $nodes scalers.istio=dedicated:NoSchedule
 fi
@@ -108,7 +109,7 @@ iwlog "START MONITORING SIDECARS"
 sleep 60 # idle cluster, many pods
 
 iwlog "GENERATE CP LOAD"
-./../scripts/userfactory.sh > user.log 2>&1 # run in foreground for now so we wait til they're done
+./../scripts/userfactory.sh > user.log # 2>&1 # run in foreground for now so we wait til they're done
 
 iwlog "CP LOAD COMPLETE"
 

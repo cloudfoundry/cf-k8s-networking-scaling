@@ -11,4 +11,6 @@ do
   sleep $USER_DELAY
 done
 
+>&2 wlog "user factory closing"
 wait
+>&2 wlog "user factory done waiting"
