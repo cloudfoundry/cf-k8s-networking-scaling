@@ -21,7 +21,7 @@ echo "$(udate),$1,SUCCESS"
 >&2 wlog "SUCCESS $1"
 
 lastfail=$(udate)
-secondsToWait=720
+secondsToWait=120
 for ((i=$secondsToWait; i>0; i--)); do
   sleep 1 &
   if [ $(curl -s -o /dev/null -w "%{http_code}" -HHost:$TARGET_URL http://$INGRESS_HOST:$INGRESS_PORT/status/200) -ne 200 ]; then
