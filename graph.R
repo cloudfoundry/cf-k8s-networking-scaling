@@ -156,7 +156,7 @@ nodeusage = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(cpup
   left_join(podtypesbynode, by="nodename", name="podtypes") %>%
   mutate(hasIstio = if_else(str_detect(podtypes, "istio"), "with istio", "without istio"))
 
-busynodenames = nodeusage %>% group_by(nodename) %>% summarize(maxcpu = max(cpupercent)) %>% filter(maxcpu > 50)
+busynodenames = nodeusage %>% group_by(nodename) %>% summarize(maxcpu = max(cpupercent)) %>% top_n(3,maxcpu)
 busynodes = busynodenames %>% left_join(nodeusage) %>% select(timestamp, nodename, cpupercent, memorypercent, hasIstio)
 
 nodeusage = nodeusage %>% gather(type, percent, -nodename, -timestamp, -hasIstio, -podtypes)
@@ -185,7 +185,7 @@ experiment_time_x_axis(ggplot(podcountsbusynodes) +
   our_theme() %+replace%
     theme(legend.position="bottom"))
 numberofbusynodes = n_distinct(podcountsbusynodes$nodename)
-ggsave(paste(filename, "nodes4pods.svg", sep=""), width=7, height=3.5 * numberofbusynodes)
+ggsave(paste(filename, "nodes4pods.svg", sep=""), width=7, height=2.5 * numberofbusynodes)
 
 print("Client Usage")
 memstats = read_csv(paste(filename, "memstats.csv", sep=""))
