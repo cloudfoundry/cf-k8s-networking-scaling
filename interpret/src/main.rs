@@ -2,7 +2,7 @@ extern crate askama;
 
 use regex::Regex;
 use std::collections::HashMap;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::{self, prelude::*, BufReader};
 use structopt::StructOpt;
 
@@ -15,6 +15,7 @@ struct IndexTemplate {
     total: i32,
     total_time: u64,
     cp_cps: f64,
+    vars: String,
 }
 
 #[derive(StructOpt)]
@@ -98,11 +99,14 @@ fn process_users(path: std::path::PathBuf) -> io::Result<()> {
 
     println!("{} {}", start, end);
 
+    let vars = fs::read_to_string("vars.sh")?;
+
     let index = IndexTemplate {
         cp_cps: ((total as f64 / (end - start) as f64) * 1000.0 * 1000.0 * 1000.0 * 100.0).round() / 100.0,
         total_time: (end - start) / (1000 * 1000 * 1000),
         success: succeeded,
         total: total,
+        vars: vars,
     };
 
     let mut file = File::create("index.html")?;

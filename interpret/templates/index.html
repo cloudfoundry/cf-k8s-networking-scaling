@@ -24,15 +24,22 @@ a:hover {
 
   <p>Achieved a control-plane goodput qps of {{ cp_cps }}.</p>
 
+  <p>Variables used for this test run:</p>
+  <pre>{{vars}}</pre>
+
   <hr>
 
+  <h3> Check if we hit our goal of 5sec at 95% for creating new routes </h3>
   <img src="controlplane.svg"></hr>
+  <h3> Check if the dataplane latency is around 20ms and in-line with published Istio numbers</h3>
   <img src="dataload.svg"><hr>
+  <h3> Check that autoscaling is working and that the resource usage isn't crazy</h3>
   <img src="sidecar.svg">
   <img src="gateway.svg">
   <img src="howmanypilots.svg"><hr>
+  <h3> Check that our client VM and k8s cluster are big enough</h3>
   <img src="nodemon.svg">
-  <img src="nodes4pods.svg"><hr>
+  <img src="nodes4pods.svg">
   <img src="resources.svg">
   <img src="ifstats.svg"><hr>
 
