@@ -460,11 +460,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         let f = filename.clone();
         let fs = folderpaths.clone();
         let tp = toppath.clone();
-        handles.push(thread::spawn(move || {
+        handles.push(thread::Builder::new().name(filename.to_string()).spawn(move || {
             println!("Processing {}...", f);
             add_runid_and_normalize_timestamp(&tp, &fs, f)
                 .expect(format!("Something went wrong processing {}", f).as_str());
-        }));
+        }).unwrap());
     }
 
     // For each file, spawn a thread
@@ -473,19 +473,19 @@ fn main() -> Result<(), Box<dyn Error>> {
         let f = filename.clone();
         let fs = folderpaths.clone();
         let tp = toppath.clone();
-        handles.push(thread::spawn(move || {
+        handles.push(thread::Builder::new().name(filename.to_string()).spawn(move || {
             println!("Processing {}...", f);
             add_runid(&tp, &fs, f)
                 .expect(format!("Something went wrong processing {}", f).as_str());
-        }));
+    }).unwrap());
     }
 
     // spawn a thread for userdata, too
     let tp = toppath.clone();
-    handles.push(thread::spawn(move || {
+        handles.push(thread::Builder::new().name("user_data.csv".to_string()).spawn(move || {
         println!("Processing user_data.csv...");
         combine_userdata(&tp, folderpaths).expect("Something went wrong processing user_data.csv");
-    }));
+    }).unwrap());
 
     // wait for processing to finish
     for handle in handles {
