@@ -57,8 +57,8 @@ last_values = quantile(controlplane$`nanoseconds to last error`, quantiles)
 controlplane = tibble(quantiles = mylabels, `time to first success` = first_values, `time to last error` = last_values)
 gathered.controlplane <- gather(controlplane, event, latency, -quantiles)
 colors <- c("time to last error"="black", "time to first success"="gray85")
-ggplot(gathered.controlplane, aes(x=quantiles, y=latency)) +
-  labs(title="Control Plane Latency by Percentile") +
+cplatency = ggplot(gathered.controlplane, aes(x=quantiles, y=latency)) +
+  labs(title="Control Plane Latency by Percentile, Zoomed to 0-30s") +
   ylab("Latency (s)") +
   xlab("Percentile") +
   geom_line(mapping = aes(group=event, color=event)) +
@@ -71,7 +71,8 @@ ggplot(gathered.controlplane, aes(x=quantiles, y=latency)) +
   scale_colour_manual(values = colors)  +
   our_theme() %+replace%
     theme(legend.position="bottom")
-ggsave(paste(filename, "controlplane.svg", sep=""), width=7, height = 3.5)
+zoomed = cplatency + coord_cartesian(ylim=c(0,fiveSecondsInNanoseconds * 6)) # zoom into the first 30s of data
+ggsave(paste(filename, "controlplane.svg", sep=""), arrangeGrob(cplatency, zoomed))
 
 # Timestamp vs Avg Latency (ms) for very large numbers of runs
 dataload = read_csv(paste(filename, "dataload.csv", sep=""))
@@ -89,11 +90,12 @@ overtime.max <- ggplot(gathered.dataload) +
   stat_summary_bin(aes(x=Name, y=milliseconds, colour="max"), fun.y = "max", bins=100, geom="line") +
   stat_summary_bin(aes(x=Name, y=milliseconds, colour="median"), fun.y = "median", bins=100, geom="line") +
   scale_colour_brewer(palette = "Set1") +
-  our_theme() %+replace%
-    theme(legend.position="bottom")
+  our_theme() %+replace% theme(legend.position="none")
 overtime.max <- experiment_time_x_axis(overtime.max)
-
-ggsave(paste(filename, "dataload_time.svg", sep=""))
+overtime.zoomed <- overtime.max + coord_cartesian(ylim=c(0,50)) + # zoom into the first 50ms of data
+  labs(title=NULL, subtitle="Both zoomed to 0-50ms") +
+    our_theme() %+replace% theme(legend.position="bottom")
+ggsave(paste(filename, "dataload_time.svg", sep=""), arrangeGrob(overtime.max, overtime.zoomed), width=7, height=10)
 
 quantiles = c(0.68, 0.90, 0.99, 0.999, 0.9999, 0.99999, 1)
 mylabels = c("p68", "p90", "p99", "p999", "p9999", "p99999", "max")
