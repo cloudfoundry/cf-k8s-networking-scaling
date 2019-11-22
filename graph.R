@@ -167,7 +167,7 @@ experiment_time_x_axis(ggplot(nodeusage, aes(group=nodename)) +
   ylab("Utilization %") + ylim(0,100) + lines() +
   facet_wrap(vars(hasIstio, type), ncol=1) +
   geom_line(mapping = aes(x=timestamp,y=percent), color="gray15", alpha=0.15) +
-  geom_line(busynodes, mapping=aes(x=timestamp,y=percent, color=nodename)) +
+  geom_line(busynodes, mapping=aes(x=timestamp,y=percent, color=nodename, alpha=0.75)) +
   our_theme() %+replace%
     theme(legend.position="bottom"))
 ggsave(paste(filename, "nodemon.svg", sep=""), width=7, height=12)
