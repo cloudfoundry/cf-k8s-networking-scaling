@@ -174,8 +174,8 @@ experiment_time_x_axis(ggplot(pilotdata, aes(x=stamp,y=count)) +
 )
 ggsave(paste(filename, "howmanypilots.png", sep=""), width=7, height=3.5)
 
-dataload = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(cpupercent=col_number(), memorypercent=col_number())) %>%
-            select(runID, timestamp, nodename, cpupercent, memorypercent) %>%
+dataload = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(cpupercent=col_number())) %>%
+            select(runID, timestamp, nodename, cpupercent) %>%
             gather(metric, percent, -timestamp, -runID, -nodename)
 experiment_time_x_axis(ggplot(dataload) +
   labs(title = "Node Utilization") +

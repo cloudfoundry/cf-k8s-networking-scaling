@@ -150,14 +150,14 @@ podcountsbynodetime = nodes4pods %>% select(-pod) %>% group_by(nodename, podtype
 podtypesbynode = nodes4pods %>% select(nodename, podtype) %>% distinct() %>% group_by(nodename) %>% summarize(podtypes = str_c(podtype, collapse=":"))
 
 # Read in timestamp-node-cpu-mem data
-nodeusage = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(cpupercent=col_number(), memorypercent=col_number())) %>%
+nodeusage = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(cpupercent=col_number())) %>%
   extract(nodename, "nodename", "gke-.+-([A-Za-z0-9]+)") %>%
-  select(timestamp, nodename, cpupercent, memorypercent) %>%
+  select(timestamp, nodename, cpupercent) %>%
   left_join(podtypesbynode, by="nodename", name="podtypes") %>%
   mutate(hasIstio = if_else(str_detect(podtypes, "istio"), "with istio", "without istio"))
 
 busynodenames = nodeusage %>% group_by(nodename) %>% summarize(maxcpu = max(cpupercent)) %>% top_n(3,maxcpu)
-busynodes = busynodenames %>% left_join(nodeusage) %>% select(timestamp, nodename, cpupercent, memorypercent, hasIstio)
+busynodes = busynodenames %>% left_join(nodeusage) %>% select(timestamp, nodename, cpupercent, hasIstio)
 
 nodeusage = nodeusage %>% gather(type, percent, -nodename, -timestamp, -hasIstio, -podtypes)
 busynodes = busynodes %>% gather(type, percent, -nodename, -timestamp, -hasIstio)

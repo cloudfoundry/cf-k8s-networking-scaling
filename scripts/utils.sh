@@ -42,10 +42,6 @@ monpods ()
     fi
 }
 
-howmanypilots () {
-  echo "$(udate),$(kubectl get pods -n istio-system | grep pilot | wc -l)"
-}
-
 cpustats ()
 {
   mpstat -P ON 1 1 | grep -v CPU | awk '/Average/ {$1=systime(); print $1 "000000000," $2 "," $3 "," $4 "," $5 "," $6 "," $7 "," $8 "," $9 "," $10 "," $11 "," $12}'
@@ -61,7 +57,3 @@ ifstats ()
   ifstat -q -t -n -i ens4 1 1 | awk 'NR > 2 {$1=systime(); print $1 "000000000," $2 "," $3}'
 }
 
-nodes4pods ()
-{
-  kubectl get pod -o=custom-columns=NODE:.spec.nodeName,NAME:.metadata.name --all-namespaces | awk 'NR > 1 {$3 = systime(); print $3 "000000000," $1 "," $2}'
-}

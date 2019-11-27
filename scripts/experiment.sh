@@ -53,10 +53,12 @@ done
 wlog "Load container up"
 sleep 10
 
+START=$(date +%s) # used for our prometheus queries later
+
 iwlog "GENERATE DP LOAD"
 
-echo "stamp,node,pod" > nodes4pods.csv
-slow_forever nodes4pods >> nodes4pods.csv &
+# echo "stamp,node,pod" > nodes4pods.csv
+# slow_forever nodes4pods >> nodes4pods.csv &
 
 echo "stamp,cpuid,usr,nice,sys,iowate,irq,soft,steal,guest,gnice,idle" > cpustats.csv
 forever cpustats >> cpustats.csv &
@@ -67,22 +69,19 @@ forever ifstats >> ifstats.csv &
 echo "stamp,total,used,free,shared,buff,available" > memstats.csv
 forever memstats  >> memstats.csv &
 
-echo "stamp,podname,event" > default_pods.log
-echo "stamp,podname,event" > istio_pods.log
-echo "stamp,podname,event" > system_pods.log
-forever monpods default >> default_pods.log 2>&1 &
-forever monpods istio-system >> istio_pods.log 2>&1 &
-forever monpods kube-system >> system_pods.log 2>&1 &
+# we never used this either
+# echo "stamp,podname,event" > default_pods.log
+# echo "stamp,podname,event" > istio_pods.log
+# echo "stamp,podname,event" > system_pods.log
+# forever monpods default >> default_pods.log 2>&1 &
+# forever monpods istio-system >> istio_pods.log 2>&1 &
+# forever monpods kube-system >> system_pods.log 2>&1 &
 
-echo "stamp,count" > howmanypilots.csv
-forever howmanypilots >> howmanypilots.csv &
 
 until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -eq 200 ]; do true; done
 sleep 10
 
-./../scripts/nodemon.sh > nodemon.csv &
-./../scripts/podmon.sh > podmon.csv &
-./../scripts/sidecarstats.sh istio-system ingressgateway > gatewaystats.csv &
+# ./../scripts/podmon.sh > podmon.csv & we never used this
 
 # create data plane load with apib
 ./../scripts/dataload.sh http://${GATEWAY_URL}/anything > dataload.csv 2>&1 &
@@ -104,8 +103,6 @@ kubectl wait --for=condition=available deployment $(kubectl get deployments | gr
 
 iwlog "START MONITORING SIDECARS"
 
-./../scripts/sidecarstats.sh default httpbin > sidecarstats.csv &
-
 sleep 60 # idle cluster, many pods
 
 iwlog "GENERATE CP LOAD"
@@ -120,6 +117,8 @@ kill $(jobs -p)
 
 iwlog "TEST COMPLETE"
 
+../scripts/prometheus_data.sh $START
+
 # dump the list of nodes with their labels, only gotta do this once
 kubectl get nodes --show-labels | awk '{print $1","$2","$6}' > nodeswithlabels.csv
 
@@ -132,6 +131,6 @@ kill -9 $(jobs -p)
 
 wlog "=== TEARDOWN ===="
 
-gcloud -q container clusters delete $CLUSTER_NAME --zone $AVAILABILITY_ZONE --async
+# gcloud -q container clusters delete $CLUSTER_NAME --zone $AVAILABILITY_ZONE --async
 
 exit
