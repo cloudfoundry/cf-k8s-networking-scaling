@@ -109,4 +109,8 @@ queryprom "pilot_proxy_convergence_time_bucket" | \
 queryprom 'sum(container_tasks_state{pod_name!=""}) by (instance,pod_name)' | \
    jq -r '["stamp","node","pod"], (.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber)]) + [.metric.instance, .metric.pod_name]) | @csv' > nodes4pods.csv
 
+# Envoy clusters
+queryprom $start 'envoy_cluster_manager_active_clusters' | \
+   jq -r '["stamp","node","pod"], (.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber)]) + [.metric.app]) | @csv' > envoyclusters.csv
+
 echo "Prometheus data collected"
