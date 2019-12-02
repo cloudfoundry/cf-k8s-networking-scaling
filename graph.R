@@ -71,7 +71,7 @@ ggplot(gathered.controlplane, aes(x=quantiles, y=latency)) +
   scale_colour_brewer(palette = "Set1") +
   our_theme() %+replace%
     theme(legend.position="bottom")
-ggsave(paste(filename, "controlplane.svg", sep=""), width=7, height = 3.5)
+ggsave(paste(filename, "controlplane.png", sep=""), width=7, height = 3.5)
 
 print("Timestamp vs Latency (ms)")
 dataload = read_csv(paste(filename, "dataload.csv", sep=""), col_types=cols(Name=col_number()))
@@ -102,7 +102,7 @@ bypercent <- ggplot(dataload, aes(x=mylabels, y=values)) +
   ylab("Latency (ms)") +  xlab("Percentile") +
   our_theme()
 
-ggsave(paste(filename, "dataload.svg", sep=""), arrangeGrob(overtime, bypercent))
+ggsave(paste(filename, "dataload.png", sep=""), arrangeGrob(overtime, bypercent))
 
 print("Sidecar Memory")
 sidecar = read_csv(paste(filename, "sidecarstats.csv", sep=""))
@@ -117,7 +117,7 @@ experiment_time_x_axis(ggplot(sidecar) +
   facet_wrap(vars(podname),strip.position = "bottom") +
   our_theme() %+replace%
     theme(strip.background = element_blank(), strip.placement = "outside"))
-ggsave(paste(filename, "sidecar.svg", sep=""), width=7, height=5)
+ggsave(paste(filename, "sidecar.png", sep=""), width=7, height=5)
 
 print("Gateway Memory")
 gateway = read_csv(paste(filename, "gatewaystats.csv", sep=""))
@@ -130,7 +130,7 @@ experiment_time_x_axis(ggplot(gateway) +
   scale_colour_brewer(palette = "Set1") +
   our_theme() %+replace%
     theme(legend.position="none"))
-ggsave(paste(filename, "gateway.svg", sep=""), width=7, height=3.5)
+ggsave(paste(filename, "gateway.png", sep=""), width=7, height=3.5)
 
 print("Pilot Count")
 dataload = read_csv(paste(filename, "howmanypilots.csv", sep=""))
@@ -139,7 +139,7 @@ experiment_time_x_axis(ggplot(dataload) +
   geom_line(mapping=aes(x=stamp,y=count)) +
   lineLabels() + lines() +
   our_theme())
-ggsave(paste(filename, "howmanypilots.svg", sep=""), width=7, height=3.5)
+ggsave(paste(filename, "howmanypilots.png", sep=""), width=7, height=3.5)
 
 print("Reading in pod-by-node data")
 # Read in timestamp-node-pod data
@@ -150,14 +150,14 @@ podcountsbynodetime = nodes4pods %>% select(-pod) %>% group_by(nodename, podtype
 podtypesbynode = nodes4pods %>% select(nodename, podtype) %>% distinct() %>% group_by(nodename) %>% summarize(podtypes = str_c(podtype, collapse=":"))
 
 # Read in timestamp-node-cpu-mem data
-nodeusage = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(cpupercent=col_number())) %>%
+nodeusage = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(percent=col_number())) %>%
   extract(nodename, "nodename", "gke-.+-([A-Za-z0-9]+)") %>%
-  select(timestamp, nodename, cpupercent) %>%
+  pivot_wider(names_from=type, values_from=percent) %>%
   left_join(podtypesbynode, by="nodename", name="podtypes") %>%
   mutate(hasIstio = if_else(str_detect(podtypes, "istio"), "with istio", "without istio"))
 
-busynodenames = nodeusage %>% group_by(nodename) %>% summarize(maxcpu = max(cpupercent)) %>% top_n(3,maxcpu)
-busynodes = busynodenames %>% left_join(nodeusage) %>% select(timestamp, nodename, cpupercent, hasIstio)
+busynodenames = nodeusage %>% group_by(nodename) %>% summarize(maxcpu = max(cpu)) %>% top_n(3,maxcpu)
+busynodes = busynodenames %>% left_join(nodeusage) %>% select(timestamp, nodename, cpu, memory, hasIstio)
 
 nodeusage = nodeusage %>% gather(type, percent, -nodename, -timestamp, -hasIstio, -podtypes)
 busynodes = busynodes %>% gather(type, percent, -nodename, -timestamp, -hasIstio)
@@ -170,7 +170,7 @@ experiment_time_x_axis(ggplot(nodeusage, aes(group=nodename)) +
   geom_line(busynodes, mapping=aes(x=timestamp,y=percent, color=nodename, alpha=0.75)) +
   our_theme() %+replace%
     theme(legend.position="bottom"))
-ggsave(paste(filename, "nodemon.svg", sep=""), width=7, height=12)
+ggsave(paste(filename, "nodemon.png", sep=""), width=7, height=12)
 
 podcountsbusynodes = podcountsbynodetime %>% right_join(busynodenames) %>%
   filter(podtype != "prometheus-to", podtype != "kube-proxy", podtype != "fluentd-gcp") %>%
@@ -185,7 +185,7 @@ experiment_time_x_axis(ggplot(podcountsbusynodes) +
   our_theme() %+replace%
     theme(legend.position="bottom"))
 numberofbusynodes = n_distinct(podcountsbusynodes$nodename)
-ggsave(paste(filename, "nodes4pods.svg", sep=""), width=7, height=2.5 * numberofbusynodes)
+ggsave(paste(filename, "nodes4pods.png", sep=""), width=7, height=2.5 * numberofbusynodes)
 
 print("Client Usage")
 memstats = read_csv(paste(filename, "memstats.csv", sep=""))
@@ -199,7 +199,7 @@ experiment_time_x_axis(ggplot(memstats) +
   lineLabels() +
    our_theme() %+replace%
      theme(legend.position="bottom"))
-ggsave(paste(filename, "resources.svg", sep=""), width=7, height=3.5)
+ggsave(paste(filename, "resources.png", sep=""), width=7, height=3.5)
 
 print("Client Network")
 ifstats = read_csv(paste(filename, "ifstats.csv", sep=""))
@@ -212,6 +212,6 @@ experiment_time_x_axis(ggplot(ifstats) +
   lineLabels() +
    our_theme() %+replace%
      theme(legend.position="bottom"))
-ggsave(paste(filename, "ifstats.svg", sep=""), width=7, height=3.5)
+ggsave(paste(filename, "ifstats.png", sep=""), width=7, height=3.5)
 
 print("All done.")

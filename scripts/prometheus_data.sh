@@ -76,8 +76,12 @@ queryprom ()
 echo "Querying prometheus"
 
 # CPU usage per node
-queryprom $start 'sum (rate (container_cpu_usage_seconds_total[1m])) by (instance) / sum (machine_cpu_cores) by (instance) * 100' | \
-  jq -r '["timestamp", "cpupercent", "nodename"], (.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) + [.metric.instance]) | @csv' > nodemon.csv
+queryprom $start '(100 - (sum by (instance) (irate(node_cpu_seconds_total{mode="idle"}[24h])) * 12.5)) * on(instance) group_left(nodename) node_uname_info' |
+   jq -r '["timestamp", "percent", "nodename", "type"], (.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) + [.metric.nodename] + ["cpu"]) | @csv' > nodemon.csv
+
+# Memory usage per node
+queryprom $start '100 - (node_memory_MemFree_bytes / node_memory_MemTotal_bytes * 100)* on(instance) group_left(nodename) node_uname_info' |
+   jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) + [.metric.nodename] + ["memory"]) | @csv' >> nodemon.csv
 
 # Number of pilots
 queryprom $start "sum(pilot_info)" | \

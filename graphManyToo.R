@@ -174,14 +174,12 @@ experiment_time_x_axis(ggplot(pilotdata, aes(x=stamp,y=count)) +
 )
 ggsave(paste(filename, "howmanypilots.png", sep=""), width=7, height=3.5)
 
-dataload = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(cpupercent=col_number())) %>%
-            select(runID, timestamp, nodename, cpupercent) %>%
-            gather(metric, percent, -timestamp, -runID, -nodename)
+dataload = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(percent=col_number()))
 experiment_time_x_axis(ggplot(dataload) +
   labs(title = "Node Utilization") +
   lines() + lineLabels() +
   geom_hline(yintercept = 100, color="grey45") +
-  facet_wrap(vars(metric), ncol=1) +
+  facet_wrap(vars(type), ncol=1) +
   geom_line(mapping=aes(x=timestamp, y=percent, group=interaction(runID, nodename)), color="gray15", alpha=0.15, show.legend=FALSE) +
   stat_summary_bin(aes(x=timestamp, y=percent, colour="max"),fun.y="max", bins=100, geom="line") +
   stat_summary_bin(aes(x=timestamp, y=percent, colour="median"),fun.y="median", bins=100, geom="line") +

@@ -11,6 +11,8 @@ source ../scripts/utils.sh
 pushd $ISTIO_FOLDER
   kubectl apply -f install/kubernetes/helm/helm-service-account.yaml
 
+  helm init --service-account tiller --wait
+
   helm template install/kubernetes/helm/istio-init --name istio-init --namespace istio-system | kubectl apply -f -
 
   # wait until istio CRDs are loaded
@@ -18,6 +20,10 @@ pushd $ISTIO_FOLDER
 
   helm template install/kubernetes/helm/istio \
     --name istio --namespace istio-system | kubectl apply -f -
+
+  sleep 10
+
+  helm install --name node-exporter stable/prometheus-node-exporter
 
   # wait until Istio is reporting live and healthy
   kubectl wait --for=condition=available --timeout=600s -n istio-system \

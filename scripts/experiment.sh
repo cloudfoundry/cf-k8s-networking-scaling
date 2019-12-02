@@ -7,7 +7,6 @@ source ../scripts/utils.sh
 
 CLUSTER_NAME=$1
 
-
 echo "stamp,event" > importanttimes.csv
 
 ./../scripts/build-cluster.sh $CLUSTER_NAME
