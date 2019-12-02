@@ -3,7 +3,7 @@
 source ../vars.sh
 source ../scripts/utils.sh
 
-echo "stamp,usernum,event"
+echo "stamp,usernum,event,status"
 
 for ((n=0;n<$NUM_USERS;n++))
 do
