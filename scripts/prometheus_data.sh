@@ -52,7 +52,7 @@ spec:
 ---
 EOF
 
-# sleep 5 # let the portforward start working
+sleep 5 # let the portforward start working
 
 INGRESS_IP=$(kubectl get svc -n istio-system istio-ingressgateway | awk 'NR>1 {print $4}')
 START=$1
