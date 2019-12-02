@@ -4,12 +4,12 @@ MACHINE_TYPE=n1-standard-8
 AVAILABILITY_ZONE=us-central1-a
 DATAPLANE_NUM_CONNECTIONS=10
 
-ISTIO_FOLDER=/home/pivotal/istio-1.3.5-soft-affinity-20-pilots-10-gateways
-ISTIO_TAINT=1
-NODES_FOR_ISTIO=20
+ISTIO_FOLDER=/home/pivotal/istio-1.4
+ISTIO_TAINT=0
+NODES_FOR_ISTIO=0
 
-NUM_APPS=100 # must be equal to or larger than NUM_USERS
-NUM_USERS=10
+NUM_APPS=1000 # must be equal to or larger than NUM_USERS
+NUM_USERS=100
 USER_DELAY=10
 
 NAMESPACES=0 # NUM_APPS will be overridden when this is true (with 1000)
