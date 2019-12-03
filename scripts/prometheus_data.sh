@@ -61,6 +61,8 @@ END=$(date +%s)
 STEP=$((($END-$START)/1000))
 STEP=$(( $STEP < 15 ? 15 : $STEP))
 
+until [ $(curl -s -o /dev/null -w "%{http_code}" http://$INGRESS_IP:15030/graph) -eq 200 ]; do sleep 1; done
+
 echo "Step size: $STEP"
 
 queryprom ()
