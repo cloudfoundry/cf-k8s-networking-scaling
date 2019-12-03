@@ -76,9 +76,13 @@ queryprom ()
     --data-urlencode "step=$STEP" \
     http://$INGRESS_IP:15030/api/v1/query_range)
 
-  if [ "$(echo $data | jq -r '.status')" == "error" ]; then
-    printf "Could not query!\nquery: $@\nresult: $data\n" >> prometheus_errors.txt
+  printf "=========\nquery: $@\nresult: $data\n" >> prometheus_errors.txt
+
+  if [ -z $data ]; then
+    printf "Blank, trying again" >> prometheus_errors.txt
+    $data=$(queryprom $@)
   fi
+
 
   echo $data
 }
