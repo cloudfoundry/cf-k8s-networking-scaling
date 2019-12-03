@@ -54,6 +54,8 @@ EOF
 
 sleep 5 # let the portforward start working
 
+rm prometheus_errors.txt
+
 INGRESS_IP=$(kubectl get svc -n istio-system istio-ingressgateway | awk 'NR>1 {print $4}')
 START=$1
 END=$(date +%s)
@@ -75,7 +77,7 @@ queryprom ()
     http://$INGRESS_IP:15030/api/v1/query_range)
 
   if [ "$(echo $data | jq -r '.status')" == "error" ]; then
-    >&2 echo "Could not query! $data"
+    printf "Could not query!\nquery: $@\nresult: $data\n" >> prometheus_errors.txt
   fi
 
   echo $data
@@ -112,7 +114,7 @@ queryprom 'sum(container_tasks_state{pod_name!=""}) by (instance,pod_name)' | \
    jq -r '["stamp","node","pod"], (.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber)]) + [.metric.instance, .metric.pod_name]) | @csv' > nodes4pods.csv
 
 # Envoy clusters
-queryprom $start 'envoy_cluster_manager_active_clusters' | \
+queryprom 'envoy_cluster_manager_active_clusters' | \
    jq -r '["stamp","node","pod"], (.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber)]) + [.metric.app]) | @csv' > envoyclusters.csv
 
 echo "Prometheus data collected"
