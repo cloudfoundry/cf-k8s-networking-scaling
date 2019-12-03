@@ -4,7 +4,7 @@ MACHINE_TYPE=n1-standard-8
 AVAILABILITY_ZONE=us-central1-a
 DATAPLANE_NUM_CONNECTIONS=10
 
-ISTIO_FOLDER=/home/pivotal/istio-1.4
+ISTIO_FOLDER=/home/pivotal/istio-1.4.0-20-pilots
 ISTIO_TAINT=0
 NODES_FOR_ISTIO=0
 
