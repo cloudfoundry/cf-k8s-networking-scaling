@@ -36,6 +36,10 @@ kubetpl render ../yaml/httpbin-gateway-wildcard-host.yaml -s NAME=httpbin-loadte
 kubetpl render ../yaml/httpbin-virtualservice-wildcard-host.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
 kubectl wait --for=condition=available deployment $(kubectl get deployments | grep httpbin | awk '{print $1}')
 
+if [ "$MIXERLESS_TELEMETRY" -eq 1 ]; then
+  $ISTIO_FOLDER/bin/istioctl manifest apply --set values.telemetry.enabled=true,values.telemetry.v2.enabled=true
+fi
+
 export INGRESS_HOST=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].port}')
 export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].port}')
