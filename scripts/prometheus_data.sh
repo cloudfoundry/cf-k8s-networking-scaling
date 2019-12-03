@@ -52,7 +52,7 @@ spec:
 ---
 EOF
 
-sleep 5 # let the portforward start working
+# sleep 5 # let the portforward start working
 
 rm prometheus_errors.txt
 
@@ -79,10 +79,9 @@ queryprom ()
   printf "=========\nquery: $@\nresult: $data\n" >> prometheus_errors.txt
 
   if [ -z $data ]; then
-    printf "Blank, trying again" >> prometheus_errors.txt
-    $data=$(queryprom $@)
+    printf "Blank, trying again\n" >> prometheus_errors.txt
+    $data=$(queryprom "$@")
   fi
-
 
   echo $data
 }
