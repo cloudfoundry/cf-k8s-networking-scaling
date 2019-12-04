@@ -129,8 +129,8 @@ sleep 2 # let them quit
 # make extra sure they quit
 kill -9 $(jobs -p)
 
-# collate and graph in the background
-./../interpret/target/debug/interpret user.log && Rscript ../graph.R &
+# collate and graph
+./../interpret/target/debug/interpret user.log && Rscript ../graph.R
 
 wlog "=== TEARDOWN ===="
 
