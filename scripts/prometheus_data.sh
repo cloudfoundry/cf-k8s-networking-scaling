@@ -80,7 +80,7 @@ queryprom ()
 
   if [ -z $data ]; then
     printf "Blank, trying again\n" >> prometheus_errors.txt
-    $data=$(queryprom "$@")
+    data=$(queryprom "$@")
   fi
 
   echo $data
