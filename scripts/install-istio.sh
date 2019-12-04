@@ -8,6 +8,8 @@ source ../scripts/utils.sh
 
 # pushd istio-$ISTIO_VERSION
 
+PATH_TO_VALUES=$(pwd)/../values.yaml
+
 pushd $ISTIO_FOLDER
   kubectl apply -f install/kubernetes/helm/helm-service-account.yaml
 
@@ -19,7 +21,7 @@ pushd $ISTIO_FOLDER
   until [ $(kubectl get crds | grep -c 'istio.io') -ge "23" ]; do true; done
 
   helm template install/kubernetes/helm/istio \
-    --name istio --namespace istio-system | kubectl apply -f -
+    --name istio --namespace istio-system -f $PATH_TO_VALUES | kubectl apply -f -
 
   sleep 10
 
