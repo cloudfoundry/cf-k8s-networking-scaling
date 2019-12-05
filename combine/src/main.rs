@@ -14,6 +14,7 @@ struct IndexTemplate {
     tests: Vec<String>,
     files: Vec<String>,
     vars: String,
+    values: String,
 }
 
 // This script will take several folders of results (up to about 100) and combine them into a
@@ -431,6 +432,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut vars_path = folderpaths[0].clone();
     vars_path.push("vars.sh");
     let vars = fs::read_to_string(vars_path)?;
+
+    let mut values_path = folderpaths[0].clone();
+    values_path.push("values.yaml");
+    let values = fs::read_to_string(values_path)?;
     // Create all top-level CSV files and setup headers
     setup_headers(
         &toppath,
@@ -515,6 +520,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         tests: testnames,
         files: filenames,
         vars: vars,
+        values: values,
     };
     let mut file = File::create("index.html")?;
     file.write_all(index.render().unwrap().as_bytes())?;
