@@ -56,3 +56,4 @@ pushd $ISTIO_FOLDER
   # kubectl apply -f samples/bookinfo/networking/destination-rule-all.yaml
 
 popd
+

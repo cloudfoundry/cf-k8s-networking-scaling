@@ -38,3 +38,10 @@ pilot:
     topologyKey: "kubernetes.io/hostname"
   autoscaleMin: 20
   autoscaleMax: 20
+
+mixer:
+  policy:
+    enabled: false
+  telemetry:
+    enabled: false
+
