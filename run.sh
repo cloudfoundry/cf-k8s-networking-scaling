@@ -24,6 +24,7 @@ for ((i=0;i<$COUNT;i++)); do
   mkdir $filename
 
   cp vars.sh $filename/
+  cp values.yaml $filename/
 
   pushd $filename
 
