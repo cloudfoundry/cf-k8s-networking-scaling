@@ -109,12 +109,8 @@ sidecar = read_csv(paste(filename, "sidecarstats.csv", sep=""))
 experiment_time_x_axis(ggplot(sidecar) +
   labs(title = "Envoy Sidecar Memory Usage Over Time") +
   ylab("Memory (mb)") + lines() +
-  geom_line(rename(sidecar, pod=podname),
-            mapping = aes(x=timestamp, y=memory, group=pod),
-            colour="grey85") +
-  geom_line(mapping = aes(x=timestamp, y=memory, group=podname)) +
+  geom_line(mapping = aes(x=timestamp, y=memory, group=podname), alpha=0.25, color="black") +
   scale_y_continuous(labels=mb_from_bytes) +
-  facet_wrap(vars(podname),strip.position = "bottom") +
   our_theme() %+replace%
     theme(strip.background = element_blank(), strip.placement = "outside"))
 ggsave(paste(filename, "sidecar.png", sep=""), width=7, height=5)
@@ -124,10 +120,9 @@ gateway = read_csv(paste(filename, "gatewaystats.csv", sep=""))
 experiment_time_x_axis(ggplot(gateway) +
   labs(title = "Gateway Memory Usage over Time") +
   ylab("Memory (mb)") + lines() +
-  geom_line(rename(gateway, pod=podname), mapping = aes(x=timestamp, y = memory, group=pod, color=pod), alpha=0.5) +
+  geom_line(rename(gateway, pod=podname), mapping = aes(x=timestamp, y = memory, group=pod, color=pod), alpha=0.25, color="black") +
   scale_y_continuous(labels=mb_from_bytes) +
   lineLabels() +
-  scale_colour_brewer(palette = "Set1") +
   our_theme() %+replace%
     theme(legend.position="none"))
 ggsave(paste(filename, "gateway.png", sep=""), width=7, height=3.5)
