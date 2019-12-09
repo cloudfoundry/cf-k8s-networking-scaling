@@ -118,6 +118,7 @@ queryprom 'sum(container_tasks_state{pod_name!=""}) by (instance,pod_name)' | \
 
 # Envoy clusters
 queryprom 'envoy_cluster_manager_active_clusters' | \
-   jq -r '["stamp","node","pod"], (.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber)]) + [.metric.app]) | @csv' > envoyclusters.csv
+  jq -r '["stamp","count","instance","pod"], (.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1])]) + [.metric.instance, .metric.app]) | @csv' > envoyclusters.csv
 
 echo "Prometheus data collected"
+
