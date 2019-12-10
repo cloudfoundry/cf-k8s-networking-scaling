@@ -93,7 +93,8 @@ sleep 120 # idle cluster, very few pods
 
 iwlog "GENERATE TEST PODS"
 if [ "$NAMESPACES" = "1" ]; then
-  kubectl apply -f ../yaml/namespace/namespaced1k.yaml
+  kubectl apply -f ../yaml/namespace/ns-and-sidecar.yaml
+  kubectl apply -f ../yaml/namespace/10groupsof200.yaml
 else
   for ((n=0;n<$NUM_APPS;n++))
   do
