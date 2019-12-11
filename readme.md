@@ -1,5 +1,7 @@
 # Istio Scaling Experiment
 
+_Possibly the most expensive static site generator ever._
+
 This repo holds the code for our reproducable istio control plane scaling stress
 test.
 
