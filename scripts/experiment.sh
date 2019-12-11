@@ -11,41 +11,33 @@ echo "stamp,event" > importanttimes.csv
 
 ./../scripts/build-cluster.sh $CLUSTER_NAME
 
-#NODES_FOR_ISTIO=10
-nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | head -n$NODES_FOR_ISTIO)
-if [ "$ISTIO_TAINT" -eq 1 ]; then
-  kubectl taint nodes $nodes scalers.istio=dedicated:NoSchedule
+# taint nodes for pilot and ingress-gateways
+if [ "$NODES_FOR_ISTIO" -gt 0]; then
+  wlog "==== Istio gets nodes"
+  nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | head -n$NODES_FOR_ISTIO)
+  if [ "$ISTIO_TAINT" -eq 1 ]; then
+    wlog "==== Tainting istio nodes"
+    kubectl taint nodes $nodes scalers.istio=dedicated:NoSchedule
+  fi
+  kubectl label nodes $nodes scalers.istio=dedicated
 fi
-kubectl label nodes $nodes scalers.istio=dedicated
 
-if [ "$ISOLATE_DATAPLANE" -eq 1 ]; then
-  nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | tail -n1)
-  kubectl taint nodes $nodes scalers.dataplane=httpbin:NoSchedule
-  kubectl label nodes $nodes scalers.dataplane=httpbin
-fi
+# taint a node for the dataplane pod
+nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | tail -n1)
+kubectl taint nodes $nodes scalers.dataplane=httpbin:NoSchedule
+kubectl label nodes $nodes scalers.dataplane=httpbin
 
 ./../scripts/install-istio.sh
 
-if [ "$ISOLATE_DATAPLANE" -eq 1 ]; then
-  kubetpl render ../yaml/httpbin-nodeselector.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
-else
-  kubetpl render ../yaml/httpbin.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
-fi
-
-kubetpl render ../yaml/httpbin-gateway-wildcard-host.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
-kubetpl render ../yaml/httpbin-virtualservice-wildcard-host.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
+# schedule the dataplane pod
+kubetpl render ../yaml/service.yaml ../yaml/httpbin-loadtest.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
 kubectl wait --for=condition=available deployment $(kubectl get deployments | grep httpbin | awk '{print $1}')
 
-# if [ "$MIXERLESS_TELEMETRY" -eq 1 ]; then
-#   $ISTIO_FOLDER/bin/istioctl manifest apply --set values.telemetry.enabled=true,values.telemetry.v2.enabled=true
-# fi
-
+wlog "Curling to see if load test container is up"
 export INGRESS_HOST=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].port}')
 export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].port}')
 export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
-
-wlog "Curling to see if load test container is up"
 until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -eq 200 ]; do
   export INGRESS_HOST=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
   export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].port}')
@@ -59,62 +51,35 @@ sleep 10
 START=$(date +%s) # used for our prometheus queries later
 
 iwlog "GENERATE DP LOAD"
-
-# echo "stamp,node,pod" > nodes4pods.csv
-# slow_forever nodes4pods >> nodes4pods.csv &
-
 echo "stamp,cpuid,usr,nice,sys,iowate,irq,soft,steal,guest,gnice,idle" > cpustats.csv
 forever cpustats >> cpustats.csv &
-
 echo "stamp,down,up" > ifstats.csv
 forever ifstats >> ifstats.csv &
-
 echo "stamp,total,used,free,shared,buff,available" > memstats.csv
 forever memstats  >> memstats.csv &
-
-# we never used this either
-# echo "stamp,podname,event" > default_pods.log
-# echo "stamp,podname,event" > istio_pods.log
-# echo "stamp,podname,event" > system_pods.log
-# forever monpods default >> default_pods.log 2>&1 &
-# forever monpods istio-system >> istio_pods.log 2>&1 &
-# forever monpods kube-system >> system_pods.log 2>&1 &
-
-
 until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -eq 200 ]; do true; done
-sleep 10
-
-# ./../scripts/podmon.sh > podmon.csv & we never used this
+sleep 10 # wait because otherwise the dataload sometimes fails to work at first
 
 # create data plane load with apib
 ./../scripts/dataload.sh http://${GATEWAY_URL}/anything > dataload.csv 2>&1 &
 
-sleep 120 # idle cluster, very few pods
-
 iwlog "GENERATE TEST PODS"
-if [ "$NAMESPACES" = "1" ]; then
-  kubectl apply -f ../yaml/namespace/ns-and-sidecar.yaml
-  kubectl apply -f ../yaml/namespace/10groupsof200.yaml
-else
-  for ((n=0;n<$NUM_APPS;n++))
-  do
-    kubetpl render ../yaml/httpbin.yaml -s NAME=httpbin-$n -s NAMESPACE=default | kubectl apply -f -
-  done
-fi
+./../scripts/generate-yaml.sh > testpods.yaml
+kubectl apply -f testpods.yaml
 
 # wait for all httpbins to be ready
 kubectl wait --for=condition=available deployment $(kubectl get deployments | grep httpbin | awk '{print $1}')
 
-iwlog "START MONITORING SIDECARS"
-
-sleep 60 # idle cluster, many pods
+sleep 30 # wait for cluster to not be in a weird state after pushing so many pods
+         # and get data for cluster without CP load or configuration as control
 
 iwlog "GENERATE CP LOAD"
 ./../scripts/userfactory.sh > user.log # 2>&1 # run in foreground for now so we wait til they're done
 
 iwlog "CP LOAD COMPLETE"
 
-sleep 60 # idle cluster with lots of services floatin' around
+sleep 30 # wait for cluster to level out after CP load, gather data for cluster without
+         # CP load but with lots of configuration
 
 # stop monitors
 kill $(jobs -p)

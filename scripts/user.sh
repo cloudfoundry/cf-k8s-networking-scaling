@@ -4,16 +4,11 @@ source ../vars.sh
 source ../scripts/utils.sh
 
 echo "$(udate),$1,STARTED,"
-TARGET_URL=httpbin-$1.example.com
+TARGET_URL=httpbin-$1-g0.example.com
 
-if [ "$NAMESPACES" = "1" ]; then
-  TARGET_URL=httpbin-0-$1.example.com
-  kubetpl render ../yaml/namespace/httpbin-gateway.yaml -s NAME=httpbin-0-$1 -s NAMESPACE=ns-0 | kubectl apply -f -
-  kubetpl render ../yaml/namespace/httpbin-virtualservice.yaml -s NAME=httpbin-0-$1 -s NAMESPACE=ns-0 | kubectl apply -f -
-else
-  kubetpl render ../yaml/httpbin-gateway.yaml -s NAME=httpbin-$1 -s NAMESPACE=default | kubectl apply -f -
-  kubetpl render ../yaml/httpbin-virtualservice.yaml -s NAME=httpbin-$1 -s NAMESPACE=default | kubectl apply -f -
-fi
+if [ $NAMESPACES -eq 1 ]; then namespace=ns-0; else namespace=default; fi
+
+kubetpl render ../yaml/gateway.yaml ../yaml/virtualservice.yaml -s NAME=httpbin-$1-g0 -s NAMESPACE=$namespace | kubectl apply -f -
 
 until [ $(curl -s -o /dev/null -w "%{http_code}" -HHost:$TARGET_URL http://$INGRESS_HOST:$INGRESS_PORT/status/200) -eq 200 ]; do true; done
 
