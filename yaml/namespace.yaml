@@ -7,3 +7,4 @@ metadata:
   name: $NAMESPACE
   labels:
     name: $NAMESPACE
+    istio-injection: enabled
