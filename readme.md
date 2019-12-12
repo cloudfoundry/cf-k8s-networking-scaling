@@ -36,10 +36,11 @@ pivotal org hit us up and we'll give you a VM that's ready to go.
 
 ## Running
 
-0. Download a version of istio and make any modifications you'd like to the helm
-   charts
-0. Set up vars.sh with your desired experiment design, make sure to point it at
+0. Download a version of istio and put it somewhere you'll have access to while
+   running the experiment. You should not need to modify it.
+0. Set up `vars.sh` with your desired experiment design, make sure to point it at
    your istio folder
+0. Set up `values.yaml` with your preferred overrides.
 0. Execute `./run.sh $name $num`
    * $name is the name of your experiment
    * $num is the number of times to run the test
