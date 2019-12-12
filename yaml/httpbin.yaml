@@ -26,6 +26,7 @@ spec:
       labels:
         app: $NAME
         version: v1
+        sidecargroup: group-$GROUP
     spec:
       containers:
       - image: docker.io/kennethreitz/httpbin
