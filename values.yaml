@@ -7,37 +7,29 @@ gateways:
       operator: "Equal"
       value: "dedicated"
       effect: "NoSchedule"
-    nodeAffinity:
-    - scalers.istio: dedicated
+    nodeSelector:
+      scalers.istio: dedicated
     podAntiAffinityTermLabelSelector:
-    - key: istio
-      operator: In
-      values: pilot
-      topologyKey: "kubernetes.io/hostname"
     - key: istio
       operator: In
       values: ingressgateway
       topologyKey: "kubernetes.io/hostname"
 
 pilot:
+  autoscaleMin: 20
+  autoscaleMax: 20
   tolerations:
   - key: "scalers.istio"
     operator: "Equal"
     value: "dedicated"
     effect: "NoSchedule"
-  nodeAffinity:
-  - scalers.istio: dedicated
+  nodeSelector:
+    scalers.istio: dedicated
   podAntiAffinityTermLabelSelector:
   - key: istio
     operator: In
     values: pilot
     topologyKey: "kubernetes.io/hostname"
-  - key: istio
-    operator: In
-    values: ingressgateway
-    topologyKey: "kubernetes.io/hostname"
-  autoscaleMin: 20
-  autoscaleMax: 20
 
 mixer:
   policy:
