@@ -12,7 +12,7 @@ echo "stamp,event" > importanttimes.csv
 ./../scripts/build-cluster.sh $CLUSTER_NAME
 
 # taint nodes for pilot and ingress-gateways
-if [ "$NODES_FOR_ISTIO" -gt 0]; then
+if [ $NODES_FOR_ISTIO -gt 0 ]; then
   wlog "==== Istio gets nodes"
   nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | head -n$NODES_FOR_ISTIO)
   if [ "$ISTIO_TAINT" -eq 1 ]; then
