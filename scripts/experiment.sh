@@ -21,9 +21,12 @@ if [ $NODES_FOR_ISTIO -gt 0 ]; then
 fi
 
 # taint a node for the dataplane pod
-nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | tail -n1)
-kubectl taint nodes $nodes scalers.dataplane=httpbin:NoSchedule
-kubectl label nodes $nodes scalers.dataplane=httpbin
+datanode=$(kubectl get nodes | awk 'NR > 1 {print $1}' | tail -n2 | head -n1)
+kubectl taint nodes $datanode scalers.dataplane=httpbin:NoSchedule
+kubectl label nodes $datanode scalers.dataplane=httpbin
+prometheusnode=$(kubectl get nodes | awk 'NR > 1 {print $1}' | tail -n1)
+kubectl taint nodes $prometheusnode scalers.istio=prometheus:NoSchedule
+kubectl label nodes $prometheusnode scalers.istio=prometheus
 
 ./../scripts/install-istio.sh
 

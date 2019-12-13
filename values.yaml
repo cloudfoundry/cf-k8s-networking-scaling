@@ -30,6 +30,14 @@ pilot:
     operator: In
     values: pilot
     topologyKey: "kubernetes.io/hostname"
+prometheus:
+  nodeSelector:
+    scalers.istio: prometheus
+  tolerations:
+  - key: "scalers.istio"
+    operator: "Equal"
+    value: "prometheus"
+    effect: "NoSchedule"
 
 mixer:
   policy:
