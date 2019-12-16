@@ -101,6 +101,6 @@ kill -9 $(jobs -p)
 
 wlog "=== TEARDOWN ===="
 
-gcloud -q container clusters delete $CLUSTER_NAME --zone $AVAILABILITY_ZONE --async
+gcloud -q container clusters delete $CLUSTER_NAME --zone $AVAILABILITY_ZONE
 
 exit
