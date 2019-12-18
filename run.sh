@@ -31,6 +31,8 @@ for ((i=0;i<$COUNT;i++)); do
     time ../scripts/experiment.sh $1-$i 2>&1 | tee experiment.log
 
   popd
+
+  sleep 600 # sleep for 10min to give the other cluster time to get out of the way
 done
 
 mkdir $1
