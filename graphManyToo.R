@@ -65,7 +65,7 @@ controlplane = tibble(quantiles = mylabels, `time to first success` = first_valu
 gathered.controlplane <- gather(controlplane, event, latency, -quantiles)
 colors <- c("time to last error"="black", "time to first success"="gray85")
 cplatency = ggplot(gathered.controlplane, aes(x=quantiles, y=latency)) +
-  labs(title="Control Plane Latency by Percentile, Zoomed to 0-30s") +
+  labs(title="Control Plane Latency by Percentile") +
   ylab("Latency (s)") +
   xlab("Percentile") +
   geom_line(mapping = aes(group=event, color=event)) +
@@ -77,9 +77,32 @@ cplatency = ggplot(gathered.controlplane, aes(x=quantiles, y=latency)) +
   scale_x_discrete(limits=mylabels) +
   scale_colour_manual(values = colors)  +
   our_theme() %+replace%
+    theme(legend.position="none")
+zoomed = cplatency + coord_cartesian(ylim=c(0,fiveSecondsInNanoseconds * 6)) + # zoom into the first 30s of data
+  labs(title=NULL, subtitle="zoomed to 0-30s") +
+  our_theme() %+replace%
     theme(legend.position="bottom")
-zoomed = cplatency + coord_cartesian(ylim=c(0,fiveSecondsInNanoseconds * 6)) # zoom into the first 30s of data
-ggsave(paste(filename, "controlplane.png", sep=""), arrangeGrob(cplatency, zoomed))
+
+# Control Plane Latency by User ID
+controlplane = read_csv(paste(filename, "user_data.csv", sep="")) %>%
+  select(runID, userid=`user id`, `time to first success`=`nanoseconds to first success`, `time to last error`=`nanoseconds to last error`) %>%
+  gather(event, latency, -userid, -runID)
+cplatency.time <- ggplot(controlplane, aes(x=userid, y=latency)) +
+  labs(title="Control Plane Latency by User ID") +
+  ylab("Latency (s)") + xlab("User ID") +
+  scale_y_continuous(labels=secondsFromNanoseconds) +
+  # add line for goal
+  geom_hline(yintercept = fiveSecondsInNanoseconds, color="#e41a1c", linetype=2) +
+  geom_text(mapping = aes(y=fiveSecondsInNanoseconds, x=0, label="GOAL 5sec at p95"), size=2, vjust=1.5, hjust=-0.5, color="grey25") +
+  facet_wrap(vars(event), ncol=1) +
+  geom_line(color="black", alpha=0.25) +
+  stat_summary_bin(aes(colour="max"), fun.y = "max", bins=100, geom="line") +
+  stat_summary_bin(aes(colour="median"), fun.y = "median", bins=100, geom="line") +
+  scale_colour_brewer(palette = "Set1") +
+  our_theme() %+replace% theme(legend.position="bottom")
+
+print("Saving cplantency all")
+ggsave(paste(filename, "controlplane.png", sep=""), arrangeGrob(arrangeGrob(cplatency, zoomed), cplatency.time), height=12, width=7)
 
 # Timestamp vs Avg Latency (ms) for very large numbers of runs
 dataload = read_csv(paste(filename, "dataload.csv", sep=""))
@@ -111,7 +134,7 @@ mylabels = c("p68", "p90", "p99", "p999", "p9999", "p99999", "max")
 dataload = read_csv(paste(filename, "rawlatencies.txt", sep=""))
 values = quantile(dataload$latency, quantiles)
 dataload = tibble(mylabels, values)
-ggplot(dataload, aes(x=mylabels, y=values)) +
+dataplane.max <- ggplot(dataload, aes(x=mylabels, y=values)) +
   labs(title = "Dataplane Latency (ms) by Percentile") +
   # add line for goal
   geom_hline(yintercept = 20, color="gray75", linetype=2) +
@@ -120,9 +143,12 @@ ggplot(dataload, aes(x=mylabels, y=values)) +
   geom_point(mapping = aes(size=1, stroke=0)) + scale_size_identity() +
   scale_x_discrete(limits = mylabels) +
   ylab("Latency (ms)") +  xlab("Percentile") +
-  our_theme()
-
-ggsave(paste(filename, "dataload_percentile.png", sep=""), width=7, height=3.5)
+  our_theme() %+replace% theme(legend.position="none")
+dataplane.zoomed <- dataplane.max +
+  labs(title=NULL, subtitle="zoomed to 0-50ms") +
+    our_theme() %+replace% theme(legend.position="bottom")
+dataplane.zoomed <- dataplane.zoomed + coord_cartesian(ylim=c(0,50))
+ggsave(paste(filename, "dataload_percentile.png", sep=""), arrangeGrob(dataplane.max, dataplane.zoomed), width=7, height=7)
 
 # Sidecar memory usage for large numbers of runs
 sidecar = read_csv(paste(filename, "sidecarstats.csv", sep=""))
