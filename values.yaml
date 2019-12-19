@@ -16,8 +16,8 @@ gateways:
       topologyKey: "kubernetes.io/hostname"
 
 pilot:
-  autoscaleMin: 20
-  autoscaleMax: 20
+  autoscaleMin: 40
+  autoscaleMax: 40
   tolerations:
   - key: "scalers.istio"
     operator: "Equal"
@@ -30,6 +30,7 @@ pilot:
     operator: In
     values: pilot
     topologyKey: "kubernetes.io/hostname"
+
 prometheus:
   nodeSelector:
     scalers.istio: prometheus

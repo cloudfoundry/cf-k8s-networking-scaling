@@ -1,19 +1,19 @@
 CLUSTER_VERSION=1.14.8-gke.12
-NUM_NODES=60
+NUM_NODES=170
 MACHINE_TYPE=n1-standard-8
 AVAILABILITY_ZONE=$(gcloud compute instances list | grep "$(hostname) " | awk '{print $2}')
 DATAPLANE_NUM_CONNECTIONS=10
 
 ISTIO_FOLDER=/home/pivotal/istio-1.4.2
 ISTIO_TAINT=1
-NODES_FOR_ISTIO=20
+NODES_FOR_ISTIO=40
 
 MIXERLESS_TELEMETRY=0
 
-NUM_APPS=1000 # NUM_APPS >= NUM_USERS * NUM_GROUPS && NUM_APPS % NUM_GROUPS == 0
-NUM_USERS=100
+NUM_APPS=4000 # NUM_APPS >= NUM_USERS * NUM_GROUPS && NUM_APPS % NUM_GROUPS == 0
+NUM_USERS=800
 USER_DELAY=10 # in seconds
 
-NAMESPACES=0 # if 0, groups within the default namespace will be used
-NUM_GROUPS=10 # set to 1 for everything in one group or namespace
+NAMESPACES=1 # if 0, groups within the default namespace will be used
+NUM_GROUPS=5 # set to 1 for everything in one group or namespace
 
