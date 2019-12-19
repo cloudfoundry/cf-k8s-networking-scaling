@@ -104,9 +104,14 @@ queryprom "sum(pilot_info)" | \
 queryprom 'envoy_server_memory_allocated{app="istio-ingressgateway"}' | \
   jq -r '["timestamp","memory","podname"], (.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) + [.metric.pod_name]) | @csv' > gatewaystats.csv
 
-# Sidecar memory usage
-queryprom 'envoy_server_memory_allocated{app=~"httpbin.*"}' | \
-  jq -r '["timestamp","memory","podname"], (.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) + [.metric.pod_name]) | @csv' > sidecarstats.csv
+# Sidecar memory usage (sample 20 sidecars)
+echo "timestamp,memory,podname" > sidecarstats.csv
+for ((i=1;i<=20;i++));
+do
+  app=$(kubectl get deployments --all-namespaces | sort -R | head -n1 | awk '{print $2}')
+  queryprom "envoy_server_memory_allocated{app=\"$app\"}" | \
+    jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) + [.metric.pod_name]) | @csv' >> sidecarstats.csv
+done
 
 # Proxy convergence
 queryprom "pilot_proxy_convergence_time_bucket" | \
