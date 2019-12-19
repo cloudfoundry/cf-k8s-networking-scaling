@@ -116,8 +116,18 @@ do
 done
 
 # Proxy convergence
-queryprom "pilot_proxy_convergence_time_bucket" | \
-  jq -r '["timestamp","value","bucket","instance"], (.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) + [.metric.le, .metric.instance]) | @csv' > proxy_convergence.csv
+queryprom "histogram_quantile(0.68, sum(rate(pilot_proxy_convergence_time_bucket[1m])) by (le))" | \
+   jq -r '["stamp", "count"], (.data.result[] | .values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) | @csv' > 68convergence.csv
+
+queryprom "histogram_quantile(0.90, sum(rate(pilot_proxy_convergence_time_bucket[1m])) by (le))" | \
+   jq -r '["stamp", "count"], (.data.result[] | .values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) | @csv' > 90convergence.csv
+
+queryprom "histogram_quantile(0.99, sum(rate(pilot_proxy_convergence_time_bucket[1m])) by (le))" | \
+   jq -r '["stamp", "count"], (.data.result[] | .values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) | @csv' > 99convergence.csv
+
+queryprom "histogram_quantile(1, sum(rate(pilot_proxy_convergence_time_bucket[1m])) by (le))" | \
+   jq -r '["stamp", "count"], (.data.result[] | .values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) | @csv' > 100convergence.csv
+
 
 # Mapping of nodes to pods
 queryprom 'sum(container_tasks_state{pod_name!=""}) by (instance,pod_name)' | \
