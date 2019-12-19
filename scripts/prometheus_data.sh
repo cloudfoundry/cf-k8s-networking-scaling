@@ -65,6 +65,8 @@ STEP=$(( $STEP < 15 ? 15 : $STEP))
 
 until [ $(curl -s -o /dev/null -w "%{http_code}" http://$INGRESS_IP:15030/graph) -eq 200 ]; do sleep 1; done
 
+echo $INGRESS_IP
+
 echo "Step size: $STEP"
 
 queryprom ()
@@ -115,7 +117,7 @@ done
 
 # Proxy convergence
 queryprom "pilot_proxy_convergence_time_bucket" | \
-  jq -r '["timestamp","value","bucket"], (.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) + [.metric.le]) | @csv' > proxy_convergence.csv
+  jq -r '["timestamp","value","bucket","instance"], (.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) + [.metric.le, .metric.instance]) | @csv' > proxy_convergence.csv
 
 # Mapping of nodes to pods
 queryprom 'sum(container_tasks_state{pod_name!=""}) by (instance,pod_name)' | \
