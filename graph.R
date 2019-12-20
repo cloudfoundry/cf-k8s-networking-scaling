@@ -18,7 +18,7 @@ times=read_csv(paste(filename, "importanttimes.csv", sep=""))
 zeroPoint = min(times$stamp)
 maxSec = max(times$stamp)
 
-breaksFromZero <- seq(from=zeroPoint, to=maxSec, by=120 * 1000 * 1000 * 1000)
+breaksFromZero <- seq(from=zeroPoint, to=maxSec, by=10 * 60 * 1000 * 1000 * 1000)
 
 secondsFromZero <- function(x) {
   return (secondsFromNanoseconds(x - zeroPoint))
