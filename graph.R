@@ -1,5 +1,8 @@
 library(tidyverse)
 library(gridExtra)
+library(anytime)
+options(digits.secs=6)                ## for fractional seconds below
+Sys.setenv(TZ=anytime:::getTZ())      ## helper function to try to get TZ
 
 filename <- "./"
 
@@ -49,6 +52,27 @@ our_theme <- function() {
 quantiles = c(0.68, 0.90, 0.99, 0.999, 1)
 mylabels = c("p68", "p90", "p99", "p999", "max")
 fiveSecondsInNanoseconds = 5 * 1000 * 1000 * 1000
+
+print("pilot proxy convergence")
+# stamp, count
+pilot_proxy_max = read_csv(paste(filename, "100convergence.csv", sep="")) %>%
+  add_column(pvalue = "max")
+pilot_proxy_p99 = read_csv(paste(filename, "99convergence.csv", sep="")) %>%
+  add_column(pvalue = "p99")
+pilot_proxy_p90 = read_csv(paste(filename, "90convergence.csv", sep="")) %>%
+  add_column(pvalue = "p90")
+pilot_proxy_p68 = read_csv(paste(filename, "68convergence.csv", sep="")) %>%
+  add_column(pvalue = "p68")
+pilot_proxy = bind_rows(pilot_proxy_max, pilot_proxy_p99, pilot_proxy_p90, pilot_proxy_p68)
+
+experiment_time_x_axis(ggplot(pilot_proxy) +
+  labs(title="Proxy-Pilot Convergence Latency over Time") +
+  ylab("Latency (s)") +
+  geom_line(mapping=aes(x=stamp, y=count, color=pvalue)) +
+  scale_colour_brewer(palette = "Set1") +
+  our_theme() %+replace%
+    theme(legend.position="bottom"))
+ggsave("convergence.png", width=7, height=3)
 
 print("Control Plane Latency by Percentile")
 controlplane = read_csv(paste(filename, "user_data.csv", sep=""))
