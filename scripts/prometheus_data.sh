@@ -78,9 +78,9 @@ queryprom ()
     --data-urlencode "step=$STEP" \
     http://$INGRESS_IP:15030/api/v1/query_range)
 
-  printf "=========\nquery: $@\nresult: $data\n" >> prometheus_errors.txt
+  printf "=========\nquery: $@\nstart: $START end: $END step: $STEP\nresult: $data\n" >> prometheus_errors.txt
 
-  if [ -z $data ]; then
+  if [ -z "$data" ]; then
     printf "Blank, trying again\n" >> prometheus_errors.txt
     data=$(queryprom "$@")
   fi
@@ -128,14 +128,15 @@ queryprom "histogram_quantile(0.99, sum(rate(pilot_proxy_convergence_time_bucket
 queryprom "histogram_quantile(1, sum(rate(pilot_proxy_convergence_time_bucket[1m])) by (le))" | \
    jq -r '["stamp", "count"], (.data.result[] | .values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) | @csv' > 100convergence.csv
 
+# Envoy clusters
+queryprom 'envoy_cluster_manager_active_clusters' | \
+  jq -r '["stamp","count","instance","pod"], (.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1])]) + [.metric.instance, .metric.app]) | @csv' > envoyclusters.csv
+
+STEP=120 # we don't need that much precision for this query
 
 # Mapping of nodes to pods
 queryprom 'sum(container_tasks_state{pod_name!=""}) by (instance,pod_name)' | \
    jq -r '["stamp","node","pod"], (.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber)]) + [.metric.instance, .metric.pod_name]) | @csv' > nodes4pods.csv
-
-# Envoy clusters
-queryprom 'envoy_cluster_manager_active_clusters' | \
-  jq -r '["stamp","count","instance","pod"], (.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1])]) + [.metric.instance, .metric.app]) | @csv' > envoyclusters.csv
 
 echo "Prometheus data collected"
 
