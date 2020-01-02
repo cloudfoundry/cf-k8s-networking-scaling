@@ -1,7 +1,7 @@
 gateways:
   istio-ingressgateway:
-    autoscaleMin: 20
-    autoscaleMax: 20
+    autoscaleMin: 80
+    autoscaleMax: 80
     tolerations:
     - key: "scalers.istio"
       operator: "Equal"
@@ -16,8 +16,8 @@ gateways:
       topologyKey: "kubernetes.io/hostname"
 
 pilot:
-  autoscaleMin: 40
-  autoscaleMax: 40
+  autoscaleMin: 80
+  autoscaleMax: 80
   tolerations:
   - key: "scalers.istio"
     operator: "Equal"

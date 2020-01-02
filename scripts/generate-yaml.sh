@@ -6,7 +6,6 @@ source ../vars.sh
 group_size=$((NUM_APPS / NUM_GROUPS))
 
 if [ "$NAMESPACES" = "1" ]; then
-
   kubetpl render ../yaml/namespace-sidecar.yaml \
     -s NAMESPACE=istio-system \
     -s NAME=default \
@@ -15,13 +14,21 @@ if [ "$NAMESPACES" = "1" ]; then
   for ((group = 0 ; group <= $NUM_GROUPS ; group++)); do
     kubetpl render ../yaml/namespace.yaml -s NAMESPACE=ns-$group
     for ((count = 0; count <= $group_size; count++)); do
-      kubetpl render ../yaml/httpbin.yaml ../yaml/service.yaml \
+      kubetpl render ../yaml/httpbin.yaml \
         -s NAME=httpbin-$count-g$group \
         -s GROUP=$group \
         -s NAMESPACE=ns-$group
+
+      # only render services for group 0
+      if [ "$group" -eq "0" ]; then
+        kubetpl render ../yaml/service.yaml \
+          -s NAME=httpbin-$count-g$group \
+          -s GROUP=$group \
+          -s NAMESPACE=ns-$group
+      fi
     done
   done
-else
+else # namespaces off
   for ((group = 0 ; group <= $NUM_GROUPS ; group++)); do
     kubetpl render ../yaml/sidecar.yaml \
       -s NAME=group-$group \
