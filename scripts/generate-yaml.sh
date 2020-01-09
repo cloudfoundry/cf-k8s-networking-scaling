@@ -19,13 +19,10 @@ if [ "$NAMESPACES" = "1" ]; then
         -s GROUP=$group \
         -s NAMESPACE=ns-$group
 
-      # only render services for group 0
-      if [ "$group" -eq "0" ]; then
-        kubetpl render ../yaml/service.yaml \
-          -s NAME=httpbin-$count-g$group \
-          -s GROUP=$group \
-          -s NAMESPACE=ns-$group
-      fi
+      # kubetpl render ../yaml/service.yaml \
+      #   -s NAME=httpbin-$count-g$group \
+      #   -s GROUP=$group \
+      #   -s NAMESPACE=ns-$group
     done
   done
 else # namespaces off

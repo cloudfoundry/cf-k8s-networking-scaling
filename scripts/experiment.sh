@@ -49,7 +49,8 @@ done
 wlog "Load container up"
 sleep 10
 
-START=$(date +%s) # used for our prometheus queries later
+../scripts/prometheus_data.sh &
+ruby ./../scripts/endpoint_arrival.rb &
 
 iwlog "GENERATE DP LOAD"
 echo "stamp,cpuid,usr,nice,sys,iowate,irq,soft,steal,guest,gnice,idle" > cpustats.csv
@@ -87,8 +88,6 @@ kill $(jobs -p)
 
 iwlog "TEST COMPLETE"
 
-../scripts/prometheus_data.sh $START
-
 # dump the list of nodes with their labels, only gotta do this once
 kubectl get nodes --show-labels | awk '{print $1","$2","$6}' > nodeswithlabels.csv
 
@@ -97,6 +96,8 @@ sleep 2 # let them quit
 kill -9 $(jobs -p)
 
 # collate and graph
+echo "stamp,gateway,route" > endpoint_arrival.csv
+cat endpoint_arrival.json | jq '.' | grep ingressgateway | sed -r 's/: /,/g' | sed -r 's/\\*"//g' | sed 's/,*$//g' | sed 's/^  \(.*\):80,\(157.......\)/\2000000000,\1/' >> endpoint_arrival.csv
 ./../interpret/target/debug/interpret user.log && Rscript ../graph.R
 
 wlog "=== TEARDOWN ===="
