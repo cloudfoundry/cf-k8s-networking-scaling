@@ -169,18 +169,21 @@ nodes4pods = read_csv(paste(filename, "nodes4pods.csv", sep="")) %>%
 podcountsbynodetime = nodes4pods %>% select(-pod) %>% group_by(nodename, podtype, stamp) %>% summarize(n=n())
 podtypesbynode = nodes4pods %>% select(nodename, podtype) %>% distinct() %>% group_by(nodename) %>% summarize(podtypes = str_c(podtype, collapse=":"))
 
+print("Reading in node cpu/mem data")
 # Read in timestamp-node-cpu-mem data
 nodeusage = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(percent=col_number())) %>%
   extract(nodename, "nodename", "gke-.+-([A-Za-z0-9]+)") %>%
-  pivot_wider(names_from=type, values_from=percent) %>%
+  pivot_wider(names_from=type, values_from=percent, values_fn = list(percent = max)) %>%
   left_join(podtypesbynode, by="nodename", name="podtypes") %>%
   mutate(hasIstio = if_else(str_detect(podtypes, "istio"), "with istio", "without istio"))
 
+print("Picking busiest nodes")
 busynodenames = nodeusage %>% group_by(nodename) %>% summarize(maxcpu = max(cpu, na.rm=TRUE)) %>% top_n(3,maxcpu)
 busynodes = busynodenames %>% left_join(nodeusage) %>% select(timestamp, nodename, cpu, memory, hasIstio)
 
 nodeusage = nodeusage %>% gather(type, percent, -nodename, -timestamp, -hasIstio, -podtypes)
 busynodes = busynodes %>% gather(type, percent, -nodename, -timestamp, -hasIstio)
+
 print("Usage by Node")
 experiment_time_x_axis(ggplot(nodeusage) +
   labs(title = "Node Utilization", subtitle="100% = utilizing the whole machine") +
@@ -236,9 +239,10 @@ ggsave(paste(filename, "ifstats.png", sep=""), width=7, height=3.5)
 
 print("Gateway config")
 # stamp, gateway, route
-stats = read_csv(paste(filename, "endpoint_arrival.csv", sep="")) %>%
+stats = read_csv(paste(filename, "endpoint_arrival.csv", sep=""), col_types=cols(stamp=col_number())) %>%
   group_by(stamp,gateway) %>% summarize(count=n()) %>%
   group_by(gateway) %>% mutate(sumcount= cumsum(count))
+print(stats)
 experiment_time_x_axis(ggplot(stats) +
   labs(title = "Routes Per Gateway") +
   geom_line(mapping=aes(x=stamp, y=sumcount, group=gateway, color=gateway), alpha=0.1) +
