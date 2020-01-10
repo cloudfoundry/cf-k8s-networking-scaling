@@ -14,6 +14,7 @@ At this time the known requirements are as follows:
 * curl & wget
 * rust (for `cargo build`)
 * R (for `Rscript ...`)
+* ruby (a somewhat recent version, the one in snap is fine)
 * gcloud, logged in and capable of creating clusters
 * kubectl
 * [kubetpl](https://github.com/shyiko/kubetpl)
