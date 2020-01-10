@@ -80,7 +80,7 @@ iwlog "GENERATE CP LOAD"
 
 iwlog "CP LOAD COMPLETE"
 
-sleep 30 # wait for cluster to level out after CP load, gather data for cluster without
+sleep 120 # wait for cluster to level out after CP load, gather data for cluster without
          # CP load but with lots of configuration
 
 # stop monitors
@@ -96,8 +96,6 @@ sleep 2 # let them quit
 kill -9 $(jobs -p)
 
 # collate and graph
-echo "stamp,gateway,route" > endpoint_arrival.csv
-cat endpoint_arrival.json | jq '.' | grep ingressgateway | sed -r 's/: /,/g' | sed -r 's/\\*"//g' | sed 's/,*$//g' | sed 's/^  \(.*\):80,\(157.......\)/\2000000000,\1/' >> endpoint_arrival.csv
 ./../interpret/target/debug/interpret user.log && Rscript ../graph.R
 
 wlog "=== TEARDOWN ===="

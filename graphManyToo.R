@@ -85,9 +85,29 @@ zoomed = cplatency + coord_cartesian(ylim=c(0,fiveSecondsInNanoseconds * 6)) + #
 
 # Control Plane Latency by User ID
 controlplane = read_csv(paste(filename, "user_data.csv", sep="")) %>%
-  select(runID, userid=`user id`, `time to first success`=`nanoseconds to first success`, `time to last error`=`nanoseconds to last error`) %>%
+  select(runID, userid=`user id`,
+         `time to first success`=`nanoseconds to first success`,
+         `time to last error`=`nanoseconds to last error`,
+         `start time`)
+# stamp, gateway, route -> they're all group 0, so route = httpbin-USERID-g0.example.com
+gatewaytouser = read_csv(paste(filename, "endpoint_arrival.csv", sep=""), col_types=cols(stamp=col_number())) %>%
+  extract(gateway, "gateway", "istio-ingressgateway-.*-(.+)") %>%
+  extract(route, "userid", "httpbin-(.+)-g.+.example.com", convert=TRUE)
+gatewaysbyroute = gatewaytouser %>% group_by(stamp, runID, userid) %>% summarize(gcount=n()) %>%
+  group_by(runID,userid) %>% mutate(totalgateways = cumsum(gcount)) %>%
+  select(stamp, runID, userid, totalgateways)
+gatewaygoal = max(gatewaysbyroute$totalgateways) # all the gateways == the most anyone ever has
+gateway_startend = gatewaysbyroute %>% group_by(runID,userid) %>%
+  summarize(minGateways = min(totalgateways), firstGatewayTime=stamp[which(totalgateways==minGateways)], allGatewayTime=stamp[which(totalgateways==gatewaygoal)][1]) %>%
+  left_join(controlplane, by=c("userid","runID")) %>%
+  mutate(firstg = firstGatewayTime - `start time`, allg = allGatewayTime - `start time`) %>%
+  select(runID, userid,
+         `first success`=`time to first success`,
+         `last error`=`time to last error`,
+         `first gateway`=firstg,
+         `last gateway`=allg) %>%
   gather(event, latency, -userid, -runID)
-cplatency.time <- ggplot(controlplane, aes(x=userid, y=latency)) +
+cplatency.time <- ggplot(gateway_startend, aes(x=userid, y=latency)) +
   labs(title="Control Plane Latency by User ID") +
   ylab("Latency (s)") + xlab("User ID") +
   scale_y_continuous(labels=secondsFromNanoseconds) +
@@ -102,7 +122,7 @@ cplatency.time <- ggplot(controlplane, aes(x=userid, y=latency)) +
   our_theme() %+replace% theme(legend.position="bottom")
 
 print("Saving cplantency all")
-ggsave(paste(filename, "controlplane.png", sep=""), arrangeGrob(arrangeGrob(cplatency, zoomed), cplatency.time), height=12, width=7)
+ggsave(paste(filename, "controlplane.png", sep=""), arrangeGrob(arrangeGrob(cplatency, zoomed), cplatency.time), height=15, width=7)
 
 # Timestamp vs Avg Latency (ms) for very large numbers of runs
 dataload = read_csv(paste(filename, "dataload.csv", sep=""))
