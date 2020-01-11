@@ -10,6 +10,7 @@ gcloud container clusters create $CLUSTER_NAME \
   --num-nodes $NUM_NODES \
   --machine-type=$MACHINE_TYPE \
   --zone $AVAILABILITY_ZONE \
+  --enable-ip-alias \
   --project cf-routing-desserts
 
 gcloud container clusters get-credentials $CLUSTER_NAME \
