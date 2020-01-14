@@ -90,6 +90,7 @@ iwlog "TEST COMPLETE"
 
 # dump the list of nodes with their labels, only gotta do this once
 kubectl get nodes --show-labels | awk '{print $1","$2","$6}' > nodeswithlabels.csv
+kubectl get pods -o wide -n istio-system | awk '{print $1","$6","$7}' > instance2pod.csv
 
 sleep 2 # let them quit
 # make extra sure they quit

@@ -92,13 +92,12 @@ echo "stamp,count" > 90convergence.csv
 echo "stamp,count" > 99convergence.csv
 echo "stamp,count" > 100convergence.csv
 echo "stamp,count,instance,pod" > envoyclusters.csv
-echo "stamp,node,pod" > nodes4pods.csv
-
+echo "stamp,count,instance" > pilot_xds.csv
 
 while true
 do
   echo "Querying prometheus"
-  sleep 30
+  sleep 180
 
   END=$(date +%s)
 
@@ -144,8 +143,12 @@ do
     jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1])]) + [.metric.instance, .metric.app]) | @csv' >> envoyclusters.csv
 
   # Mapping of nodes to pods
+  echo "stamp,node,pod" > nodes4pods.csv
   queryprom 'sum(container_tasks_state{pod_name!=""}) by (instance,pod_name)' | \
      jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber)]) + [.metric.instance, .metric.pod_name]) | @csv' >> nodes4pods.csv
+
+  queryprom 'pilot_xds' | \
+    jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) + [.metric.instance]) | @csv' >> pilot_xds.csv
 
   echo "Prometheus data collected"
   START=$END

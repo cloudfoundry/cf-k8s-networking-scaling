@@ -14,7 +14,7 @@ if [ "$NAMESPACES" = "1" ]; then
   for ((group = 0 ; group <= $NUM_GROUPS ; group++)); do
     kubetpl render ../yaml/namespace.yaml -s NAMESPACE=ns-$group
     for ((count = 0; count <= $group_size; count++)); do
-      kubetpl render ../yaml/httpbin.yaml \
+      kubetpl render ../yaml/httpbin.yaml ../yaml/service.yaml \
         -s NAME=httpbin-$count-g$group \
         -s GROUP=$group \
         -s NAMESPACE=ns-$group
