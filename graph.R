@@ -95,7 +95,8 @@ gatewaytouser = read_csv(paste(filename, "endpoint_arrival.csv", sep=""), col_ty
   extract(gateway, "gateway", "istio-ingressgateway-.*-(.+)") %>%
   extract(route, "userid", "httpbin-(.+)-g.+.example.com", convert=TRUE)
 gatewaysbyroute = gatewaytouser %>% group_by(stamp, userid) %>% summarize(gcount=n()) %>%
-  group_by(userid) %>% mutate(totalgateways = cumsum(gcount)) %>% select(stamp, userid, totalgateways)
+  arrange(stamp) %>% group_by(userid) %>%
+  mutate(totalgateways = cumsum(gcount)) %>% select(stamp, userid, totalgateways)
 gatewaygoal = max(gatewaysbyroute$totalgateways) # all the gateways == the most anyone ever has
 gateway_startend = gatewaysbyroute %>% group_by(userid) %>%
   summarize(minGateways = min(totalgateways), firstGatewayTime=stamp[which(totalgateways==minGateways)], allGatewayTime=stamp[which(totalgateways==gatewaygoal)][1]) %>%
@@ -276,7 +277,8 @@ trajectories = ggplot(gatewaysbyroute_fromstart) +
   labs(title = "Gateways per User Routes by time since creation") +
   xlab("Time (seconds)") + scale_x_continuous(labels=secondsFromNanoseconds) +
   scale_colour_distiller(palette="Spectral") +
-  geom_line(mapping=aes(x=fromstart, y=totalgateways, color=userid), alpha=0.1) +
+  geom_line(mapping=aes(x=fromstart, y=totalgateways, group=userid, color=userid), alpha=0.1) +
+  geom_point(mapping=aes(x=fromstart, y=totalgateways, color=userid), alpha=0.2) +
   our_theme() %+replace%
     theme(legend.position="bottom")
 
