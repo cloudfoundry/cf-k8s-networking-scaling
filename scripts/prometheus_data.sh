@@ -93,6 +93,9 @@ echo "stamp,count" > 99convergence.csv
 echo "stamp,count" > 100convergence.csv
 echo "stamp,count,instance,pod" > envoyclusters.csv
 echo "stamp,node,pod" > nodes4pods.csv
+echo "stamp,count,passfail,instance,resource,version" > galley_validation.csv
+echo "stamp,count,instance" > galley_runtime_psp.csv
+echo "stamp,count,instance" > galley_runtime_strat.csv
 
 
 while true
@@ -146,6 +149,17 @@ do
   # Mapping of nodes to pods
   queryprom 'sum(container_tasks_state{pod_name!=""}) by (instance,pod_name)' | \
      jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber)]) + [.metric.instance, .metric.pod_name]) | @csv' >> nodes4pods.csv
+
+  queryprom 'galley_validation_passed' | \
+    jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), .[1]]) + ["passed",.metric.instance, .metric.resource, .metric.version]) | @csv' >> galley_validation.csv
+  queryprom 'galley_validation_failed' | \
+    jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), .[1]]) + ["failed",.metric.instance, .metric.resource, .metric.version]) | @csv' >> galley_validation.csv
+
+  queryprom 'galley_runtime_processor_snapshots_published_total' | \
+    jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), .[1]]) + [.metric.instance]) | @csv' >> galley_runtime_psp.csv
+
+  queryprom 'galley_runtime_strategy_on_change_total' | \
+    jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), .[1]]) + [.metric.instance]) | @csv' >> galley_runtime_strat.csv
 
   echo "Prometheus data collected"
   START=$END
