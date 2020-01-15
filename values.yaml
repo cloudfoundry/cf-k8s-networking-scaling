@@ -1,7 +1,7 @@
 gateways:
   istio-ingressgateway:
-    autoscaleMin: 80
-    autoscaleMax: 80
+    autoscaleEnabled: false
+    replicaCount: 80
     tolerations:
     - key: "scalers.istio"
       operator: "Equal"
@@ -16,8 +16,8 @@ gateways:
       topologyKey: "kubernetes.io/hostname"
 
 pilot:
-  autoscaleMin: 80
-  autoscaleMax: 80
+  autoscaleEnabled: false
+  replicaCount: 80
   tolerations:
   - key: "scalers.istio"
     operator: "Equal"
@@ -29,6 +29,21 @@ pilot:
   - key: istio
     operator: In
     values: pilot
+    topologyKey: "kubernetes.io/hostname"
+
+galley:
+  replicaCount: 40
+  tolerations:
+  - key: "scalers.istio"
+    operator: "Equal"
+    value: "dedicated"
+    effect: "NoSchedule"
+  nodeSelector:
+    scalers.istio: dedicated
+  podAntiAffinityTermLabelSelector:
+  - key: istio
+    operator: In
+    values: galley
     topologyKey: "kubernetes.io/hostname"
 
 prometheus:
