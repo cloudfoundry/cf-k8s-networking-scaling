@@ -65,7 +65,7 @@ pilot_proxy_p68 = read_csv(paste(filename, "68convergence.csv", sep="")) %>%
   add_column(pvalue = "p68")
 pilot_proxy = bind_rows(pilot_proxy_max, pilot_proxy_p99, pilot_proxy_p90, pilot_proxy_p68)
 
-experiment_time_x_axis(ggplot(pilot_proxy) +
+pilotproxy_plot = experiment_time_x_axis(ggplot(pilot_proxy) +
   labs(title="Proxy-Pilot Convergence Latency over Time") +
   ylab("Latency (s)") +
   lines() +
@@ -73,7 +73,20 @@ experiment_time_x_axis(ggplot(pilot_proxy) +
   scale_colour_brewer(palette = "Set1") +
   our_theme() %+replace%
     theme(legend.position="bottom"))
-ggsave("convergence.png", width=7, height=3)
+
+pilot_xds = read_csv(paste(filename, "pilot_xds.csv", sep=""))
+pilotxds_plot = experiment_time_x_axis(ggplot(pilot_xds, aes(x=stamp, y=count)) +
+  labs(title="Pilot XDS over Time") +
+  ylab("Count of Envoys Connected") +
+  lineLabels() + lines() +
+  geom_line(mapping=aes(group=instance), color="black", alpha=0.2) +
+  stat_summary_bin(aes(colour="max"), fun.y = "max", bins=100, geom="line") +
+  stat_summary_bin(aes(colour="median"), fun.y = "median", bins=100, geom="line") +
+  scale_colour_brewer(palette = "Set1") +
+  our_theme() %+replace%
+    theme(legend.position="bottom"))
+
+ggsave(paste(filename, "convergence.png", sep=""), arrangeGrob(pilotproxy_plot, pilotxds_plot))
 
 print("Control Plane Latency by Percentile")
 controlplane = read_csv(paste(filename, "user_data.csv", sep="")) %>% select(`user id`, `start time`, `nanoseconds to first success`, `nanoseconds to last error`)
