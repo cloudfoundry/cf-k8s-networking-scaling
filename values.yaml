@@ -1,7 +1,7 @@
 gateways:
   istio-ingressgateway:
     autoscaleEnabled: false
-    replicaCount: 80
+    replicaCount: 20
     tolerations:
     - key: "scalers.istio"
       operator: "Equal"
@@ -17,7 +17,7 @@ gateways:
 
 pilot:
   autoscaleEnabled: false
-  replicaCount: 80
+  replicaCount: 20
   tolerations:
   - key: "scalers.istio"
     operator: "Equal"
@@ -32,7 +32,7 @@ pilot:
     topologyKey: "kubernetes.io/hostname"
 
 galley:
-  replicaCount: 40
+  replicaCount: 10
   tolerations:
   - key: "scalers.istio"
     operator: "Equal"
