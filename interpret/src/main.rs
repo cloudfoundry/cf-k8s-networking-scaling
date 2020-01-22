@@ -37,19 +37,19 @@ fn process_users(path: std::path::PathBuf) -> io::Result<()> {
     let mut users: HashMap<String, User> = HashMap::new();
 
     for line in reader.lines() {
-        let re = Regex::new(r"(\d+),(\d+),(\w+)").unwrap();
+        let re = Regex::new(r"(\d+),(\d+),(\d+),(\w+)").unwrap();
         let line = line.unwrap();
         match re.captures(line.as_str()) {
             Some(caps) => {
                 let this_time = caps.get(1).unwrap().as_str().parse::<u64>().unwrap();
                 let user = users
-                    .entry(caps.get(2).unwrap().as_str().to_string())
+                    .entry(caps.get(2).unwrap().as_str().to_string() + "g" + caps.get(3).unwrap().as_str())
                     .or_insert(User {
                         start_time: 0,
                         success_time: 0,
                         end_time: 0,
                     });
-                match caps.get(3).unwrap().as_str() {
+                match caps.get(4).unwrap().as_str() {
                     "COMPLETED" => {
                         user.end_time = this_time;
                         ()

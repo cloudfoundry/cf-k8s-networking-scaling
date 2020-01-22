@@ -291,15 +291,15 @@ fn combine_userdata(
                 continue;
             }
 
-            //user id, start time, success time, nanoseconds to first success, completion time, nanoseconds to last error
-            let re = Regex::new(r"(\d+), (\d+), (\d+), (\d+), (\d+), (\d+)")?;
+            //user id, group id, start time, success time, nanoseconds to first success, completion time, nanoseconds to last error
+            let re = Regex::new(r"(\d+g\d+), (\d+), (\d+), (\d+), (\d+), (\d+)")?;
             let captures = re.captures(line.as_str()).ok_or("yikes")?;
 
             let user_id = captures
                 .get(1)
                 .ok_or("missing user_id")?
-                .as_str()
-                .parse::<u64>()?;
+                .as_str();
+                // .parse::<u64>()?;
             let start_time = captures
                 .get(2)
                 .ok_or("missing start_time")?

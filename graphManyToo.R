@@ -73,6 +73,7 @@ cplatency = ggplot(gathered.controlplane, aes(x=quantiles, y=latency)) +
   # add line for goal
   geom_hline(yintercept = fiveSecondsInNanoseconds, color="#e41a1c", linetype=2) +
   geom_text(mapping = aes(y=fiveSecondsInNanoseconds, x="p68", label="GOAL 5sec at p95"), size=2, vjust=1.5, hjust=1, color="grey25") +
+  geom_text(vjust = 0, nudge_y = 0.5, aes(label = secondsFromNanoseconds(latency))) +
   scale_y_continuous(labels=secondsFromNanoseconds) +
   scale_x_discrete(limits=mylabels) +
   scale_colour_manual(values = colors)  +
@@ -88,26 +89,31 @@ controlplane = read_csv(paste(filename, "user_data.csv", sep="")) %>%
   select(runID, userid=`user id`,
          `time to first success`=`nanoseconds to first success`,
          `time to last error`=`nanoseconds to last error`,
-         `start time`)
+         `start time`) %>%
+  extract(userid, c("userid","groupid"), "(.+)g(.+)", convert=TRUE)
 # stamp, gateway, route -> they're all group 0, so route = httpbin-USERID-g0.example.com
 gatewaytouser = read_csv(paste(filename, "endpoint_arrival.csv", sep=""), col_types=cols(stamp=col_number())) %>%
   extract(gateway, "gateway", "istio-ingressgateway-.*-(.+)") %>%
-  extract(route, "userid", "httpbin-(.+)-g.+.example.com", convert=TRUE)
-gatewaysbyroute = gatewaytouser %>% group_by(stamp, runID, userid) %>% summarize(gcount=n()) %>%
-  group_by(runID,userid) %>% mutate(totalgateways = cumsum(gcount)) %>%
-  select(stamp, runID, userid, totalgateways)
+  extract(route, c("userid","groupid"), "httpbin-(.+)-g(.+).example.com", convert=TRUE)
+gatewaysbyroute = gatewaytouser %>% group_by(stamp, runID, userid, groupid) %>% summarize(gcount=n()) %>%
+  group_by(runID,userid, groupid) %>% mutate(totalgateways = cumsum(gcount)) %>%
+  select(stamp, runID, userid, groupid, totalgateways)
 gatewaygoal = max(gatewaysbyroute$totalgateways) # all the gateways == the most anyone ever has
-gateway_startend = gatewaysbyroute %>% group_by(runID,userid) %>%
-  summarize(minGateways = min(totalgateways), firstGatewayTime=stamp[which(totalgateways==minGateways)], allGatewayTime=stamp[which(totalgateways==gatewaygoal)][1]) %>%
-  left_join(controlplane, by=c("userid","runID")) %>%
+gateway_startend = gatewaysbyroute %>% group_by(runID,userid, groupid) %>%
+  summarize(minGateways = min(totalgateways),
+            firstGatewayTime=stamp[which(totalgateways==minGateways)],
+            allGatewayTime=stamp[which(totalgateways==gatewaygoal)][1]) %>%
+  left_join(controlplane, by=c("userid","groupid","runID")) %>%
   mutate(firstg = firstGatewayTime - `start time`, allg = allGatewayTime - `start time`) %>%
-  select(runID, userid,
+  select(runID, userid, groupid,
          `first success`=`time to first success`,
          `last error`=`time to last error`,
          `first gateway`=firstg,
          `last gateway`=allg) %>%
-  gather(event, latency, -userid, -runID)
-cplatency.time <- ggplot(gateway_startend, aes(x=userid, y=latency)) +
+  gather(event, latency, -userid, -groupid, -runID)
+maxuserid = max(gateway_startend$userid) + 1
+gateway_startend = gateway_startend %>% mutate(uid = maxuserid * groupid + userid)
+cplatency.time <- ggplot(gateway_startend, aes(x=uid, y=latency)) +
   labs(title="Control Plane Latency by User ID") +
   ylab("Latency (s)") + xlab("User ID") +
   scale_y_continuous(labels=secondsFromNanoseconds) +

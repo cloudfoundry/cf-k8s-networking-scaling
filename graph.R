@@ -89,18 +89,22 @@ pilotxds_plot = experiment_time_x_axis(ggplot(pilot_xds, aes(x=stamp, y=count)) 
 ggsave(paste(filename, "convergence.png", sep=""), arrangeGrob(pilotproxy_plot, pilotxds_plot))
 
 print("Control Plane Latency by Percentile")
-controlplane = read_csv(paste(filename, "user_data.csv", sep="")) %>% select(`user id`, `start time`, `nanoseconds to first success`, `nanoseconds to last error`)
+controlplane = read_csv(paste(filename, "user_data.csv", sep="")) %>%
+  select(`user id`, `start time`, `nanoseconds to first success`, `nanoseconds to last error`) %>%
+  extract(`user id`, c("userid","groupid"), "(.+)g(.+)", convert=TRUE)
 # stamp, gateway, route -> they're all group 0, so route = httpbin-USERID-g0.example.com
 gatewaytouser = read_csv(paste(filename, "endpoint_arrival.csv", sep=""), col_types=cols(stamp=col_number())) %>%
   extract(gateway, "gateway", "istio-ingressgateway-.*-(.+)") %>%
-  extract(route, "userid", "httpbin-(.+)-g.+.example.com", convert=TRUE)
-gatewaysbyroute = gatewaytouser %>% group_by(stamp, userid) %>% summarize(gcount=n()) %>%
-  arrange(stamp) %>% group_by(userid) %>%
-  mutate(totalgateways = cumsum(gcount)) %>% select(stamp, userid, totalgateways)
+  extract(route, c("userid","groupid"), "httpbin-(.+)-g(.+).example.com", convert=TRUE)
+gatewaysbyroute = gatewaytouser %>% group_by(stamp, userid, groupid) %>% summarize(gcount=n()) %>%
+  arrange(stamp) %>% group_by(userid, groupid) %>%
+  mutate(totalgateways = cumsum(gcount)) %>% select(stamp, userid, groupid, totalgateways)
 gatewaygoal = max(gatewaysbyroute$totalgateways) # all the gateways == the most anyone ever has
-gateway_startend = gatewaysbyroute %>% group_by(userid) %>%
-  summarize(minGateways = min(totalgateways), firstGatewayTime=stamp[which(totalgateways==minGateways)], allGatewayTime=stamp[which(totalgateways==gatewaygoal)][1]) %>%
-  left_join(controlplane, by=c("userid"="user id")) %>%
+gateway_startend = gatewaysbyroute %>% group_by(userid, groupid) %>%
+  summarize(minGateways = min(totalgateways),
+            firstGatewayTime=stamp[which(totalgateways==minGateways)],
+            allGatewayTime=stamp[which(totalgateways==gatewaygoal)][1]) %>%
+  left_join(controlplane, by=c("userid","groupid")) %>%
   mutate(firstg = firstGatewayTime - `start time`, allg = allGatewayTime - `start time`)
 print(gateway_startend)
 
@@ -266,10 +270,16 @@ experiment_time_x_axis(ggplot(ifstats) +
 ggsave(paste(filename, "ifstats.png", sep=""), width=7, height=3.5)
 
 print("Gateway config")
-controlplane = read_csv(paste(filename, "user_data.csv", sep="")) %>% select(userid=`user id`,start =`start time`)
+controlplane = read_csv(paste(filename, "user_data.csv", sep="")) %>%
+  select(userid=`user id`,start =`start time`) %>%
+  extract(userid, c("userid","groupid"), "(.+)g(.+)", convert=TRUE)
+maxUserid = max(controlplane$userid) + 1
+controlplane = controlplane %>% mutate(uid= maxUserid * groupid + userid)
+
 print(gatewaysbyroute)
 print(controlplane)
-gatewaysbyroute_fromstart = gatewaysbyroute %>% left_join(controlplane, by="userid") %>%
+gatewaysbyroute_fromstart = gatewaysbyroute %>%
+  left_join(controlplane, by=c("userid","groupid")) %>%
   mutate(fromstart = stamp - start)
 print(gatewaysbyroute_fromstart)
 
@@ -277,18 +287,20 @@ trajectories = ggplot(gatewaysbyroute_fromstart) +
   labs(title = "Gateways per User Routes by time since creation") +
   xlab("Time (seconds)") + scale_x_continuous(labels=secondsFromNanoseconds) +
   scale_colour_distiller(palette="Spectral") +
-  geom_line(mapping=aes(x=fromstart, y=totalgateways, group=userid, color=userid), alpha=0.05) +
+  geom_line(mapping=aes(x=fromstart, y=totalgateways, group=uid, alpha=0.05)) +
   our_theme() %+replace%
     theme(legend.position="bottom")
+
+gateway_startend = gateway_startend %>% mutate(uid= maxUserid * groupid + userid)
 
 oneline = ggplot(gateway_startend) +
   labs(title = "Latency by Userid") +
   ylab("Time (seconds)") + scale_y_continuous(labels=secondsFromNanoseconds) +
   scale_colour_brewer(palette = "Set1") +
-  geom_line(mapping=aes(x=userid, y=`nanoseconds to first success`, color="First Success"), alpha=0.6) +
-  geom_line(mapping=aes(x=userid, y=`nanoseconds to last error`, color="Last Error"), alpha=0.6) +
-  geom_line(mapping=aes(x=userid, y=firstg, color="First Gateway"), alpha=0.6) +
-  geom_line(mapping=aes(x=userid, y=allg, color="All Gateways"), alpha=0.6) +
+  geom_line(mapping=aes(x=uid, y=`nanoseconds to first success`, color="First Success"), alpha=0.6) +
+  geom_line(mapping=aes(x=uid, y=`nanoseconds to last error`, color="Last Error"), alpha=0.6) +
+  geom_line(mapping=aes(x=uid, y=firstg, color="First Gateway"), alpha=0.6) +
+  geom_line(mapping=aes(x=uid, y=allg, color="All Gateways"), alpha=0.6) +
   our_theme() %+replace%
     theme(legend.position="bottom")
 ggsave(paste(filename, "endpoint_arrival.png", sep=""), arrangeGrob(trajectories, oneline), width=7, height=8)
