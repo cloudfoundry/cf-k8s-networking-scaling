@@ -11,9 +11,9 @@ if [ "$NAMESPACES" = "1" ]; then
     -s NAME=default \
     -s HOST='./*'
 
-  for ((group = 0 ; group <= $NUM_GROUPS ; group++)); do
+  for ((group = 0 ; group < $NUM_GROUPS ; group++)); do
     kubetpl render ../yaml/namespace.yaml -s NAMESPACE=ns-$group
-    for ((count = 0; count <= $group_size; count++)); do
+    for ((count = 0; count < $group_size; count++)); do
       kubetpl render ../yaml/httpbin.yaml ../yaml/service.yaml \
         -s NAME=httpbin-$count-g$group \
         -s GROUP=$group \
@@ -26,12 +26,12 @@ if [ "$NAMESPACES" = "1" ]; then
     done
   done
 else # namespaces off
-  for ((group = 0 ; group <= $NUM_GROUPS ; group++)); do
+  for ((group = 0 ; group < $NUM_GROUPS ; group++)); do
     kubetpl render ../yaml/sidecar.yaml \
       -s NAME=group-$group \
       -s NAMESPACE=default \
       -s GROUP=$group
-    for ((count = 0; count <= $group_size; count++)); do
+    for ((count = 0; count < $group_size; count++)); do
       kubetpl render ../yaml/httpbin.yaml ../yaml/service.yaml \
         -s NAME=httpbin-$count-g$group \
         -s NAMESPACE=default \
