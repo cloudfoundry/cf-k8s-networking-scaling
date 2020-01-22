@@ -10,6 +10,7 @@ group_size=$((NUM_APPS / NUM_GROUPS))
 for ((group = 0 ; group < $NUM_GROUPS ; group++)); do
   for ((count = 0; count < $group_size; count++)); do
     ./../scripts/user.sh $count $group &
+    sleep $USER_DELAY
   done
 done
 
