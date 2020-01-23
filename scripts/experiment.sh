@@ -65,6 +65,8 @@ sleep 10 # wait because otherwise the dataload sometimes fails to work at first
 # create data plane load with apib
 ./../scripts/dataload.sh http://${GATEWAY_URL}/anything > dataload.csv 2>&1 &
 
+podsalive &
+
 iwlog "GENERATE TEST PODS"
 ./../scripts/generate-yaml.sh > testpods.yaml
 kubectl apply -f testpods.yaml

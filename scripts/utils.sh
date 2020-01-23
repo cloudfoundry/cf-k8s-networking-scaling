@@ -24,6 +24,15 @@ forever ()
     done
 }
 
+podsalive ()
+{
+  echo "stamp,unscheduledpods"
+  while true; do
+    echo "$(udate),$(kubectl get pods --all-namespaces | grep httpbin | grep -v Running | wc -l)" > podalive.csv
+    sleep 1;
+  done
+}
+
 cpustats ()
 {
   mpstat -P ON 1 1 | grep -v CPU | awk '/Average/ {$1=systime(); print $1 "000000000," $2 "," $3 "," $4 "," $5 "," $6 "," $7 "," $8 "," $9 "," $10 "," $11 "," $12}'
