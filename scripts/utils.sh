@@ -28,7 +28,7 @@ podsalive ()
 {
   echo "stamp,unscheduledpods"
   while true; do
-    echo "$(udate),$(kubectl get pods --all-namespaces | grep httpbin | grep -v Running | wc -l)" > podalive.csv
+    echo "$(udate),$(kubectl get pods --all-namespaces | grep httpbin | grep -v Running | wc -l)" >> podalive.csv
     sleep 1;
   done
 }
