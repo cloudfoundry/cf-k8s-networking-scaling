@@ -1,3 +1,6 @@
+# global:
+#   useMCP: false
+
 gateways:
   istio-ingressgateway:
     autoscaleEnabled: false
