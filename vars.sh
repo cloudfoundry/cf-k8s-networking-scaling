@@ -1,4 +1,4 @@
-CLUSTER_VERSION=1.14.8-gke.12
+CLUSTER_VERSION=1.14.8-gke.33
 NUM_NODES=100
 MACHINE_TYPE=n1-standard-8
 AVAILABILITY_ZONE=$(gcloud compute instances list | grep "$(hostname) " | awk '{print $2}')
