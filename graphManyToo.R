@@ -240,7 +240,7 @@ experiment_time_x_axis(ggplot(dataload) +
     theme(legend.position="none", axis.title.x=element_blank(), axis.text.x=element_blank()))
 ggsave(paste(filename, "nodemon.png", sep=""), width=7, height=3.5)
 
-memstats = read_csv(paste(filename, "memstats.csv", sep="")) %>% mutate(memory = (used/total) * 1000) %>% select(runID, timestamp=stamp, memory)
+memstats = read_csv(paste(filename, "memstats.csv", sep="")) %>% mutate(memory = (used/total) * 100) %>% select(runID, timestamp=stamp, memory)
 cpustats = read_csv(paste(filename, "cpustats.csv", sep="")) %>% filter(cpuid == "all") %>% mutate(cpu = (100 - idle)) %>% select(runID, timestamp=stamp, cpuid, cpu)
 clientstats = full_join(memstats, cpustats) %>% gather("metric", "percent", -runID, -cpuid, -timestamp)
 cpu = experiment_time_x_axis(ggplot(clientstats, aes(x=timestamp, y=percent)) +
