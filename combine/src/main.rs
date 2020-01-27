@@ -390,6 +390,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         "nodemon.csv",
         "nodes4pods.csv",
         "endpoint_arrival.csv",
+        "podalive.csv",
     ];
 
     let filenames_without_timestamps = ["rawlatencies.txt"];
