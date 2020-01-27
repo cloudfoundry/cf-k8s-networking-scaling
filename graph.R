@@ -314,7 +314,7 @@ trajectories = ggplot(gatewaysbyroute_fromstart) +
   labs(title = "Gateways per User Routes by time since creation") +
   xlab("Time (seconds)") + scale_x_continuous(labels=secondsFromNanoseconds) +
   scale_colour_distiller(palette="Spectral") +
-  geom_line(mapping=aes(x=fromstart, y=totalgateways, group=uid, alpha=0.05)) +
+  geom_line(mapping=aes(x=fromstart, y=totalgateways, group=uid, color=uid), alpha=0.05) +
   our_theme() %+replace%
     theme(legend.position="bottom")
 
