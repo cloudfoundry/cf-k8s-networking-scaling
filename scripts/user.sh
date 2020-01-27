@@ -16,11 +16,11 @@ echo "$(udate),$1,$2,SUCCESS,"
 >&2 wlog "SUCCESS $1-g$2"
 
 lastfail=$(udate)
-secondsToWait=120
-for ((i=$secondsToWait; i>0; i--)); do
-  sleep 1 &
-  status=$(curl -s -o /dev/null -w "%{http_code}" -HHost:$TARGET_URL http://$INGRESS_HOST:$INGRESS_PORT/status/200)
-  if [ $status -ne 200 ]; then
+timesToPoll=$(expr 120 / $USER_POLL_DELAY)
+for ((i=$timesToPoll; i>0; i--)); do
+  sleep $USER_POLL_DELAY &
+  status=$(curl -vvv -o /dev/null -w "%{http_code},$INGRESS_HOST:$INGRESS_PORT-$1g$2-$i.curl" -HHost:$TARGET_URL http://$INGRESS_HOST:$INGRESS_PORT/status/200 2>"curlstuff/$INGRESS_HOST:$INGRESS_PORT-$1g$2-$i.curl")
+  if [ $(echo $status | cut -d, -f1) -ne 200 ]; then
     lastfail=$(udate)
     echo "$(udate),$1,$2,FAILURE,$status"
   fi

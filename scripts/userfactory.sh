@@ -3,7 +3,8 @@
 source ../vars.sh
 source ../scripts/utils.sh
 
-echo "stamp,usernum,groupnum,event,status"
+mkdir -p curlstuff
+echo "stamp,usernum,groupnum,event,status,logfile"
 
 group_size=$((NUM_USERS / NUM_GROUPS))
 
