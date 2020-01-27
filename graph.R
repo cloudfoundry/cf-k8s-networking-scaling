@@ -106,7 +106,6 @@ gateway_startend = gatewaysbyroute %>% group_by(userid, groupid) %>%
             allGatewayTime=stamp[which(totalgateways==gatewaygoal)][1]) %>%
   left_join(controlplane, by=c("userid","groupid")) %>%
   mutate(firstg = firstGatewayTime - `start time`, allg = allGatewayTime - `start time`)
-print(gateway_startend)
 
 first_values = quantile(gateway_startend$`nanoseconds to first success`, quantiles, na.rm=TRUE)
 last_values = quantile(gateway_startend$`nanoseconds to last error`, quantiles, na.rm=TRUE)
@@ -129,6 +128,37 @@ ggplot(gathered.controlplane, aes(x=quantiles, y=latency)) +
   our_theme() %+replace%
     theme(legend.position="bottom")
 ggsave(paste(filename, "controlplane.png", sep=""), width=7, height = 3.5)
+
+print("Errors by User ID")
+# stamp,usernum,groupnum,event,status,logfile
+userlog = read_csv(paste(filename, "user.log", sep=""), col_types=cols(stamp=col_number(),status=col_factor()))
+userstarts = userlog %>% filter(event == "STARTED") %>% select(stamp, usernum, groupnum)
+maxUser = max((userlog %>% filter(groupnum == 0))$usernum) + 1
+usererrors = userlog %>% filter(event == "FAILURE")%>%
+  select(stamp, usernum, groupnum, status) %>%
+  left_join(userstarts, by=c("usernum", "groupnum"), suffix=c("Error","Start")) %>%
+  mutate(latency = stampError - stampStart, userid = usernum + (maxUser * groupnum)) %>%
+  select(stampError, latency, userid, status)
+
+errorLatency = ggplot(usererrors, aes(x=latency, y=userid, color=status)) +
+  labs(title = "Distribution of Errors by per UserID latency") +
+  xlab("Latency (s)") +
+  ylab("User ID") +
+  geom_point(alpha=0.2) +
+  scale_colour_brewer(palette = "Set1") +
+  scale_x_continuous(labels=secondsFromNanoseconds) +
+  our_theme() %+replace%
+    theme(legend.position="bottom")
+errorTime = experiment_time_x_axis(ggplot(usererrors, aes(x=stampError, y=userid, color=status)) +
+  labs(title = "Distribution of Errors by per UserID latency") +
+  xlab("Latency (s)") +
+  ylab("User ID") +
+  lineLabels() + lines() + 
+  geom_point(alpha=0.2) +
+  scale_colour_brewer(palette = "Set1") +
+  our_theme() %+replace%
+    theme(legend.position="bottom"))
+ggsave(paste(filename, "cperrors.png", sep=""), arrangeGrob(errorLatency, errorTime), width=7, height = 7)
 
 print("Timestamp vs Latency (ms)")
 dataload = read_csv(paste(filename, "dataload.csv", sep=""), col_types=cols(Name=col_number()))
@@ -276,12 +306,9 @@ controlplane = read_csv(paste(filename, "user_data.csv", sep="")) %>%
 maxUserid = max(controlplane$userid) + 1
 controlplane = controlplane %>% mutate(uid= maxUserid * groupid + userid)
 
-print(gatewaysbyroute)
-print(controlplane)
 gatewaysbyroute_fromstart = gatewaysbyroute %>%
   left_join(controlplane, by=c("userid","groupid")) %>%
   mutate(fromstart = stamp - start)
-print(gatewaysbyroute_fromstart)
 
 trajectories = ggplot(gatewaysbyroute_fromstart) +
   labs(title = "Gateways per User Routes by time since creation") +
