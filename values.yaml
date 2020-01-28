@@ -1,10 +1,12 @@
-# global:
-#   useMCP: false
+global:
+  useMCP: false
 
 gateways:
   istio-ingressgateway:
-    autoscaleEnabled: false
-    replicaCount: 20
+    # autoscaleEnabled: false
+    # replicaCount: 20
+    autoscaleMin: 1
+    autoscaleMax: 20
     tolerations:
     - key: "scalers.istio"
       operator: "Equal"
@@ -19,8 +21,10 @@ gateways:
       topologyKey: "kubernetes.io/hostname"
 
 pilot:
-  autoscaleEnabled: false
-  replicaCount: 20
+  # autoscaleEnabled: false
+  # replicaCount: 20
+  autoscaleMin: 1
+  autoscaleMax: 20
   tolerations:
   - key: "scalers.istio"
     operator: "Equal"
@@ -34,20 +38,20 @@ pilot:
     values: pilot
     topologyKey: "kubernetes.io/hostname"
 
-galley:
-  replicaCount: 10
-  tolerations:
-  - key: "scalers.istio"
-    operator: "Equal"
-    value: "dedicated"
-    effect: "NoSchedule"
-  nodeSelector:
-    scalers.istio: dedicated
-  podAntiAffinityTermLabelSelector:
-  - key: istio
-    operator: In
-    values: galley
-    topologyKey: "kubernetes.io/hostname"
+# galley:
+#   replicaCount: 10
+#   tolerations:
+#   - key: "scalers.istio"
+#     operator: "Equal"
+#     value: "dedicated"
+#     effect: "NoSchedule"
+#   nodeSelector:
+#     scalers.istio: dedicated
+#   podAntiAffinityTermLabelSelector:
+#   - key: istio
+#     operator: In
+#     values: galley
+#     topologyKey: "kubernetes.io/hostname"
 
 prometheus:
   nodeSelector:
