@@ -32,7 +32,9 @@ for ((i=0;i<$COUNT;i++)); do
 
   popd
 
-  sleep 600 # sleep for 10min to give the other cluster time to get out of the way
+  if [ $i < $(expr $COUNT - 1) ]; then
+    sleep 600 # sleep for 10min to give the other cluster time to get out of the way
+  fi
 done
 
 mkdir $1
