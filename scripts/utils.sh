@@ -48,3 +48,7 @@ ifstats ()
   ifstat -q -t -n -i ens4 1 1 | awk 'NR > 2 {$1=systime(); print $1 "000000000," $2 "," $3}'
 }
 
+time_wait ()
+{
+  netstat -on | grep TIME_WAIT | wc | awk '{$10=systime(); print $10 "0000000000," $1}'
+}

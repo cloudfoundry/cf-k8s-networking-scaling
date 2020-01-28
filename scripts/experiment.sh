@@ -59,6 +59,8 @@ echo "stamp,down,up" > ifstats.csv
 forever ifstats >> ifstats.csv &
 echo "stamp,total,used,free,shared,buff,available" > memstats.csv
 forever memstats  >> memstats.csv &
+echo "stamp,sockets" > time_wait.csv
+forever time_wait  >> time_wait.csv &
 until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -eq 200 ]; do true; done
 sleep 10 # wait because otherwise the dataload sometimes fails to work at first
 
