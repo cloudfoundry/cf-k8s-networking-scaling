@@ -7,36 +7,36 @@ gateways:
     # replicaCount: 20
     autoscaleMin: 1
     autoscaleMax: 20
-    tolerations:
-    - key: "scalers.istio"
-      operator: "Equal"
-      value: "dedicated"
-      effect: "NoSchedule"
-    nodeSelector:
-      scalers.istio: dedicated
-    podAntiAffinityTermLabelSelector:
-    - key: istio
-      operator: In
-      values: ingressgateway
-      topologyKey: "kubernetes.io/hostname"
+    # tolerations:
+    # - key: "scalers.istio"
+    #   operator: "Equal"
+    #   value: "dedicated"
+    #   effect: "NoSchedule"
+    # nodeSelector:
+    #   scalers.istio: dedicated
+    # podAntiAffinityTermLabelSelector:
+    # - key: istio
+    #   operator: In
+    #   values: ingressgateway
+    #   topologyKey: "kubernetes.io/hostname"
 
 pilot:
   # autoscaleEnabled: false
   # replicaCount: 20
   autoscaleMin: 1
   autoscaleMax: 20
-  tolerations:
-  - key: "scalers.istio"
-    operator: "Equal"
-    value: "dedicated"
-    effect: "NoSchedule"
-  nodeSelector:
-    scalers.istio: dedicated
-  podAntiAffinityTermLabelSelector:
-  - key: istio
-    operator: In
-    values: pilot
-    topologyKey: "kubernetes.io/hostname"
+  # tolerations:
+  # - key: "scalers.istio"
+  #   operator: "Equal"
+  #   value: "dedicated"
+  #   effect: "NoSchedule"
+  # nodeSelector:
+  #   scalers.istio: dedicated
+  # podAntiAffinityTermLabelSelector:
+  # - key: istio
+  #   operator: In
+  #   values: pilot
+  #   topologyKey: "kubernetes.io/hostname"
 
 # galley:
 #   replicaCount: 10
