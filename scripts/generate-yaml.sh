@@ -4,6 +4,7 @@ source ../vars.sh
 
 # produce test pods!
 group_size=$((NUM_APPS / NUM_GROUPS))
+half=$((group_size / 2))
 
 if [ "$NAMESPACES" = "1" ]; then
   kubetpl render ../yaml/namespace-sidecar.yaml \
@@ -18,11 +19,6 @@ if [ "$NAMESPACES" = "1" ]; then
         -s NAME=httpbin-$count-g$group \
         -s GROUP=$group \
         -s NAMESPACE=ns-$group
-
-      # kubetpl render ../yaml/service.yaml \
-      #   -s NAME=httpbin-$count-g$group \
-      #   -s GROUP=$group \
-      #   -s NAMESPACE=ns-$group
     done
   done
 else # namespaces off
@@ -36,6 +32,12 @@ else # namespaces off
         -s NAME=httpbin-$count-g$group \
         -s NAMESPACE=default \
         -s GROUP=$group
+
+      if [ $count -ge $half ] && [ $STEADY_STATE -eq 1 ]; then
+        kubetpl render ../yaml/gateway.yaml ../yaml/virtualservice.yaml \
+          -s NAME=httpbin-$count-g$group \
+          -s NAMESPACE=default
+      fi
     done
   done
 fi
