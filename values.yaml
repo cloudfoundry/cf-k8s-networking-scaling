@@ -62,9 +62,9 @@ prometheus:
     value: "prometheus"
     effect: "NoSchedule"
 
-# mixer:
-#   policy:
-#     enabled: false
-#   telemetry:
-#     enabled: false
+mixer:
+  policy:
+    enabled: false
+  telemetry:
+    enabled: false
 
