@@ -7,6 +7,7 @@ class Gateway
   def initialize(name)
     @name = name
     @endpoints = {}
+    @missing = Hash.new([])
   end
 
   def generate_route
@@ -34,12 +35,23 @@ class Gateway
         @endpoints[c] = Time.now.to_i
       end
     end
+
+    @endpoints.keys.each do |e|
+      if !clusters.include?(e)
+        @missing[e] += [Time.now.to_i]
+      end
+    end
   end
 
   def to_csv
     out = []
     @endpoints.keys.each do |e|
-      out << ["#{@endpoints[e]}000000000", @name, e, @route].join(',')
+      out << ["#{@endpoints[e]}000000000", @name, e, @route, "appears"].join(',')
+    end
+    @missing.keys.each do |m|
+      @missing[m].each do |time|
+        out << ["#{time}000000000", @name, m, @route, "missing"].join(',')
+      end
     end
     out.join("\n")
   end
@@ -59,7 +71,7 @@ begin
     gateways.map(&:process_endpoints)
 
     open("endpoint_arrival.csv", 'w') do |f|
-      f.puts "stamp,gateway,route,local_port"
+      f.puts "stamp,gateway,route,local_port,event"
       f.puts gateways.map(&:to_csv).join("\n")
     end
     sleep(0.25)
