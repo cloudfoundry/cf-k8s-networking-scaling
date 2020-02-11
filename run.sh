@@ -46,3 +46,7 @@ pushd $1
 popd
 
 mv $1 experiments/
+
+pushd experiments/$1
+  ruby ../../minmax.rb
+popd
