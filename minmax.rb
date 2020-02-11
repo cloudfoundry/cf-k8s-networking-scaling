@@ -57,14 +57,14 @@ SQL
 puts "pilot idle\tpilot load\tig idle\t\tig load"
 puts "cpu\tram\tcpu\tram\tcpu\tram\tcpu\tram\t"
 arr = [
-  (pilot[0][2] * 10).round(2), # idle cpu
-  (pilot[1][2] * 10).round(2), # idle ram
-  (pilot[0][3] * 10).round(2), # loaded cpu
-  (pilot[1][3] * 10).round(2), # loaded ram
-  (ig[0][2] * 10).round(2), # idle cpu
-  (ig[1][2] * 10).round(2), # idle ram
-  (ig[0][3] * 10).round(2), # loaded cpu
-  (ig[1][3] * 10).round(2), # loaded ram
+  (pilot[0][2]).round(2), # idle cpu
+  (pilot[1][2]).round(2), # idle ram
+  (pilot[0][3]).round(2), # loaded cpu
+  (pilot[1][3]).round(2), # loaded ram
+  (ig[0][2]).round(2), # idle cpu
+  (ig[1][2]).round(2), # idle ram
+  (ig[0][3]).round(2), # loaded cpu
+  (ig[1][3]).round(2), # loaded ram
 ]
 puts arr.join("\t")
 puts "pasteable:"
