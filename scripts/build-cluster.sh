@@ -4,6 +4,7 @@ source ../vars.sh
 source ../scripts/utils.sh
 
 CLUSTER_NAME=$1
+AVAILABILITY_ZONE=$(gcloud compute instances list | grep "$(hostname) " | awk '{print $2}')
 
 gcloud container clusters create $CLUSTER_NAME \
   --cluster-version $CLUSTER_VERSION \
