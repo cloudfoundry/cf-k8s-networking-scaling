@@ -1,12 +1,12 @@
 CLUSTER_VERSION=1.14.8-gke.33
-NUM_NODES=100
+NUM_NODES=120
 MACHINE_TYPE=n1-standard-8
 AVAILABILITY_ZONE=$(gcloud compute instances list | grep "$(hostname) " | awk '{print $2}')
 DATAPLANE_NUM_CONNECTIONS=10
 
 ISTIO_FOLDER=/home/pivotal/istio-1.4.2
 ISTIO_TAINT=1
-NODES_FOR_ISTIO=20
+NODES_FOR_ISTIO=40
 
 MIXERLESS_TELEMETRY=0
 

@@ -4,7 +4,7 @@ global:
 gateways:
   istio-ingressgateway:
     autoscaleEnabled: false
-    replicaCount: 10
+    replicaCount: 20
     # autoscaleMin: 1
     # autoscaleMax: 20
     tolerations:
@@ -26,7 +26,7 @@ gateways:
 
 pilot:
   autoscaleEnabled: false
-  replicaCount: 10
+  replicaCount: 20
   # autoscaleMin: 1
   # autoscaleMax: 20
   tolerations:
