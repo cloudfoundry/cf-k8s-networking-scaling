@@ -84,7 +84,7 @@ iwlog "GENERATE CP LOAD"
 
 iwlog "CP LOAD COMPLETE"
 
-sleep 120 # wait for cluster to level out after CP load, gather data for cluster without
+sleep 600 # wait for cluster to level out after CP load, gather data for cluster without
          # CP load but with lots of configuration
 
 # stop monitors
