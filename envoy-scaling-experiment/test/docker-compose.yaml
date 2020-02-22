@@ -1,0 +1,64 @@
+version: "3.7"
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile-gateway
+    volumes:
+      - ./envoy-bootstrap.yaml:/etc/bootstrap.yaml
+    networks:
+      - envoymesh
+    expose:
+      - "80"
+      - "15090"
+      - "15000"
+    ports:
+      - "8000:80"
+      - "15090:15090"
+      - "15000:15000"
+
+  navigator:
+    build:
+      context: ../navigator
+      dockerfile: Dockerfile
+    networks:
+      envoymesh:
+        aliases:
+          - navigator
+    environment:
+      - PORT=8080
+    expose:
+      - "8080"
+
+  service1:
+    build:
+      context: .
+      dockerfile: Dockerfile-service
+    volumes:
+      - ./service-envoy.yaml:/etc/service-envoy.yaml
+    networks:
+      envoymesh:
+        aliases:
+          - service1
+    environment:
+      - SERVICE_NAME=1
+    expose:
+      - "80"
+
+  service2:
+    build:
+      context: .
+      dockerfile: Dockerfile-service
+    volumes:
+      - ./service-envoy.yaml:/etc/service-envoy.yaml
+    networks:
+      envoymesh:
+        aliases:
+          - service2
+    environment:
+      - SERVICE_NAME=2
+    expose:
+      - "80"
+
+networks:
+  envoymesh: {}
