@@ -2,13 +2,21 @@ package discovery
 
 import (
 	"context"
+	"fmt"
+	"log"
+
 	"github.com/davecgh/go-spew/spew"
 	xdspb "github.com/envoyproxy/go-control-plane/envoy/api/v2"
 	corepb "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
+	endpb "github.com/envoyproxy/go-control-plane/envoy/api/v2/endpoint"
+	lispb "github.com/envoyproxy/go-control-plane/envoy/api/v2/listener"
+	routepb "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
+	hcmpb "github.com/envoyproxy/go-control-plane/envoy/config/filter/network/http_connection_manager/v2"
 	"github.com/envoyproxy/go-control-plane/pkg/cache"
 	xds "github.com/envoyproxy/go-control-plane/pkg/server"
+	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/duration"
-	"log"
 )
 
 type discoveryServerCallbacks struct {
@@ -52,6 +60,98 @@ func (l logger) Errorf(format string, args ...interface{}) { log.Printf(format, 
 func NewDiscoveryServer() xds.Server {
 	var clusters, endpoints, routes, listeners, runtimes []cache.Resource
 
+	//   - address:
+	//       socket_address:
+	//         address: 0.0.0.0
+	//         port_value: 80
+	//     filter_chains:
+	//     - filters:
+	//       - name: envoy.filters.network.http_connection_manager
+	//         typed_config:
+	//           "@type": type.googleapis.com/envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager
+	//           codec_type: auto
+	//           stat_prefix: ingress_http
+	//           route_config:
+	//             name: local_route
+	//             virtual_hosts:
+	//             - name: backend
+	//               domains:
+	//               - "*"
+	//               routes:
+	//               - match:
+	//                   prefix: "/service/1"
+	//                 route:
+	//                   cluster: service1
+	//               - match:
+	//                   prefix: "/service/2"
+	//                 route:
+	//                   cluster: service2
+	//           http_filters:
+	//           - name: envoy.router
+	//             typed_config: {}
+
+	// HTTP filter configuration
+	manager := &hcmpb.HttpConnectionManager{
+		CodecType:  hcmpb.HttpConnectionManager_AUTO,
+		StatPrefix: "ingress_http",
+		RouteSpecifier: &hcmpb.HttpConnectionManager_RouteConfig{
+			RouteConfig: &xdspb.RouteConfiguration{
+				Name: "local_route",
+				VirtualHosts: []*routepb.VirtualHost{{
+					Name:    "backend",
+					Domains: []string{"*"},
+					Routes: []*routepb.Route{{
+						Name: "",
+						Match: &routepb.RouteMatch{
+							PathSpecifier: &routepb.RouteMatch_Prefix{
+								Prefix: "/service/1",
+							},
+						},
+						Action: &routepb.Route_Route{
+							Route: &routepb.RouteAction{
+								ClusterSpecifier: &routepb.RouteAction_Cluster{
+									Cluster: "service1",
+								},
+							},
+						},
+					}},
+				}},
+			},
+		},
+		HttpFilters: []*hcmpb.HttpFilter{{
+			Name: wellknown.Router,
+		}},
+	}
+	pbst, err := ptypes.MarshalAny(manager)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("%s\n", pbst)
+
+	listeners = []cache.Resource{
+		&xdspb.Listener{
+			Address: &corepb.Address{
+				Address: &corepb.Address_SocketAddress{
+					SocketAddress: &corepb.SocketAddress{
+						Address: "0.0.0.0",
+						PortSpecifier: &corepb.SocketAddress_PortValue{
+							PortValue: 80,
+						},
+					},
+				},
+			},
+			FilterChains: []*lispb.FilterChain{{
+				Filters: []*lispb.Filter{{
+					Name: wellknown.HTTPConnectionManager,
+					ConfigType: &lispb.Filter_TypedConfig{
+						TypedConfig: pbst,
+					},
+				}},
+			}},
+		},
+	}
+
 	//   - name: service1
 	//    connect_timeout: 0.25s
 	//    type: strict_dns
@@ -77,13 +177,35 @@ func NewDiscoveryServer() xds.Server {
 			Http2ProtocolOptions: &corepb.Http2ProtocolOptions{},
 			LoadAssignment: &xdspb.ClusterLoadAssignment{
 				ClusterName: "service1",
+				Endpoints: []*endpb.LocalityLbEndpoints{
+					&endpb.LocalityLbEndpoints{
+						LbEndpoints: []*endpb.LbEndpoint{
+							&endpb.LbEndpoint{
+								HostIdentifier: &endpb.LbEndpoint_Endpoint{
+									Endpoint: &endpb.Endpoint{
+										Address: &corepb.Address{
+											Address: &corepb.Address_SocketAddress{
+												SocketAddress: &corepb.SocketAddress{
+													Address: "service1",
+													PortSpecifier: &corepb.SocketAddress_PortValue{
+														PortValue: 80,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
 
 	snapshotCache := cache.NewSnapshotCache(false, cache.IDHash{}, &logger{})
-	snapshot := cache.NewSnapshot("1.0", endpoints, clusters, routes, listeners, runtimes)
-	_ = snapshotCache.SetSnapshot("node1", snapshot)
+	snapshot := cache.NewSnapshot("2.0", endpoints, clusters, routes, listeners, runtimes)
+	_ = snapshotCache.SetSnapshot("ingressgateway", snapshot)
 
 	server := xds.NewServer(context.Background(), snapshotCache, newCallbacks())
 

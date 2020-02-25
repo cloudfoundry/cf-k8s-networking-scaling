@@ -1,6 +1,6 @@
 ---
 node:
-  id: router~10.68.1.8~istio-ingressgateway-86647dc686-fsz4p.istio-system~istio-system.svc.cluster.local
+  id: ingressgateway
   cluster: istio-ingressgateway
   locality:
     region: us-west1
