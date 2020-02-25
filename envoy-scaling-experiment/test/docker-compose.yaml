@@ -38,6 +38,7 @@ services:
       - ./service-envoy.yaml:/etc/service-envoy.yaml
     networks:
       envoymesh:
+        ipv4_address: "172.28.1.1"
         aliases:
           - service1
     environment:
@@ -61,4 +62,8 @@ services:
       - "80"
 
 networks:
-  envoymesh: {}
+  envoymesh:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16

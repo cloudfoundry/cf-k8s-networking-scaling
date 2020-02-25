@@ -60,6 +60,32 @@ func (l logger) Errorf(format string, args ...interface{}) { log.Printf(format, 
 func NewDiscoveryServer() xds.Server {
 	var clusters, endpoints, routes, listeners, runtimes []cache.Resource
 
+	// RDS configuration
+	routes = []cache.Resource{
+		&xdspb.RouteConfiguration{
+			Name: "route.1",
+			VirtualHosts: []*routepb.VirtualHost{{
+				Name:    "backend",
+				Domains: []string{"*"},
+				Routes: []*routepb.Route{{
+					Name: "",
+					Match: &routepb.RouteMatch{
+						PathSpecifier: &routepb.RouteMatch_Prefix{
+							Prefix: "/service/1",
+						},
+					},
+					Action: &routepb.Route_Route{
+						Route: &routepb.RouteAction{
+							ClusterSpecifier: &routepb.RouteAction_Cluster{
+								Cluster: "service1",
+							},
+						},
+					},
+				}},
+			}},
+		},
+	}
+
 	//   - address:
 	//       socket_address:
 	//         address: 0.0.0.0
@@ -94,28 +120,14 @@ func NewDiscoveryServer() xds.Server {
 	manager := &hcmpb.HttpConnectionManager{
 		CodecType:  hcmpb.HttpConnectionManager_AUTO,
 		StatPrefix: "ingress_http",
-		RouteSpecifier: &hcmpb.HttpConnectionManager_RouteConfig{
-			RouteConfig: &xdspb.RouteConfiguration{
-				Name: "local_route",
-				VirtualHosts: []*routepb.VirtualHost{{
-					Name:    "backend",
-					Domains: []string{"*"},
-					Routes: []*routepb.Route{{
-						Name: "",
-						Match: &routepb.RouteMatch{
-							PathSpecifier: &routepb.RouteMatch_Prefix{
-								Prefix: "/service/1",
-							},
-						},
-						Action: &routepb.Route_Route{
-							Route: &routepb.RouteAction{
-								ClusterSpecifier: &routepb.RouteAction_Cluster{
-									Cluster: "service1",
-								},
-							},
-						},
-					}},
-				}},
+		RouteSpecifier: &hcmpb.HttpConnectionManager_Rds{
+			Rds: &hcmpb.Rds{
+				ConfigSource: &corepb.ConfigSource{
+					ConfigSourceSpecifier: &corepb.ConfigSource_Ads{
+						Ads: &corepb.AggregatedConfigSource{},
+					},
+				},
+				RouteConfigName: "route.1",
 			},
 		},
 		HttpFilters: []*hcmpb.HttpFilter{{
@@ -166,31 +178,20 @@ func NewDiscoveryServer() xds.Server {
 	//              socket_address:
 	//                address: service1
 	//                port_value: 80
-	clusters = []cache.Resource{
-		&xdspb.Cluster{
-			Name: "service1",
-			ConnectTimeout: &duration.Duration{
-				Seconds: 1,
-			},
-			ClusterDiscoveryType: &xdspb.Cluster_Type{Type: xdspb.Cluster_STRICT_DNS},
-			LbPolicy:             xdspb.Cluster_ROUND_ROBIN,
-			Http2ProtocolOptions: &corepb.Http2ProtocolOptions{},
-			LoadAssignment: &xdspb.ClusterLoadAssignment{
-				ClusterName: "service1",
-				Endpoints: []*endpb.LocalityLbEndpoints{
-					&endpb.LocalityLbEndpoints{
-						LbEndpoints: []*endpb.LbEndpoint{
-							&endpb.LbEndpoint{
-								HostIdentifier: &endpb.LbEndpoint_Endpoint{
-									Endpoint: &endpb.Endpoint{
-										Address: &corepb.Address{
-											Address: &corepb.Address_SocketAddress{
-												SocketAddress: &corepb.SocketAddress{
-													Address: "service1",
-													PortSpecifier: &corepb.SocketAddress_PortValue{
-														PortValue: 80,
-													},
-												},
+	endpoints = []cache.Resource{&xdspb.ClusterLoadAssignment{
+		ClusterName: "service1",
+		Endpoints: []*endpb.LocalityLbEndpoints{
+			&endpb.LocalityLbEndpoints{
+				LbEndpoints: []*endpb.LbEndpoint{
+					&endpb.LbEndpoint{
+						HostIdentifier: &endpb.LbEndpoint_Endpoint{
+							Endpoint: &endpb.Endpoint{
+								Address: &corepb.Address{
+									Address: &corepb.Address_SocketAddress{
+										SocketAddress: &corepb.SocketAddress{
+											Address: "172.28.1.1",
+											PortSpecifier: &corepb.SocketAddress_PortValue{
+												PortValue: 80,
 											},
 										},
 									},
@@ -199,12 +200,31 @@ func NewDiscoveryServer() xds.Server {
 						},
 					},
 				},
+			}},
+	}}
+
+	clusters = []cache.Resource{
+		&xdspb.Cluster{
+			Name: "service1",
+			ConnectTimeout: &duration.Duration{
+				Seconds: 1,
+			},
+			ClusterDiscoveryType: &xdspb.Cluster_Type{Type: xdspb.Cluster_EDS},
+			LbPolicy:             xdspb.Cluster_ROUND_ROBIN,
+			Http2ProtocolOptions: &corepb.Http2ProtocolOptions{},
+			EdsClusterConfig: &xdspb.Cluster_EdsClusterConfig{
+				ServiceName: "service1",
+				EdsConfig: &corepb.ConfigSource{
+					ConfigSourceSpecifier: &corepb.ConfigSource_Ads{
+						Ads: &corepb.AggregatedConfigSource{},
+					},
+				},
 			},
 		},
 	}
 
 	snapshotCache := cache.NewSnapshotCache(false, cache.IDHash{}, &logger{})
-	snapshot := cache.NewSnapshot("2.0", endpoints, clusters, routes, listeners, runtimes)
+	snapshot := cache.NewSnapshot("2.7", endpoints, clusters, routes, listeners, runtimes)
 	_ = snapshotCache.SetSnapshot("ingressgateway", snapshot)
 
 	server := xds.NewServer(context.Background(), snapshotCache, newCallbacks())
