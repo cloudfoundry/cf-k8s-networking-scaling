@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	xdspb "github.com/envoyproxy/go-control-plane/envoy/api/v2"
@@ -17,48 +18,96 @@ import (
 	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/duration"
+	opentracing "github.com/opentracing/opentracing-go"
+	openlog "github.com/opentracing/opentracing-go/log"
 )
 
 type discoveryServerCallbacks struct {
+	reqSpan    map[string]opentracing.Span
+	streamSpan opentracing.Span
 }
 
-func (d discoveryServerCallbacks) OnStreamOpen(ctx context.Context, streamID int64, url string) error {
+func (d *discoveryServerCallbacks) OnStreamOpen(ctx context.Context, streamID int64, url string) error {
 	log.Printf("Callback: OnStreamOpen: streamId = %d, url = %s\n\n", streamID, url)
+	d.streamSpan = opentracing.GlobalTracer().StartSpan("onStreamOpen")
+	d.streamSpan.SetTag("streamID", streamID)
 	return nil
 }
 
-func (d discoveryServerCallbacks) OnStreamClosed(streamID int64) {
+func (d *discoveryServerCallbacks) OnStreamClosed(streamID int64) {
 	log.Printf("Callback: OnStreamClosed: streamId = %d\n\n", streamID)
+	if d.streamSpan != nil {
+		d.streamSpan.Finish()
+	} else {
+		log.Printf("No streamSpan for %d\n", streamID)
+	}
 }
 
-func (d discoveryServerCallbacks) OnStreamRequest(streamID int64, req *xdspb.DiscoveryRequest) error {
+func (d *discoveryServerCallbacks) OnStreamRequest(streamID int64, req *xdspb.DiscoveryRequest) error {
 	log.Printf("Callback: OnStreamRequest: streamId = %d\nreq = %s\n\n", streamID, spew.Sdump(*req))
+	span := d.streamSpan.Tracer().StartSpan(
+		"onStreamRequest",
+		opentracing.ChildOf(d.streamSpan.Context()))
+	span.SetTag("streamID", streamID)
+	span.SetTag("typeUrl", req.TypeUrl)
+	span.SetTag("nonce", req.ResponseNonce)
+	span.SetTag("resourceNames", req.ResourceNames)
+	d.streamSpan.LogFields(
+		openlog.String("requestVersion", req.VersionInfo),
+		openlog.String("event", "request"),
+	)
+	d.reqSpan[req.ResponseNonce] = span
+
 	return nil
 }
 
-func (d discoveryServerCallbacks) OnStreamResponse(streamID int64, req *xdspb.DiscoveryRequest, out *xdspb.DiscoveryResponse) {
+func (d *discoveryServerCallbacks) OnStreamResponse(streamID int64, req *xdspb.DiscoveryRequest, out *xdspb.DiscoveryResponse) {
 	log.Printf("Callback: OnStreamResponse: streamId = %d\nreq = %s\nout = %s\n\n", streamID, spew.Sdump(*req), spew.Sdump(*out))
+	span := d.reqSpan[req.ResponseNonce]
+	span.SetTag("request_nonce", req.ResponseNonce)
+	span.SetTag("response_nonce", out.Nonce)
+	span.Finish()
+	d.reqSpan[req.ResponseNonce] = nil
 }
 
-func (d discoveryServerCallbacks) OnFetchRequest(ctx context.Context, req *xdspb.DiscoveryRequest) error {
+func (d *discoveryServerCallbacks) OnFetchRequest(ctx context.Context, req *xdspb.DiscoveryRequest) error {
 	log.Printf("Callback: OnFetchRequest: \nreq = %s\n\n", spew.Sdump(*req))
 	return nil
 }
 
-func (d discoveryServerCallbacks) OnFetchResponse(req *xdspb.DiscoveryRequest, res *xdspb.DiscoveryResponse) {
+func (d *discoveryServerCallbacks) OnFetchResponse(req *xdspb.DiscoveryRequest, res *xdspb.DiscoveryResponse) {
 	log.Printf("Callback: OnFetchResponse: \nreq = %s\nres = %s\n\n", spew.Sdump(*req), spew.Sdump(*res))
 }
 
 type logger struct {
 }
 
-func (l logger) Debugf(format string, args ...interface{}) { log.Printf(format, args...) }
-func (l logger) Infof(format string, args ...interface{})  { log.Printf(format, args...) }
-func (l logger) Warnf(format string, args ...interface{})  { log.Printf(format, args...) }
-func (l logger) Errorf(format string, args ...interface{}) { log.Printf(format, args...) }
+func (l logger) Debugf(format string, args ...interface{}) { log.Printf("snapshot: "+format, args...) }
+func (l logger) Infof(format string, args ...interface{})  { log.Printf("snapshot: "+format, args...) }
+func (l logger) Warnf(format string, args ...interface{})  { log.Printf("snapshot: "+format, args...) }
+func (l logger) Errorf(format string, args ...interface{}) { log.Printf("snapshot: "+format, args...) }
 
 func NewDiscoveryServer() xds.Server {
+	snapshot := createSnapshot(getVersion())
+	snapshotCache := cache.NewSnapshotCache(false, cache.IDHash{}, &logger{})
+	_ = snapshotCache.SetSnapshot("ingressgateway", snapshot)
+
+	server := xds.NewServer(context.Background(), snapshotCache, newCallbacks())
+
+	return server
+}
+
+func newCallbacks() *discoveryServerCallbacks {
+	return &discoveryServerCallbacks{
+		reqSpan: make(map[string]opentracing.Span),
+	}
+}
+
+func createSnapshot(version string) cache.Snapshot {
 	var clusters, endpoints, routes, listeners, runtimes []cache.Resource
+
+	span := opentracing.GlobalTracer().StartSpan("createSnapshot")
+	defer span.Finish()
 
 	// RDS configuration
 	routes = []cache.Resource{
@@ -72,6 +121,20 @@ func NewDiscoveryServer() xds.Server {
 					Match: &routepb.RouteMatch{
 						PathSpecifier: &routepb.RouteMatch_Prefix{
 							Prefix: "/service/1",
+						},
+					},
+					Action: &routepb.Route_Route{
+						Route: &routepb.RouteAction{
+							ClusterSpecifier: &routepb.RouteAction_Cluster{
+								Cluster: "service1",
+							},
+						},
+					},
+				}, {
+					Name: "",
+					Match: &routepb.RouteMatch{
+						PathSpecifier: &routepb.RouteMatch_Prefix{
+							Prefix: "/service/2",
 						},
 					},
 					Action: &routepb.Route_Route{
@@ -138,8 +201,6 @@ func NewDiscoveryServer() xds.Server {
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Printf("%s\n", pbst)
 
 	listeners = []cache.Resource{
 		&xdspb.Listener{
@@ -223,15 +284,10 @@ func NewDiscoveryServer() xds.Server {
 		},
 	}
 
-	snapshotCache := cache.NewSnapshotCache(false, cache.IDHash{}, &logger{})
-	snapshot := cache.NewSnapshot("2.7", endpoints, clusters, routes, listeners, runtimes)
-	_ = snapshotCache.SetSnapshot("ingressgateway", snapshot)
-
-	server := xds.NewServer(context.Background(), snapshotCache, newCallbacks())
-
-	return server
+	span.SetTag("version", version)
+	return cache.NewSnapshot(version, endpoints, clusters, routes, listeners, runtimes)
 }
 
-func newCallbacks() *discoveryServerCallbacks {
-	return &discoveryServerCallbacks{}
+func getVersion() string {
+	return fmt.Sprintf("%d", time.Now().Unix())
 }

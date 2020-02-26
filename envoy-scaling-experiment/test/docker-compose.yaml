@@ -1,19 +1,81 @@
 version: "3.7"
 services:
+  jaeger-collector:
+    image: jaegertracing/jaeger-collector
+    command: ["--cassandra.keyspace=jaeger_v1_dc1", "--cassandra.servers=cassandra", "--collector.zipkin.http-port=9411"]
+    ports:
+    - "14269"
+    - "14268:14268"
+    - "14267"
+    - "14250"
+    - "9411:9411"
+    restart: on-failure
+    networks:
+      - default
+      - envoymesh
+    depends_on:
+    - cassandra-schema
+
+  jaeger-query:
+    image: jaegertracing/jaeger-query
+    command: ["--cassandra.keyspace=jaeger_v1_dc1", "--cassandra.servers=cassandra"]
+    ports:
+    - "16686:16686"
+    - "16687"
+    expose:
+    - "16686"
+    networks:
+      - default
+      - envoymesh
+    restart: on-failure
+    depends_on:
+    - cassandra-schema
+
+  jaeger-agent:
+    image: jaegertracing/jaeger-agent
+    command: ["--reporter.grpc.host-port=jaeger-collector:14250"]
+    ports:
+    - "5775:5775/udp"
+    - "6831:6831/udp"
+    - "6832:6832/udp"
+    - "5778:5778"
+    restart: on-failure
+    networks:
+      - default
+      - envoymesh
+    depends_on:
+    - jaeger-collector
+
+  cassandra:
+    image: cassandra:3.9
+    networks:
+      - default
+
+  cassandra-schema:
+    image: jaegertracing/jaeger-cassandra-schema
+    networks:
+      - default
+    depends_on:
+    - cassandra
+
   gateway:
     build:
       context: .
       dockerfile: Dockerfile-gateway
     volumes:
       - ./envoy-bootstrap.yaml:/etc/bootstrap.yaml
+      - ~/scalers.networking.family.crt:/etc/certs/our.crt
+      - ~/scalers.networking.family.key:/etc/certs/our.key
     networks:
       - envoymesh
     expose:
       - "80"
+      - "8001"
       - "15090"
       - "15000"
     ports:
       - "8000:80"
+      - "8001:8001"
       - "15090:15090"
       - "15000:15000"
 
@@ -62,8 +124,10 @@ services:
       - "80"
 
 networks:
+  default: {}
   envoymesh:
     ipam:
       driver: default
       config:
         - subnet: 172.28.0.0/16
+
