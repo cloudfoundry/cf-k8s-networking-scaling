@@ -18,6 +18,7 @@ import (
 	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/duration"
+	wrappers "github.com/golang/protobuf/ptypes/wrappers"
 	opentracing "github.com/opentracing/opentracing-go"
 	openlog "github.com/opentracing/opentracing-go/log"
 )
@@ -120,21 +121,7 @@ func createSnapshot(version string) cache.Snapshot {
 					Name: "",
 					Match: &routepb.RouteMatch{
 						PathSpecifier: &routepb.RouteMatch_Prefix{
-							Prefix: "/service/1",
-						},
-					},
-					Action: &routepb.Route_Route{
-						Route: &routepb.RouteAction{
-							ClusterSpecifier: &routepb.RouteAction_Cluster{
-								Cluster: "service1",
-							},
-						},
-					},
-				}, {
-					Name: "",
-					Match: &routepb.RouteMatch{
-						PathSpecifier: &routepb.RouteMatch_Prefix{
-							Prefix: "/service/2",
+							Prefix: "/",
 						},
 					},
 					Action: &routepb.Route_Route{
@@ -183,6 +170,8 @@ func createSnapshot(version string) cache.Snapshot {
 	manager := &hcmpb.HttpConnectionManager{
 		CodecType:  hcmpb.HttpConnectionManager_AUTO,
 		StatPrefix: "ingress_http",
+		// Tracing:           &hcmpb.HttpConnectionManager_Tracing{},
+		GenerateRequestId: &wrappers.BoolValue{Value: true},
 		RouteSpecifier: &hcmpb.HttpConnectionManager_Rds{
 			Rds: &hcmpb.Rds{
 				ConfigSource: &corepb.ConfigSource{
@@ -239,6 +228,11 @@ func createSnapshot(version string) cache.Snapshot {
 	//              socket_address:
 	//                address: service1
 	//                port_value: 80
+
+	service1Address, err := ResolveAddr("service1")
+	if err != nil {
+		log.Panicf("Cannot resolve addr for service1: %s", err)
+	}
 	endpoints = []cache.Resource{&xdspb.ClusterLoadAssignment{
 		ClusterName: "service1",
 		Endpoints: []*endpb.LocalityLbEndpoints{
@@ -250,7 +244,7 @@ func createSnapshot(version string) cache.Snapshot {
 								Address: &corepb.Address{
 									Address: &corepb.Address_SocketAddress{
 										SocketAddress: &corepb.SocketAddress{
-											Address: "172.28.1.1",
+											Address: service1Address,
 											PortSpecifier: &corepb.SocketAddress_PortValue{
 												PortValue: 80,
 											},

@@ -1,14 +1,16 @@
 version: "3.7"
 services:
   jaeger-collector:
-    image: jaegertracing/jaeger-collector
-    command: ["--cassandra.keyspace=jaeger_v1_dc1", "--cassandra.servers=cassandra", "--collector.zipkin.http-port=9411"]
+    image: jaegertracing/jaeger-collector:1.15
+    command: ["--cassandra.keyspace=jaeger_v1_dc1", "--cassandra.servers=cassandra", "--collector.zipkin.http-port=9411", "--log-level=debug"]
     ports:
     - "14269"
     - "14268:14268"
     - "14267"
     - "14250"
     - "9411:9411"
+    expose:
+    - "9411"
     restart: on-failure
     networks:
       - default
@@ -17,7 +19,7 @@ services:
     - cassandra-schema
 
   jaeger-query:
-    image: jaegertracing/jaeger-query
+    image: jaegertracing/jaeger-query:1.15
     command: ["--cassandra.keyspace=jaeger_v1_dc1", "--cassandra.servers=cassandra"]
     ports:
     - "16686:16686"
@@ -32,13 +34,15 @@ services:
     - cassandra-schema
 
   jaeger-agent:
-    image: jaegertracing/jaeger-agent
+    image: jaegertracing/jaeger-agent:1.15
     command: ["--reporter.grpc.host-port=jaeger-collector:14250"]
     ports:
     - "5775:5775/udp"
     - "6831:6831/udp"
     - "6832:6832/udp"
     - "5778:5778"
+    expose:
+      - "6831"
     restart: on-failure
     networks:
       - default
@@ -52,7 +56,7 @@ services:
       - default
 
   cassandra-schema:
-    image: jaegertracing/jaeger-cassandra-schema
+    image: jaegertracing/jaeger-cassandra-schema:1.15
     networks:
       - default
     depends_on:
@@ -97,7 +101,7 @@ services:
       context: .
       dockerfile: Dockerfile-service
     volumes:
-      - ./service-envoy.yaml:/etc/service-envoy.yaml
+      - ./service1-envoy.yml:/etc/service-envoy.yaml
     networks:
       envoymesh:
         ipv4_address: "172.28.1.1"
@@ -113,7 +117,7 @@ services:
       context: .
       dockerfile: Dockerfile-service
     volumes:
-      - ./service-envoy.yaml:/etc/service-envoy.yaml
+      - ./service2-envoy.yml:/etc/service-envoy.yaml
     networks:
       envoymesh:
         aliases:

@@ -33,6 +33,19 @@ static_resources:
             protocol: TCP
             address: jaeger-query
             port_value: 16686
+    - name: jaeger-collector
+      connect_timeout: 1s
+      type: strict_dns
+      lb_policy: round_robin
+      load_assignment:
+        cluster_name: jaeger-collector
+        endpoints:
+        - lb_endpoints:
+          - endpoint:
+              address:
+                socket_address:
+                  address: jaeger-collector
+                  port_value: 9411
     - name: prometheus_stats
       type: STATIC
       connect_timeout: 0.250s
@@ -66,16 +79,6 @@ static_resources:
         tcp_keepalive:
           keepalive_time: 300
       http2_protocol_options: {}
-    - name: zipkin
-      type: STRICT_DNS
-      dns_refresh_rate: 300s
-      dns_lookup_family: V4_ONLY
-      connect_timeout: 1s
-      lb_policy: ROUND_ROBIN
-      hosts:
-        - socket_address:
-            address: zipkin.istio-system
-            port_value: 9411
   listeners:
     - address:
         socket_address:
@@ -88,6 +91,7 @@ static_resources:
               config:
                 codec_type: AUTO
                 stat_prefix: stats
+                generate_request_id: true
                 route_config:
                   virtual_hosts:
                     - name: jaeger
@@ -134,11 +138,3 @@ static_resources:
                             cluster: prometheus_stats
                 http_filters:
                   name: envoy.router
-tracing:
-  http:
-    name: envoy.zipkin
-    config:
-      collector_cluster: zipkin
-      collector_endpoint: "/api/v1/spans"
-      trace_id_128bit: 'true'
-      shared_span_context: 'false'

@@ -1,5 +1,0 @@
-FROM envoyproxy/envoy-dev:8f2515a19bdcc75bea0bfd7016231a7661d0be6e
-
-RUN apt-get update && apt-get -q install -y \
-    curl
-CMD /usr/local/bin/envoy -c /etc/bootstrap.yaml --service-cluster ingressgateway

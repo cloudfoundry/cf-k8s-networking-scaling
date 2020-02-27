@@ -1,0 +1,52 @@
+---
+piVersion: v1
+kind: ServiceAccount
+metadata:
+    name: navigator
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: navigator
+  name: navigator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: navigator
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: navigator
+    spec:
+      serviceAccountName: navigator
+      containers:
+      - image: gcr.io/cf-routing-desserts/navigator:latest
+        name: navigator
+        resources: {}
+        env:
+          - name: PORT
+            value: 8080
+        ports:
+          - containerPort: 8080
+            name: grpc
+            protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: navigator
+  name: navigator
+spec:
+  ports:
+  - name: grpc
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: navigator
+  type: ClusterIP
+

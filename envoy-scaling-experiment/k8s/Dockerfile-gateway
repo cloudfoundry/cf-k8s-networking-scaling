@@ -1,0 +1,19 @@
+FROM istio/proxyv2:1.5.0-beta.3 as istio
+FROM ubuntu:16.04
+
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install -y ca-certificates curl \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/* \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /etc/envoy
+
+COPY --from=istio /usr/local/bin/envoy /usr/local/bin/envoy
+
+ENV JAEGER_VERSION=v0.4.2
+RUN curl -Lo /usr/local/lib/libjaegertracing_plugin.so https://github.com/jaegertracing/jaeger-client-cpp/releases/download/${JAEGER_VERSION}/libjaegertracing_plugin.linux_amd64.so
+
+CMD /usr/local/bin/envoy -c /etc/bootstrap.yaml --service-cluster ingressgateway

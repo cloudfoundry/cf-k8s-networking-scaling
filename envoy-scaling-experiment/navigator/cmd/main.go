@@ -18,7 +18,7 @@ import (
 
 func main() {
 	port := os.Getenv("PORT")
-	tracer, closer := initJaeger("hello-world")
+	tracer, closer := initJaeger("navigator")
 	defer closer.Close()
 	opentracing.SetGlobalTracer(tracer)
 
