@@ -266,7 +266,6 @@ func createSnapshot(version string) cache.Snapshot {
 			},
 			ClusterDiscoveryType: &xdspb.Cluster_Type{Type: xdspb.Cluster_EDS},
 			LbPolicy:             xdspb.Cluster_ROUND_ROBIN,
-			Http2ProtocolOptions: &corepb.Http2ProtocolOptions{},
 			EdsClusterConfig: &xdspb.Cluster_EdsClusterConfig{
 				ServiceName: "service1",
 				EdsConfig: &corepb.ConfigSource{

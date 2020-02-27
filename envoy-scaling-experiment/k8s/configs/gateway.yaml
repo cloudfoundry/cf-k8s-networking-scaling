@@ -159,6 +159,8 @@ spec:
       containers:
       - image: gcr.io/cf-routing-desserts/envoy:latest
         name: gateway
+        command:
+          - "/usr/local/bin/envoy"
         args:
           - "-c"
           - "/etc/envoy/config/envoy-bootstrap.yaml"
