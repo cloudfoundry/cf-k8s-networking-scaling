@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 
 	"code.cloudfoundry.org/navigator/discovery"
 	"google.golang.org/grpc"
@@ -18,6 +19,15 @@ import (
 
 func main() {
 	port := os.Getenv("PORT")
+	numAppsStr := os.Getenv("NUM_APPS")
+	if numAppsStr == "" {
+		log.Fatal("NUM_APPS is not set")
+	}
+	numApps, err := strconv.Atoi(numAppsStr)
+	if err != nil {
+		log.Fatalf("NUM_APPS %q is not a number", numAppsStr)
+	}
+
 	tracer, closer := initJaeger("navigator")
 	defer closer.Close()
 	opentracing.SetGlobalTracer(tracer)

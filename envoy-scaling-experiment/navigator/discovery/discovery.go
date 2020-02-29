@@ -21,6 +21,7 @@ import (
 	wrappers "github.com/golang/protobuf/ptypes/wrappers"
 	opentracing "github.com/opentracing/opentracing-go"
 	openlog "github.com/opentracing/opentracing-go/log"
+	"github.com/pkg/errors"
 )
 
 type discoveryServerCallbacks struct {
@@ -88,14 +89,96 @@ func (l logger) Infof(format string, args ...interface{})  { log.Printf("snapsho
 func (l logger) Warnf(format string, args ...interface{})  { log.Printf("snapshot: "+format, args...) }
 func (l logger) Errorf(format string, args ...interface{}) { log.Printf("snapshot: "+format, args...) }
 
-func NewDiscoveryServer() xds.Server {
-	snapshot := createSnapshot(getVersion())
+type DiscoverServer struct {
+	xds.Server
+	cache cache.Cache
+	ingressPort uint32
+}
+
+func NewDiscoveryServer(ingressPort uint32) xds.Server {
+	// snapshot := createSnapshot(getVersion())
 	snapshotCache := cache.NewSnapshotCache(false, cache.IDHash{}, &logger{})
-	_ = snapshotCache.SetSnapshot("ingressgateway", snapshot)
+	// _ = snapshotCache.SetSnapshot("ingressgateway", snapshot)
 
-	server := xds.NewServer(context.Background(), snapshotCache, newCallbacks())
+	ds := &DiscoverServer{
+		ingressPort: ingressPort,
+		cache:  snapshotCache,
+		Server: xds.NewServer(context.Background(), snapshotCache, newCallbacks()),
+	}
+	return ds
+}
 
-	return server
+func (ds *DiscoverServer) UpdateRoutes(clusters []*xdspb.Cluster, loadAssignments []*xdspb.ClusterLoadAssignment, virtualHosts []*routepb.VirtualHost) error {
+	var endpoints, routes, listeners, runtimes []cache.Resource
+
+	span := opentracing.GlobalTracer().StartSpan("createSnapshot")
+	defer span.Finish()
+
+	// RDS
+	routes = []cache.Resource{
+		&xdspb.RouteConfiguration{
+			Name:         "ingress_80",
+			VirtualHosts: virtualHosts,
+		},
+	}
+
+	// HTTP filter configuration
+	manager := &hcmpb.HttpConnectionManager{
+		CodecType:         hcmpb.HttpConnectionManager_AUTO,
+		StatPrefix:        "ingress_http",
+		GenerateRequestId: &wrappers.BoolValue{Value: true},
+		RouteSpecifier: &hcmpb.HttpConnectionManager_Rds{
+			Rds: &hcmpb.Rds{
+				ConfigSource: &corepb.ConfigSource{
+					ConfigSourceSpecifier: &corepb.ConfigSource_Ads{
+						Ads: &corepb.AggregatedConfigSource{},
+					},
+				},
+				RouteConfigName: "ingress_80",
+			},
+		},
+		HttpFilters: []*hcmpb.HttpFilter{{
+			Name: wellknown.Router,
+		}},
+	}
+	pbst, err := ptypes.MarshalAny(manager)
+	if err != nil {
+		return errors.Wrap(err, "cannot create HttpConnectionManager")
+	}
+
+	listeners = []cache.Resource{
+		&xdspb.Listener{
+			Address: &corepb.Address{
+				Address: &corepb.Address_SocketAddress{
+					SocketAddress: &corepb.SocketAddress{
+						Address: "0.0.0.0",
+						PortSpecifier: &corepb.SocketAddress_PortValue{
+							PortValue: ds.ingressPort,
+						},
+					},
+				},
+			},
+			FilterChains: []*lispb.FilterChain{{
+				Filters: []*lispb.Filter{{
+					Name: wellknown.HTTPConnectionManager,
+					ConfigType: &lispb.Filter_TypedConfig{
+						TypedConfig: pbst,
+					},
+				}},
+			}},
+		},
+	}
+
+	// EDS
+	endpoints = make([]cache.Resource, len(loadAssignments))
+	for i := range loadAssignments {
+		endpoints[i] = cache.Resource(loadAssignments[i])	
+	}
+
+	// TOOD: convert clusters to []cache.Resource, add version
+	span.SetTag("version", version)
+	return cache.NewSnapshot(version, endpoints, clusters, routes, listeners, runtimes)
+
 }
 
 func newCallbacks() *discoveryServerCallbacks {
@@ -113,7 +196,7 @@ func createSnapshot(version string) cache.Snapshot {
 	// RDS configuration
 	routes = []cache.Resource{
 		&xdspb.RouteConfiguration{
-			Name: "route.1",
+			Name: "ingress_80",
 			VirtualHosts: []*routepb.VirtualHost{{
 				Name:    "backend",
 				Domains: []string{"*"},
@@ -179,7 +262,7 @@ func createSnapshot(version string) cache.Snapshot {
 						Ads: &corepb.AggregatedConfigSource{},
 					},
 				},
-				RouteConfigName: "route.1",
+				RouteConfigName: "ingress_80",
 			},
 		},
 		HttpFilters: []*hcmpb.HttpFilter{{
