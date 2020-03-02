@@ -77,7 +77,7 @@ iwlog "GENERATE TEST PODS"
 kubectl apply -f testpods.yaml
 
 # wait for all httpbins to be ready
-kubectl wait --for=condition=available deployment $(kubectl get deployments | grep httpbin | awk '{print $1}')
+kubectl wait --for=condition=podscheduled pods $(kubectl get pods | grep httpbin | awk '{print $1}')
 
 sleep 30 # wait for cluster to not be in a weird state after pushing so many pods
          # and get data for cluster without CP load or configuration as control

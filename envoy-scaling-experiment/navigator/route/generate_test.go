@@ -27,7 +27,7 @@ func TestGenerateVirtualHosts(t *testing.T) {
 	}{
 		{
 			name:   "No Routes",
-			config: route.Config{HostnameFormat: "", Numbers: []uint64{}},
+			config: route.Config{HostnameFormat: "", Numbers: []int{}},
 			expected: &GenerateVirtualHostsResult{
 				vh:  []*routepb.VirtualHost(nil),
 				err: nil,
@@ -35,7 +35,7 @@ func TestGenerateVirtualHosts(t *testing.T) {
 		},
 		{
 			name:   "One Route",
-			config: route.Config{HostnameFormat: "", Numbers: []uint64{1}},
+			config: route.Config{HostnameFormat: "", Numbers: []int{1}},
 			expected: &GenerateVirtualHostsResult{
 				vh: []*routepb.VirtualHost{
 					{
@@ -63,7 +63,7 @@ func TestGenerateVirtualHosts(t *testing.T) {
 		},
 		{
 			name:   "More Routes",
-			config: route.Config{HostnameFormat: "", Numbers: []uint64{1, 100, 500}},
+			config: route.Config{HostnameFormat: "", Numbers: []int{1, 100, 500}},
 			expected: &GenerateVirtualHostsResult{
 				vh: []*routepb.VirtualHost{
 					{
@@ -157,7 +157,7 @@ func TestGenerateClusters(t *testing.T) {
 	}{
 		{
 			name:   "No Clusters",
-			config: route.Config{HostnameFormat: "", Numbers: []uint64{}},
+			config: route.Config{HostnameFormat: "", Numbers: []int{}},
 			expected: &GenerateClustersResult{
 				cl:  []*xdspb.Cluster(nil),
 				err: nil,
@@ -165,7 +165,7 @@ func TestGenerateClusters(t *testing.T) {
 		},
 		{
 			name:   "One Cluster",
-			config: route.Config{HostnameFormat: "", Numbers: []uint64{1}},
+			config: route.Config{HostnameFormat: "", Numbers: []int{1}},
 			expected: &GenerateClustersResult{
 				cl: []*xdspb.Cluster{
 					{
@@ -190,7 +190,7 @@ func TestGenerateClusters(t *testing.T) {
 		},
 		{
 			name:   "Multiple Clusters",
-			config: route.Config{HostnameFormat: "", Numbers: []uint64{1, 100}},
+			config: route.Config{HostnameFormat: "", Numbers: []int{1, 100}},
 			expected: &GenerateClustersResult{
 				cl: []*xdspb.Cluster{
 					{
@@ -266,7 +266,7 @@ func TestGenerateLoadAssignments(t *testing.T) {
 		{
 			name: "No Endpoints",
 			config: route.Config{
-				HostnameFormat: "%d.example.com", Numbers: []uint64{}, Port: 80,
+				HostnameFormat: "%d.example.com", Numbers: []int{}, Port: 80,
 			},
 			expected: &GenerateLoadAssignmentsResult{
 				clas: []*xdspb.ClusterLoadAssignment(nil),
@@ -277,7 +277,7 @@ func TestGenerateLoadAssignments(t *testing.T) {
 			name: "One Endpoint",
 			config: route.Config{
 				HostnameFormat: "%d.example.com",
-				Numbers:        []uint64{1},
+				Numbers:        []int{1},
 				Port:           80,
 				Resolver:       fakeStaticResolver,
 			},
@@ -316,7 +316,7 @@ func TestGenerateLoadAssignments(t *testing.T) {
 			name: "Invalid hostname",
 			config: route.Config{
 				HostnameFormat: "%d.example.com",
-				Numbers:        []uint64{1},
+				Numbers:        []int{1},
 				Port:           80,
 				Resolver:       fakeErroringResolver,
 			},

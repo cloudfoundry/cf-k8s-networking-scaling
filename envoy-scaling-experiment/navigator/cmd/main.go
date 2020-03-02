@@ -18,37 +18,33 @@ import (
 )
 
 func main() {
-	port := os.Getenv("PORT")
-	numAppsStr := os.Getenv("NUM_APPS")
-	if numAppsStr == "" {
-		log.Fatal("NUM_APPS is not set")
-	}
-	numApps, err := strconv.Atoi(numAppsStr)
-	if err != nil {
-		log.Fatalf("NUM_APPS %q is not a number", numAppsStr)
-	}
+	xdsPort, httpPort, serviceHostnameFormat, servicePort := parseArgs()
 
 	tracer, closer := initJaeger("navigator")
 	defer closer.Close()
 	opentracing.SetGlobalTracer(tracer)
 
 	log.Println("Creating ADS server")
-	server := discovery.NewDiscoveryServer()
+	server := discovery.NewDiscoveryServer(80)
 	log.Println("Creating gRPS server")
 	grpcServer := grpc.NewServer()
-	log.Printf("Trying to bind port %s\n", port)
-	lis, _ := net.Listen("tcp", ":"+port)
+	log.Printf("Trying to bind port %s\n", xdsPort)
+	lis, _ := net.Listen("tcp", ":"+xdsPort)
 
 	log.Println("Registering ADS")
 	ads.RegisterAggregatedDiscoveryServiceServer(grpcServer, server)
 
+	managementServer := discovery.NewManagmentServer(serviceHostnameFormat, servicePort, server)
+
 	go func() {
 		log.Println("Serving gRPS server")
-		if err := grpcServer.Serve(lis); err != nil {
-			// error handling
-		}
+		log.Fatal(grpcServer.Serve(lis))
 	}()
 
+	go func() {
+		log.Println("Serving HTTP managmenet server")
+		log.Fatal(managementServer.ListenAndServe(fmt.Sprintf(":%s", httpPort)))
+	}()
 	select {}
 }
 
@@ -68,4 +64,32 @@ func initJaeger(service string) (opentracing.Tracer, io.Closer) {
 		panic(fmt.Sprintf("ERROR: cannot init Jaeger: %v\n", err))
 	}
 	return tracer, closer
+}
+
+func parseArgs() (xdsPort, httpPort, serviceHostnameFormat string, servicePort int) {
+	xdsPort = os.Getenv("XDS_PORT")
+	if xdsPort == "" {
+		log.Fatal("XDS_PORT is required")
+	}
+	httpPort = os.Getenv("HTTP_PORT")
+	if httpPort == "" {
+		log.Fatal("HTTP_PORT is required")
+	}
+	serviceHostnameFormat = os.Getenv("SERVICE_HOSTNAME_FORMAT")
+	if serviceHostnameFormat == "" {
+		log.Fatal("SERVICE_HOSTNAME_FORMAT is required")
+	}
+	servicePortStr := os.Getenv("SERVICE_PORT")
+	if servicePortStr == "" {
+		log.Fatal("SERVICE_PORT is required")
+	}
+	servicePort, err := strconv.Atoi(servicePortStr)
+	if err != nil {
+		log.Fatal("SERVICE_PORT is not a number")
+	}
+	if servicePort <= 0 {
+		log.Fatal("SERVICE_PORT must be positive number")
+	}
+
+	return
 }

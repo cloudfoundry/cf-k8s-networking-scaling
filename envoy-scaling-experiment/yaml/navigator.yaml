@@ -28,13 +28,20 @@ spec:
         name: navigator
         resources: {}
         env:
-          - name: PORT
+          - name: XDS_PORT
             value: "8080"
-          - name: NUM_APPS
-            value: $NUM_APPS
+          - name: HTTP_PORT
+            value: "8081"
+          - name: SERVICE_HOSTNAME_FORMAT
+            value: "httpbin-%d.default.svc.cluster.local"
+          - name: SERVICE_PORT
+            value: "8000"
         ports:
           - containerPort: 8080
             name: grpc
+            protocol: TCP
+          - containerPort: 8081
+            name: http
             protocol: TCP
 ---
 apiVersion: v1
@@ -49,6 +56,10 @@ spec:
     port: 8080
     protocol: TCP
     targetPort: 8080
+  - name: http
+    port: 8081
+    protocol: TCP
+    targetPort: 8081
   selector:
     app: navigator
   type: ClusterIP

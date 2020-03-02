@@ -4,4 +4,4 @@
 
 source ../vars.sh
 
-kubetpl -s NUM_APPS=$NUM_APPS -f ../yaml/navigator.yaml | kubectl -n system -f -
+kubetpl render ../yaml/navigator.yaml | kubectl apply -n system -f -

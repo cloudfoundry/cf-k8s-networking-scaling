@@ -2,6 +2,7 @@ package route
 
 import (
 	"fmt"
+	"log"
 
 	"code.cloudfoundry.org/navigator/resolve"
 	xdspb "github.com/envoyproxy/go-control-plane/envoy/api/v2"
@@ -20,7 +21,7 @@ type Resolver interface {
 type Config struct {
 	HostnameFormat string
 	Port           uint32
-	Numbers        []uint64
+	Numbers        []int
 	Resolver
 }
 
@@ -30,8 +31,8 @@ type RouteConfig struct {
 	VirutalHosts    []*routepb.VirtualHost
 }
 
-func Generate(hostnameFormat string, port uint32, numbers []uint64) (*RouteConfig, error) {
-	numbersSeen := map[uint64]struct{}{}
+func Generate(hostnameFormat string, port uint32, numbers []int) (*RouteConfig, error) {
+	numbersSeen := map[int]struct{}{}
 
 	for _, n := range numbers {
 		if _, seen := numbersSeen[n]; seen {
@@ -123,6 +124,8 @@ func (c *Config) GenerateLoadAssignments() (endps []*xdspb.ClusterLoadAssignment
 		addr, err := c.Resolver.ResolveAddr(hostname)
 		if err != nil {
 			return nil, fmt.Errorf("cannot resolve addr for service: %s, because: %s", hostname, err)
+		} else {
+			log.Printf("resolved addr for service %s to %s", hostname, addr)
 		}
 
 		endps = append(endps, &xdspb.ClusterLoadAssignment{
@@ -153,15 +156,15 @@ func (c *Config) GenerateLoadAssignments() (endps []*xdspb.ClusterLoadAssignment
 	return
 }
 
-func (c *Config) clusterName(n uint64) string {
+func (c *Config) clusterName(n int) string {
 	return fmt.Sprintf("service.%d", n)
 }
 
-func (c *Config) clusterHostname(n uint64) string {
+func (c *Config) clusterHostname(n int) string {
 	return fmt.Sprintf(c.HostnameFormat, n)
 }
 
-func (c *Config) domain(n uint64) string {
+func (c *Config) domain(n int) string {
 	return fmt.Sprintf("%d.example.com", n)
 }
 

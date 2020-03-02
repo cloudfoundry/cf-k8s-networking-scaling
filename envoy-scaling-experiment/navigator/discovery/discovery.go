@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	xdspb "github.com/envoyproxy/go-control-plane/envoy/api/v2"
 	corepb "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
-	endpb "github.com/envoyproxy/go-control-plane/envoy/api/v2/endpoint"
 	lispb "github.com/envoyproxy/go-control-plane/envoy/api/v2/listener"
 	routepb "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
 	hcmpb "github.com/envoyproxy/go-control-plane/envoy/config/filter/network/http_connection_manager/v2"
@@ -17,59 +17,64 @@ import (
 	xds "github.com/envoyproxy/go-control-plane/pkg/server"
 	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/duration"
 	wrappers "github.com/golang/protobuf/ptypes/wrappers"
 	opentracing "github.com/opentracing/opentracing-go"
-	openlog "github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
 )
 
+type DiscoverServer struct {
+	xds.Server
+	cache       cache.SnapshotCache
+	configSpan  opentracing.Span
+	ingressPort uint32
+}
+
+func NewDiscoveryServer(ingressPort uint32) *DiscoverServer {
+	snapshotCache := cache.NewSnapshotCache(true, cache.IDHash{}, &logger{})
+
+	ds := &DiscoverServer{
+		ingressPort: ingressPort,
+		cache:       snapshotCache,
+	}
+	ds.Server = xds.NewServer(context.Background(), snapshotCache, newCallbacks(ds))
+	_ = ds.UpdateRoutes(nil, nil, nil)
+	return ds
+}
+
 type discoveryServerCallbacks struct {
-	reqSpan    map[string]opentracing.Span
-	streamSpan opentracing.Span
+	discoverServer *DiscoverServer
+}
+
+func newCallbacks(ds *DiscoverServer) *discoveryServerCallbacks {
+	return &discoveryServerCallbacks{
+		discoverServer: ds,
+	}
 }
 
 func (d *discoveryServerCallbacks) OnStreamOpen(ctx context.Context, streamID int64, url string) error {
 	log.Printf("Callback: OnStreamOpen: streamId = %d, url = %s\n\n", streamID, url)
-	d.streamSpan = opentracing.GlobalTracer().StartSpan("onStreamOpen")
-	d.streamSpan.SetTag("streamID", streamID)
 	return nil
 }
 
 func (d *discoveryServerCallbacks) OnStreamClosed(streamID int64) {
 	log.Printf("Callback: OnStreamClosed: streamId = %d\n\n", streamID)
-	if d.streamSpan != nil {
-		d.streamSpan.Finish()
-	} else {
-		log.Printf("No streamSpan for %d\n", streamID)
-	}
 }
 
 func (d *discoveryServerCallbacks) OnStreamRequest(streamID int64, req *xdspb.DiscoveryRequest) error {
 	log.Printf("Callback: OnStreamRequest: streamId = %d\nreq = %s\n\n", streamID, spew.Sdump(*req))
-	span := d.streamSpan.Tracer().StartSpan(
-		"onStreamRequest",
-		opentracing.ChildOf(d.streamSpan.Context()))
-	span.SetTag("streamID", streamID)
-	span.SetTag("typeUrl", req.TypeUrl)
-	span.SetTag("nonce", req.ResponseNonce)
-	span.SetTag("resourceNames", req.ResourceNames)
-	d.streamSpan.LogFields(
-		openlog.String("requestVersion", req.VersionInfo),
-		openlog.String("event", "request"),
-	)
-	d.reqSpan[req.ResponseNonce] = span
-
 	return nil
 }
 
 func (d *discoveryServerCallbacks) OnStreamResponse(streamID int64, req *xdspb.DiscoveryRequest, out *xdspb.DiscoveryResponse) {
 	log.Printf("Callback: OnStreamResponse: streamId = %d\nreq = %s\nout = %s\n\n", streamID, spew.Sdump(*req), spew.Sdump(*out))
-	span := d.reqSpan[req.ResponseNonce]
-	span.SetTag("request_nonce", req.ResponseNonce)
-	span.SetTag("response_nonce", out.Nonce)
-	span.Finish()
-	d.reqSpan[req.ResponseNonce] = nil
+	typename := out.TypeUrl[strings.LastIndex(out.TypeUrl, ".")+1:]
+	d.discoverServer.configSpan.LogKV(
+		"event", fmt.Sprintf("Sending %s", typename),
+		"type", out.TypeUrl,
+		"version", out.VersionInfo,
+		"full_response", out.String())
+	// This will cause duplicate span ID warning in Jaeger but it will merge all logs together for the last span
+	d.discoverServer.configSpan.Finish()
 }
 
 func (d *discoveryServerCallbacks) OnFetchRequest(ctx context.Context, req *xdspb.DiscoveryRequest) error {
@@ -89,33 +94,11 @@ func (l logger) Infof(format string, args ...interface{})  { log.Printf("snapsho
 func (l logger) Warnf(format string, args ...interface{})  { log.Printf("snapshot: "+format, args...) }
 func (l logger) Errorf(format string, args ...interface{}) { log.Printf("snapshot: "+format, args...) }
 
-type DiscoverServer struct {
-	xds.Server
-	cache cache.Cache
-	ingressPort uint32
-}
-
-func NewDiscoveryServer(ingressPort uint32) xds.Server {
-	// snapshot := createSnapshot(getVersion())
-	snapshotCache := cache.NewSnapshotCache(false, cache.IDHash{}, &logger{})
-	// _ = snapshotCache.SetSnapshot("ingressgateway", snapshot)
-
-	ds := &DiscoverServer{
-		ingressPort: ingressPort,
-		cache:  snapshotCache,
-		Server: xds.NewServer(context.Background(), snapshotCache, newCallbacks()),
-	}
-	return ds
-}
-
 func (ds *DiscoverServer) UpdateRoutes(clusters []*xdspb.Cluster, loadAssignments []*xdspb.ClusterLoadAssignment, virtualHosts []*routepb.VirtualHost) error {
-	var endpoints, routes, listeners, runtimes []cache.Resource
-
-	span := opentracing.GlobalTracer().StartSpan("createSnapshot")
-	defer span.Finish()
+	var clustersCache, endpointsCache, routesCache, listenersCache, runtimesCache []cache.Resource
 
 	// RDS
-	routes = []cache.Resource{
+	routesCache = []cache.Resource{
 		&xdspb.RouteConfiguration{
 			Name:         "ingress_80",
 			VirtualHosts: virtualHosts,
@@ -146,7 +129,7 @@ func (ds *DiscoverServer) UpdateRoutes(clusters []*xdspb.Cluster, loadAssignment
 		return errors.Wrap(err, "cannot create HttpConnectionManager")
 	}
 
-	listeners = []cache.Resource{
+	listenersCache = []cache.Resource{
 		&xdspb.Listener{
 			Address: &corepb.Address{
 				Address: &corepb.Address_SocketAddress{
@@ -170,198 +153,30 @@ func (ds *DiscoverServer) UpdateRoutes(clusters []*xdspb.Cluster, loadAssignment
 	}
 
 	// EDS
-	endpoints = make([]cache.Resource, len(loadAssignments))
+	endpointsCache = make([]cache.Resource, len(loadAssignments))
 	for i := range loadAssignments {
-		endpoints[i] = cache.Resource(loadAssignments[i])	
+		endpointsCache[i] = cache.Resource(loadAssignments[i])
 	}
 
-	// TOOD: convert clusters to []cache.Resource, add version
-	span.SetTag("version", version)
-	return cache.NewSnapshot(version, endpoints, clusters, routes, listeners, runtimes)
-
-}
-
-func newCallbacks() *discoveryServerCallbacks {
-	return &discoveryServerCallbacks{
-		reqSpan: make(map[string]opentracing.Span),
-	}
-}
-
-func createSnapshot(version string) cache.Snapshot {
-	var clusters, endpoints, routes, listeners, runtimes []cache.Resource
-
-	span := opentracing.GlobalTracer().StartSpan("createSnapshot")
-	defer span.Finish()
-
-	// RDS configuration
-	routes = []cache.Resource{
-		&xdspb.RouteConfiguration{
-			Name: "ingress_80",
-			VirtualHosts: []*routepb.VirtualHost{{
-				Name:    "backend",
-				Domains: []string{"*"},
-				Routes: []*routepb.Route{{
-					Name: "",
-					Match: &routepb.RouteMatch{
-						PathSpecifier: &routepb.RouteMatch_Prefix{
-							Prefix: "/",
-						},
-					},
-					Action: &routepb.Route_Route{
-						Route: &routepb.RouteAction{
-							ClusterSpecifier: &routepb.RouteAction_Cluster{
-								Cluster: "service1",
-							},
-						},
-					},
-				}},
-			}},
-		},
+	// EDS
+	clustersCache = make([]cache.Resource, len(clusters))
+	for i := range clusters {
+		clustersCache[i] = cache.Resource(clusters[i])
 	}
 
-	//   - address:
-	//       socket_address:
-	//         address: 0.0.0.0
-	//         port_value: 80
-	//     filter_chains:
-	//     - filters:
-	//       - name: envoy.filters.network.http_connection_manager
-	//         typed_config:
-	//           "@type": type.googleapis.com/envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager
-	//           codec_type: auto
-	//           stat_prefix: ingress_http
-	//           route_config:
-	//             name: local_route
-	//             virtual_hosts:
-	//             - name: backend
-	//               domains:
-	//               - "*"
-	//               routes:
-	//               - match:
-	//                   prefix: "/service/1"
-	//                 route:
-	//                   cluster: service1
-	//               - match:
-	//                   prefix: "/service/2"
-	//                 route:
-	//                   cluster: service2
-	//           http_filters:
-	//           - name: envoy.router
-	//             typed_config: {}
+	version := getVersion()
+	snapshot := cache.NewSnapshot(version, endpointsCache, clustersCache, routesCache, listenersCache, runtimesCache)
 
-	// HTTP filter configuration
-	manager := &hcmpb.HttpConnectionManager{
-		CodecType:  hcmpb.HttpConnectionManager_AUTO,
-		StatPrefix: "ingress_http",
-		// Tracing:           &hcmpb.HttpConnectionManager_Tracing{},
-		GenerateRequestId: &wrappers.BoolValue{Value: true},
-		RouteSpecifier: &hcmpb.HttpConnectionManager_Rds{
-			Rds: &hcmpb.Rds{
-				ConfigSource: &corepb.ConfigSource{
-					ConfigSourceSpecifier: &corepb.ConfigSource_Ads{
-						Ads: &corepb.AggregatedConfigSource{},
-					},
-				},
-				RouteConfigName: "ingress_80",
-			},
-		},
-		HttpFilters: []*hcmpb.HttpFilter{{
-			Name: wellknown.Router,
-		}},
+	// Tell Jaeger that we are serving a new config version
+	if ds.configSpan != nil {
+		ds.configSpan.Finish()
 	}
-	pbst, err := ptypes.MarshalAny(manager)
-	if err != nil {
-		panic(err)
-	}
+	ds.configSpan = opentracing.GlobalTracer().StartSpan("createSnapshot")
+	ds.configSpan.SetTag("version", version)
+	err = ds.cache.SetSnapshot("ingressgateway", snapshot) // never returns an error
 
-	listeners = []cache.Resource{
-		&xdspb.Listener{
-			Address: &corepb.Address{
-				Address: &corepb.Address_SocketAddress{
-					SocketAddress: &corepb.SocketAddress{
-						Address: "0.0.0.0",
-						PortSpecifier: &corepb.SocketAddress_PortValue{
-							PortValue: 80,
-						},
-					},
-				},
-			},
-			FilterChains: []*lispb.FilterChain{{
-				Filters: []*lispb.Filter{{
-					Name: wellknown.HTTPConnectionManager,
-					ConfigType: &lispb.Filter_TypedConfig{
-						TypedConfig: pbst,
-					},
-				}},
-			}},
-		},
-	}
+	return err
 
-	//   - name: service1
-	//    connect_timeout: 0.25s
-	//    type: strict_dns
-	//    lb_policy: round_robin
-	//    http2_protocol_options: {}
-	//    load_assignment:
-	//      cluster_name: service1
-	//      endpoints:
-	//      - lb_endpoints:
-	//        - endpoint:
-	//            address:
-	//              socket_address:
-	//                address: service1
-	//                port_value: 80
-
-	service1Address, err := ResolveAddr("service1")
-	if err != nil {
-		log.Panicf("Cannot resolve addr for service1: %s", err)
-	}
-	endpoints = []cache.Resource{&xdspb.ClusterLoadAssignment{
-		ClusterName: "service1",
-		Endpoints: []*endpb.LocalityLbEndpoints{
-			&endpb.LocalityLbEndpoints{
-				LbEndpoints: []*endpb.LbEndpoint{
-					&endpb.LbEndpoint{
-						HostIdentifier: &endpb.LbEndpoint_Endpoint{
-							Endpoint: &endpb.Endpoint{
-								Address: &corepb.Address{
-									Address: &corepb.Address_SocketAddress{
-										SocketAddress: &corepb.SocketAddress{
-											Address: service1Address,
-											PortSpecifier: &corepb.SocketAddress_PortValue{
-												PortValue: 80,
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			}},
-	}}
-
-	clusters = []cache.Resource{
-		&xdspb.Cluster{
-			Name: "service1",
-			ConnectTimeout: &duration.Duration{
-				Seconds: 1,
-			},
-			ClusterDiscoveryType: &xdspb.Cluster_Type{Type: xdspb.Cluster_EDS},
-			LbPolicy:             xdspb.Cluster_ROUND_ROBIN,
-			EdsClusterConfig: &xdspb.Cluster_EdsClusterConfig{
-				ServiceName: "service1",
-				EdsConfig: &corepb.ConfigSource{
-					ConfigSourceSpecifier: &corepb.ConfigSource_Ads{
-						Ads: &corepb.AggregatedConfigSource{},
-					},
-				},
-			},
-		},
-	}
-
-	span.SetTag("version", version)
-	return cache.NewSnapshot(version, endpoints, clusters, routes, listeners, runtimes)
 }
 
 func getVersion() string {

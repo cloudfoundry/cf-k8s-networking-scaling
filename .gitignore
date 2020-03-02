@@ -1,5 +1,7 @@
 **/*.rs.bk
 
+testpods.y*ml
+
 .DS_Store
 
 .RData
