@@ -68,11 +68,21 @@ func (d *discoveryServerCallbacks) OnStreamRequest(streamID int64, req *xdspb.Di
 func (d *discoveryServerCallbacks) OnStreamResponse(streamID int64, req *xdspb.DiscoveryRequest, out *xdspb.DiscoveryResponse) {
 	log.Printf("Callback: OnStreamResponse: streamId = %d\nreq = %s\nout = %s\n\n", streamID, spew.Sdump(*req), spew.Sdump(*out))
 	typename := out.TypeUrl[strings.LastIndex(out.TypeUrl, ".")+1:]
+	if typename == "Listener" {
+		return
+	}
+
+	resourceNames := parseResourcesNames(out.Resources, out.TypeUrl)
+	routeNumbers := parseRouteNumbers(resourceNames)
+
 	d.discoverServer.configSpan.LogKV(
 		"event", fmt.Sprintf("Sending %s", typename),
-		"type", out.TypeUrl,
+		"type", typename,
+		"typeurl", out.TypeUrl,
 		"version", out.VersionInfo,
-		"full_response", out.String())
+		"full_response", out.String(),
+		"routes", routeNumbers,
+	)
 	// This will cause duplicate span ID warning in Jaeger but it will merge all logs together for the last span
 	d.discoverServer.configSpan.Finish()
 }
