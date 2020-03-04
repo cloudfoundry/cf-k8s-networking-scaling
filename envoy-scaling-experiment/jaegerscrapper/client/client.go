@@ -18,6 +18,10 @@ type Trace struct {
 	Spans   []*Span `json:"spans"`
 }
 
+func (t *Trace) GetID() string {
+	return t.TraceID
+}
+
 type Span struct {
 	SpanID        string `json:"spanID"`
 	OperationName string `json:"operationName"`
@@ -25,6 +29,10 @@ type Span struct {
 	Duration      int    `json:"duration"`
 	Tags          []*Tag `json:"tags"`
 	Logs          []*Log `json:"logs"`
+}
+
+func (s *Span) GetID() string {
+	return s.SpanID
 }
 
 type Tag struct {

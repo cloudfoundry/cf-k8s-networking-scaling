@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	xds "github.com/envoyproxy/go-control-plane/pkg/server"
 	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 	"github.com/golang/protobuf/ptypes"
+	anypb "github.com/golang/protobuf/ptypes/any"
 	wrappers "github.com/golang/protobuf/ptypes/wrappers"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
@@ -72,8 +74,15 @@ func (d *discoveryServerCallbacks) OnStreamResponse(streamID int64, req *xdspb.D
 		return
 	}
 
-	resourceNames := parseResourcesNames(out.Resources, out.TypeUrl)
-	routeNumbers := parseRouteNumbers(resourceNames)
+	resourceNames, err := parseResourcesNames(out.Resources, out.TypeUrl)
+	if err != nil {
+		log.Fatalf("cannot parse resource names, err: %s", err)
+	}
+
+	routeNumbers, err := parseRouteNumbers(resourceNames)
+	if err != nil {
+		log.Fatalf("cannot parse resource number, err: %s", err)
+	}
 
 	d.discoverServer.configSpan.LogKV(
 		"event", fmt.Sprintf("Sending %s", typename),
@@ -81,7 +90,7 @@ func (d *discoveryServerCallbacks) OnStreamResponse(streamID int64, req *xdspb.D
 		"typeurl", out.TypeUrl,
 		"version", out.VersionInfo,
 		"full_response", out.String(),
-		"routes", routeNumbers,
+		"routes", serializeRouteNumbers(routeNumbers),
 	)
 	// This will cause duplicate span ID warning in Jaeger but it will merge all logs together for the last span
 	d.discoverServer.configSpan.Finish()
@@ -168,7 +177,7 @@ func (ds *DiscoverServer) UpdateRoutes(clusters []*xdspb.Cluster, loadAssignment
 		endpointsCache[i] = cache.Resource(loadAssignments[i])
 	}
 
-	// EDS
+	// CDS
 	clustersCache = make([]cache.Resource, len(clusters))
 	for i := range clusters {
 		clustersCache[i] = cache.Resource(clusters[i])
@@ -191,4 +200,78 @@ func (ds *DiscoverServer) UpdateRoutes(clusters []*xdspb.Cluster, loadAssignment
 
 func getVersion() string {
 	return fmt.Sprintf("%d", time.Now().Unix())
+}
+
+func parseResourcesNames(marshaledResources []*anypb.Any, typeURL string) ([]string, error) {
+	names := make([]string, len(marshaledResources))
+
+	for i, marshaledResource := range marshaledResources {
+		// TODO: create ones
+		resource, err := createResource(typeURL)
+		if err != nil {
+			return nil, err
+		}
+		err = ptypes.UnmarshalAny(marshaledResource, resource)
+		if err != nil {
+			return nil, err
+		}
+
+		// For Route we don't care about RouteConfiguration name, we care only about virutal hosts names
+		if typeURL == cache.RouteType {
+			return getRouteResourceRoutesNames(resource.(*xdspb.RouteConfiguration)), nil
+		}
+
+		names[i] = cache.GetResourceName(resource)
+	}
+
+	return names, nil
+}
+
+func createResource(typeURL string) (cache.Resource, error) {
+	switch typeURL {
+	case cache.EndpointType:
+		return &xdspb.ClusterLoadAssignment{}, nil
+	case cache.ClusterType:
+		return &xdspb.Cluster{}, nil
+	case cache.RouteType:
+		return &xdspb.RouteConfiguration{}, nil
+	case cache.ListenerType:
+		return &xdspb.Listener{}, nil
+	default:
+		return nil, fmt.Errorf("%s not supported", typeURL)
+	}
+}
+
+func getRouteResourceRoutesNames(route *xdspb.RouteConfiguration) []string {
+	names := make([]string, len(route.VirtualHosts))
+
+	for i, vh := range route.VirtualHosts {
+		names[i] = vh.GetName()
+	}
+
+	return names
+}
+
+// parseRouteNumbers returns slice of integers which are parsed by stripping last number after last dot in the input string
+func parseRouteNumbers(resources []string) ([]int, error) {
+	nums := make([]int, len(resources))
+
+	for i, res := range resources {
+		numStr := res[strings.LastIndex(res, ".")+1:]
+		num, err := strconv.Atoi(numStr)
+		if err != nil {
+			return nil, err
+		}
+		nums[i] = num
+	}
+	return nums, nil
+}
+
+func serializeRouteNumbers(nums []int) string {
+	numsStr := make([]string, len(nums))
+	for i, n := range nums {
+		numsStr[i] = fmt.Sprintf("%d", n)
+	}
+
+	return strings.Join(numsStr, ",")
 }
