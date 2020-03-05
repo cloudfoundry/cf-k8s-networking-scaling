@@ -48,7 +48,7 @@ type Log struct {
 
 // http://35.223.181.191/api/traces?end=1583191141380000&limit=20&lookback=1h&maxDuration&minDuration&service=navigator&start=1583187541380000
 func Fetch(jaegerQueryAddr string) ([]byte, error) {
-	resp, err := http.Get(fmt.Sprintf("http://%s/api/traces?service=navigator&loopback=2d", jaegerQueryAddr))
+	resp, err := http.Get(fmt.Sprintf("http://%s/api/traces?service=navigator&loopback=2d&limit=100000000", jaegerQueryAddr))
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot fetch Jaeger query")
 	}

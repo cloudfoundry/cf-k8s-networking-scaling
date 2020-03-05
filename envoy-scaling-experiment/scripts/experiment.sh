@@ -29,7 +29,12 @@ echo "stamp,event" > importanttimes.csv
 # kubectl taint nodes $prometheusnode scalers.istio=prometheus:NoSchedule
 # kubectl label nodes $prometheusnode scalers.istio=prometheus
 
+iwlog "Installing system components"
 ./../scripts/install-system-components.sh
+
+export INGRESS_IP=$(kubectl -n system get services gateway -ojsonpath='{.status.loadBalancer.ingress[0].ip}')
+export INGRESS_PORT=80
+echo "INGRESS: $INGRESS_IP:$INGRESS_PORT"
 
 # TODO
 # schedule the dataplane pod
@@ -69,30 +74,44 @@ forever time_wait  >> time_wait.csv &
 # create data plane load with apib
 # ./../scripts/dataload.sh http://${GATEWAY_URL}/anything > dataload.csv 2>&1 &
 
-# TODO ?
-# podsalive &
+podsalive &
 
 iwlog "GENERATE TEST PODS"
 ./../scripts/generate-yaml.sh > testpods.yaml
 kubectl apply -f testpods.yaml
 
-# wait for all httpbins to be ready
+# wait for all httpbins to be scheduled
 kubectl wait --for=condition=podscheduled pods $(kubectl get pods | grep httpbin | awk '{print $1}')
 
 sleep 30 # wait for cluster to not be in a weird state after pushing so many pods
          # and get data for cluster without CP load or configuration as control
 
-iwlog "DEPLOYING CONTROL PLANE AND SETING UP ROUTES"
-./../scripts/deploy-control-plane.sh
+echo "stamp,route,status" > route-status.csv
+./../scripts/route-poller.sh >> route-status.csv &
 
-# TODO
-# iwlog "GENERATE CP LOAD"
-# ./../scripts/userfactory.sh > user.log # 2>&1 # run in foreground for now so we wait til they're done
+iwlog "GENERATE CP LOAD"
+# ensure port 8081 is free before forwarding to it
+kubectl port-forward -n system service/navigator :8081 > portforward.log & # so that we can reach the Navigator API
+sleep 5 # wait for port-forward
+navigator_port=$(cat portforward.log | grep -P -o "127.0.0.1:\d+" | cut -d":" -f2)
+wlog "forwarding Navigator API to localhost:${navigator_port}"
 
-# iwlog "CP LOAD COMPLETE"
+for i in $(seq 0 $(($NUM_APPS - 1)) ); do
+  wlog "creating route $i"
+  # create routes for httpbin 0 through $i via our Navigator API
+  response_code=$(curl -sS -XPOST http://localhost:${navigator_port}/set-routes -d '{"numbers":['$(seq -s',' 0 $i)']}' --write-out '%{http_code}' -o /tmp/navigator_output)
+  if [[ "${response_code}" != "200" ]]; then
+    echo "Navigator returned ${response_code}"
+    cat /tmp/navigator_output
+  fi
 
-# sleep 600 # wait for cluster to level out after CP load, gather data for cluster without
-#          # CP load but with lots of configuration
+  sleep $USER_DELAY
+done
+
+iwlog "CP LOAD COMPLETE"
+
+sleep 600 # wait for cluster to level out after CP load, gather data for cluster without
+          # CP load but with lots of configuration
 
 # stop monitors
 kill $(jobs -p)
@@ -100,17 +119,15 @@ kill $(jobs -p)
 iwlog "TEST COMPLETE"
 exit
 
-# TODO the rest
 # dump the list of nodes with their labels, only gotta do this once
 kubectl get nodes --show-labels | awk '{print $1","$2","$6}' > nodeswithlabels.csv
-kubectl get pods -o wide -n istio-system | awk '{print $1","$6","$7}' > instance2pod.csv
+kubectl get pods -o wide -n system | awk '{print $1","$6","$7}' > instance2pod.csv
 
 sleep 2 # let them quit
 # make extra sure they quit
 kill -9 $(jobs -p)
 
-# collate and graph
-./../interpret/target/debug/interpret user.log && Rscript ../graph.R
+# TODO Rscript ../graph.R
 
 wlog "=== TEARDOWN ===="
 

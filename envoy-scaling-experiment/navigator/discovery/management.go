@@ -53,22 +53,22 @@ func (s *ManagementServer) HandleSetRoutes(w http.ResponseWriter, req *http.Requ
 
 	err = json.Unmarshal(body, &payload)
 	if err != nil {
-		_, _ = w.Write([]byte(errors.Wrap(err, "cannot parse JSON").Error()))
 		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(errors.Wrap(err, "cannot parse JSON").Error()))
 		return
 	}
 
 	c, err := route.Generate(s.hostnameForat, uint32(s.port), payload.Numbers)
 	if err != nil {
-		_, _ = w.Write([]byte(errors.Wrap(err, "cannot create route config").Error()))
 		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(errors.Wrap(err, "cannot create route config").Error()))
 		return
 	}
 
 	err = s.xdsServer.UpdateRoutes(c.Clusters, c.LoadAssignments, c.VirutalHosts)
 	if err != nil {
-		_, _ = w.Write([]byte(errors.Wrap(err, "cannot update Discover Server routes").Error()))
 		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(errors.Wrap(err, "cannot update Discover Server routes").Error()))
 		return
 	}
 

@@ -76,7 +76,7 @@ func createEvent(l *Log) *Event {
 		case "routes":
 			event.RoutesStr = field.Value.(string)
 			event.Routes = mustParseRoutes(field.Value.(string))
-			if event.RoutesStr == "" {
+			if len(event.Routes) == 0 {
 				log.Printf("Warning: routes for event at %d are empty", event.Timestamp)
 			}
 		}
@@ -93,7 +93,7 @@ func mustParseRoutes(s string) []int {
 	for i, str := range routesStr {
 		n, err := strconv.Atoi(str)
 		if err != nil {
-			panic(err)
+			return routes
 		}
 		routes[i] = n
 	}

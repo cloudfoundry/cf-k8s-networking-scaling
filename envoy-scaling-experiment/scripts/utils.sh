@@ -5,9 +5,14 @@ udate ()
   date +%s%N
 }
 
+pst_time ()
+{
+  TZ=America/Los_Angeles date +%H:%M:%S
+}
+
 wlog ()
 {
-  echo "$(udate) $1"
+  echo "$(pst_time) $1"
 }
 
 iwlog ()

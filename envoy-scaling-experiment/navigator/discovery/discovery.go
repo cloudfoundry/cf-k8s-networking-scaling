@@ -114,60 +114,14 @@ func (l logger) Warnf(format string, args ...interface{})  { log.Printf("snapsho
 func (l logger) Errorf(format string, args ...interface{}) { log.Printf("snapshot: "+format, args...) }
 
 func (ds *DiscoverServer) UpdateRoutes(clusters []*xdspb.Cluster, loadAssignments []*xdspb.ClusterLoadAssignment, virtualHosts []*routepb.VirtualHost) error {
-	var clustersCache, endpointsCache, routesCache, listenersCache, runtimesCache []cache.Resource
+	var clustersCache, endpointsCache, routesCache, runtimesCache []cache.Resource
+	const nodeName = "ingressgateway"
 
 	// RDS
 	routesCache = []cache.Resource{
 		&xdspb.RouteConfiguration{
 			Name:         "ingress_80",
 			VirtualHosts: virtualHosts,
-		},
-	}
-
-	// HTTP filter configuration
-	manager := &hcmpb.HttpConnectionManager{
-		CodecType:         hcmpb.HttpConnectionManager_AUTO,
-		StatPrefix:        "ingress_http",
-		GenerateRequestId: &wrappers.BoolValue{Value: true},
-		RouteSpecifier: &hcmpb.HttpConnectionManager_Rds{
-			Rds: &hcmpb.Rds{
-				ConfigSource: &corepb.ConfigSource{
-					ConfigSourceSpecifier: &corepb.ConfigSource_Ads{
-						Ads: &corepb.AggregatedConfigSource{},
-					},
-				},
-				RouteConfigName: "ingress_80",
-			},
-		},
-		HttpFilters: []*hcmpb.HttpFilter{{
-			Name: wellknown.Router,
-		}},
-	}
-	pbst, err := ptypes.MarshalAny(manager)
-	if err != nil {
-		return errors.Wrap(err, "cannot create HttpConnectionManager")
-	}
-
-	listenersCache = []cache.Resource{
-		&xdspb.Listener{
-			Address: &corepb.Address{
-				Address: &corepb.Address_SocketAddress{
-					SocketAddress: &corepb.SocketAddress{
-						Address: "0.0.0.0",
-						PortSpecifier: &corepb.SocketAddress_PortValue{
-							PortValue: ds.ingressPort,
-						},
-					},
-				},
-			},
-			FilterChains: []*lispb.FilterChain{{
-				Filters: []*lispb.Filter{{
-					Name: wellknown.HTTPConnectionManager,
-					ConfigType: &lispb.Filter_TypedConfig{
-						TypedConfig: pbst,
-					},
-				}},
-			}},
 		},
 	}
 
@@ -184,7 +138,60 @@ func (ds *DiscoverServer) UpdateRoutes(clusters []*xdspb.Cluster, loadAssignment
 	}
 
 	version := getVersion()
-	snapshot := cache.NewSnapshot(version, endpointsCache, clustersCache, routesCache, listenersCache, runtimesCache)
+	var snapshot cache.Snapshot
+	prevSnapshot, err := ds.cache.GetSnapshot(nodeName)
+	if err != nil { // No prevous snapshot -> create new listeners
+		// HTTP filter configuration
+		manager := &hcmpb.HttpConnectionManager{
+			CodecType:         hcmpb.HttpConnectionManager_AUTO,
+			StatPrefix:        "ingress_http",
+			GenerateRequestId: &wrappers.BoolValue{Value: true},
+			RouteSpecifier: &hcmpb.HttpConnectionManager_Rds{
+				Rds: &hcmpb.Rds{
+					ConfigSource: &corepb.ConfigSource{
+						ConfigSourceSpecifier: &corepb.ConfigSource_Ads{
+							Ads: &corepb.AggregatedConfigSource{},
+						},
+					},
+					RouteConfigName: "ingress_80",
+				},
+			},
+			HttpFilters: []*hcmpb.HttpFilter{{
+				Name: wellknown.Router,
+			}},
+		}
+		pbst, err := ptypes.MarshalAny(manager)
+		if err != nil {
+			return errors.Wrap(err, "cannot create HttpConnectionManager")
+		}
+
+		listenersCache := []cache.Resource{
+			&xdspb.Listener{
+				Address: &corepb.Address{
+					Address: &corepb.Address_SocketAddress{
+						SocketAddress: &corepb.SocketAddress{
+							Address: "0.0.0.0",
+							PortSpecifier: &corepb.SocketAddress_PortValue{
+								PortValue: ds.ingressPort,
+							},
+						},
+					},
+				},
+				FilterChains: []*lispb.FilterChain{{
+					Filters: []*lispb.Filter{{
+						Name: wellknown.HTTPConnectionManager,
+						ConfigType: &lispb.Filter_TypedConfig{
+							TypedConfig: pbst,
+						},
+					}},
+				}},
+			},
+		}
+		snapshot = cache.NewSnapshot(version, endpointsCache, clustersCache, routesCache, listenersCache, runtimesCache)
+	} else { // Previous snapshot; preserve listeners
+		snapshot = cache.NewSnapshot(version, endpointsCache, clustersCache, routesCache, nil, runtimesCache)
+		snapshot.Resources[cache.Listener] = prevSnapshot.Resources[cache.Listener]
+	}
 
 	// Tell Jaeger that we are serving a new config version
 	if ds.configSpan != nil {
@@ -192,7 +199,7 @@ func (ds *DiscoverServer) UpdateRoutes(clusters []*xdspb.Cluster, loadAssignment
 	}
 	ds.configSpan = opentracing.GlobalTracer().StartSpan("createSnapshot")
 	ds.configSpan.SetTag("version", version)
-	err = ds.cache.SetSnapshot("ingressgateway", snapshot) // never returns an error
+	err = ds.cache.SetSnapshot(nodeName, snapshot) // never returns an error
 
 	return err
 
