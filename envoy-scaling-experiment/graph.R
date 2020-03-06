@@ -88,3 +88,33 @@ configs_sent =ggplot(xds) +
     theme(legend.position="bottom")
 
 ggsave(paste(filename, "config.png", sep=""), configs_sent)
+
+print("Latency between Config Sent and Route Working")
+scaleMicroToNano <- function(x, na.rm = FALSE) x * 10^3
+configs = xds %>% filter(Type == "Cluster") %>%
+  select(stamp=Timestamp, route=Routes) %>%
+  mutate_at("stamp", scaleMicroToNano) %>%
+  arrange(stamp, route) %>%
+  group_by(route) %>%  slice(1L) %>% ungroup()
+
+observations = routes %>% filter(status == "200") %>%
+  select(stamp, route) %>%
+  arrange(stamp, route) %>%
+  group_by(route) %>%  slice(1L) %>% ungroup()
+
+halfRoute = max(configs$route) / 2
+all.withtimes = left_join(configs, observations, by="route") %>%
+  filter(route < halfRoute) %>%
+  mutate(time_diff = stamp.y - stamp.x)
+
+ggplot(all.withtimes) +
+  labs(title="Latency from Config Sent to Route returns 200") +
+  xlab("Time (seconds)") +
+  scale_x_continuous(labels=secondsFromNanoseconds) +
+  ylab("Route Number") +
+  geom_point(mapping=aes(x=time_diff, y=route)) +
+  our_theme() %+replace%
+    theme(legend.position="bottom")
+
+ggsave(paste(filename, "latency.png", sep=""))
+
