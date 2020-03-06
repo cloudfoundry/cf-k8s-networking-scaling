@@ -20,7 +20,7 @@ zeroPoint = min(times$stamp)
 maxSec = max(times$stamp)
 
 ## Create time axis for experiment
-breaksFromZero <- seq(from=zeroPoint, to=maxSec, by=1 * 60 * 1000 * 1000 * 1000)
+breaksFromZero <- seq(from=zeroPoint, to=maxSec, by=5 * 60 * 1000 * 1000 * 1000)
 
 secondsFromZero <- function(x) {
   return (secondsFromNanoseconds(x - zeroPoint))
@@ -60,14 +60,14 @@ fiveSecondsInNanoseconds = 5 * 1000 * 1000 * 1000
 
 print("Graph Route Statuses")
 routes = read_csv("./route-status.csv", col_types=cols(status=col_factor()))
-
-route_status = experiment_time_x_axis(ggplot(filter(routes, status != "200")) +
+only_errors = filter(routes, status != "200")
+route_status = experiment_time_x_axis(ggplot(routes) +
   labs(title="Route Status over Time") +
   ylab("Route Number") +
   lines() +
   lineLabels() +
-  geom_point(mapping=aes(x=stamp, y=route, color=status), alpha = 0.75, size=0.2) +
-  scale_size_area() +
+  facet_wrap(vars(status), ncol=1) +
+  geom_point(mapping=aes(x=stamp, y=route, color=status), alpha = 0.5) +
   scale_colour_brewer(palette = "Set1") +
   our_theme() %+replace%
     theme(legend.position="bottom"))
@@ -76,7 +76,7 @@ ggsave(paste(filename, "routes.png", sep=""), route_status)
 
 print("Graph Configs Sent")
 xds = read_delim("./jaeger.csv", ";")
-xds = xds %>% separate_rows(Routes, convert = TRUE)
+xds = xds %>% separate_rows(Routes, convert = TRUE) # one row per observation of a route being configured
 configs_sent =ggplot(xds) +
   labs(title="Config Sent over Time") +
   ylab("Route Number") +
