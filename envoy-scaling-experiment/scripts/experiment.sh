@@ -7,6 +7,16 @@ source ../scripts/utils.sh
 
 CLUSTER_NAME=$1
 
+if [ $STEADY_STATE != 1 ]; then
+  wlog "Only steady-state load is supported at this time. Please set STEADY_STATE to 1."
+  exit 1
+fi
+
+if [ $NUM_USERS -gt $(($NUM_APPS / 2)) ]; then
+  wlog "For steady-state load, NUM_APPS ($NUM_APPS) must be double or more NUM_USERS ($NUM_USERS)."
+  exit 1
+fi
+
 echo "stamp,event" > importanttimes.csv
 
 ./../scripts/build-cluster.sh $CLUSTER_NAME
@@ -108,17 +118,29 @@ wlog "forwarding Navigator API to localhost:${navigator_port}"
 LAST_ROUTE=$(($NUM_APPS - 1))
 HALF_ROUTES=$(($NUM_APPS / 2))
 set_routes "$(seq -s',' $HALF_ROUTES $LAST_ROUTE)" # precreate second half
+
+# wait for a known-configured route to work
+url="$LAST_ROUTE.example.com"
+status=$(curl -sS -w "%{http_code}" -H "Host:${url}" http://$INGRESS_IP:80/status/200 2>> curlstuff/route-$LAST_ROUTE.log)
+while [ $status != "200" ]; do
+  status=$(curl -sS -w "%{http_code}" -H "Host:${url}" http://$INGRESS_IP:80/status/200 2>> curlstuff/route-$LAST_ROUTE.log)
+done
 sleep 30 # so we can see that setup worked on the graphs
 
 iwlog "GENERATE CP LOAD"
 
-for i in $(seq 0 $(($HALF_ROUTES - 1)) ); do
+for i in $(seq 0 $(($NUM_USERS - 1)) ); do
   wlog "creating route $i"
   set_routes "$(seq -s',' 0 $i),$(seq -s',' $(($HALF_ROUTES + $i)) $LAST_ROUTE)"
   sleep $USER_DELAY
 done
 
 iwlog "CP LOAD COMPLETE"
+
+sleep 10
+
+JAEGER_QUERY_IP=$(kubectl -n system get services jaeger-query -ojsonpath='{.status.loadBalancer.ingress[0].ip}')
+./../jaegerscrapper/bin/scrapper -csvPath ./jaeger.csv -jaegerQueryAddr $JAEGER_QUERY_IP
 
 sleep 600 # wait for cluster to level out after CP load, gather data for cluster without
           # CP load but with lots of configuration
@@ -131,9 +153,6 @@ iwlog "TEST COMPLETE"
 # dump the list of nodes with their labels, only gotta do this once
 kubectl get nodes --show-labels | awk '{print $1","$2","$6}' > nodeswithlabels.csv
 kubectl get pods -o wide -n system | awk '{print $1","$6","$7}' > instance2pod.csv
-
-export JAEGER_QUERY_IP=$(kubectl -n system get services jaeger-query -ojsonpath='{.status.loadBalancer.ingress[0].ip}')
-./../jaegerscrapper/bin/scrapper -csvPath /dev/stdout -jaegerQueryAddr $JAEGER_QUERY_IP
 
 sleep 2 # let them quit
 # make extra sure they quit
