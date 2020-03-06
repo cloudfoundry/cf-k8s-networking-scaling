@@ -89,22 +89,32 @@ sleep 30 # wait for cluster to not be in a weird state after pushing so many pod
 echo "stamp,route,status" > route-status.csv
 ./../scripts/route-poller.sh >> route-status.csv &
 
-iwlog "GENERATE CP LOAD"
+set_routes()
+{
+  response_code=$(curl -sS -XPOST http://localhost:${navigator_port}/set-routes -d "{\"numbers\":[$1]}" --write-out '%{http_code}' -o /tmp/navigator_output)
+  if [[ "${response_code}" != "200" ]]; then
+    echo "Navigator returned ${response_code}"
+    cat /tmp/navigator_output
+    echo
+  fi
+}
+
 # ensure port 8081 is free before forwarding to it
 kubectl port-forward -n system service/navigator :8081 > portforward.log & # so that we can reach the Navigator API
 sleep 5 # wait for port-forward
 navigator_port=$(cat portforward.log | grep -P -o "127.0.0.1:\d+" | cut -d":" -f2)
 wlog "forwarding Navigator API to localhost:${navigator_port}"
 
-for i in $(seq 0 $(($NUM_APPS - 1)) ); do
-  wlog "creating route $i"
-  # create routes for httpbin 0 through $i via our Navigator API
-  response_code=$(curl -sS -XPOST http://localhost:${navigator_port}/set-routes -d '{"numbers":['$(seq -s',' 0 $i)']}' --write-out '%{http_code}' -o /tmp/navigator_output)
-  if [[ "${response_code}" != "200" ]]; then
-    echo "Navigator returned ${response_code}"
-    cat /tmp/navigator_output
-  fi
+LAST_ROUTE=$(($NUM_APPS - 1))
+HALF_ROUTES=$(($NUM_APPS / 2))
+set_routes "$(seq -s',' $HALF_ROUTES $LAST_ROUTE)" # precreate second half
+sleep 30 # so we can see that setup worked on the graphs
 
+iwlog "GENERATE CP LOAD"
+
+for i in $(seq 0 $(($HALF_ROUTES - 1)) ); do
+  wlog "creating route $i"
+  set_routes "$(seq -s',' 0 $i),$(seq -s',' $(($HALF_ROUTES + $i)) $LAST_ROUTE)"
   sleep $USER_DELAY
 done
 
@@ -117,17 +127,19 @@ sleep 600 # wait for cluster to level out after CP load, gather data for cluster
 kill $(jobs -p)
 
 iwlog "TEST COMPLETE"
-exit
 
 # dump the list of nodes with their labels, only gotta do this once
 kubectl get nodes --show-labels | awk '{print $1","$2","$6}' > nodeswithlabels.csv
 kubectl get pods -o wide -n system | awk '{print $1","$6","$7}' > instance2pod.csv
 
+export JAEGER_QUERY_IP=$(kubectl -n system get services jaeger-query -ojsonpath='{.status.loadBalancer.ingress[0].ip}')
+./../jaegerscrapper/bin/scrapper -csvPath /dev/stdout -jaegerQueryAddr $JAEGER_QUERY_IP
+
 sleep 2 # let them quit
 # make extra sure they quit
 kill -9 $(jobs -p)
 
-# TODO Rscript ../graph.R
+Rscript ../graph.R
 
 wlog "=== TEARDOWN ===="
 
