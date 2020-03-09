@@ -59,7 +59,7 @@ fiveSecondsInNanoseconds = 5 * 1000 * 1000 * 1000
 
 
 print("Graph Route Statuses")
-routes = read_csv("./route-status.csv", col_types=cols(status=col_factor()))
+routes = read_csv("./route-status.csv", col_types=cols(status=col_factor(), route=col_integer())) %>% drop_na()
 only_errors = filter(routes, status != "200")
 route_status = experiment_time_x_axis(ggplot(routes) +
   labs(title="Route Status over Time") +
@@ -76,7 +76,9 @@ ggsave(paste(filename, "routes.png", sep=""), route_status)
 
 print("Graph Configs Sent")
 xds = read_delim("./jaeger.csv", ";")
-xds = xds %>% separate_rows(Routes, convert = TRUE) # one row per observation of a route being configured
+xds = xds %>%
+  separate_rows(Routes, convert = TRUE) %>%  # one row per observation of a route being configured
+  drop_na() # sometimes route is NA, so drop those
 configs_sent =ggplot(xds) +
   labs(title="Config Sent over Time") +
   ylab("Route Number") +
