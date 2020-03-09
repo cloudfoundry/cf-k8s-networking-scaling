@@ -72,7 +72,7 @@ route_status = experiment_time_x_axis(ggplot(routes) +
   our_theme() %+replace%
     theme(legend.position="bottom"))
 
-ggsave(paste(filename, "routes.png", sep=""), route_status)
+ggsave(paste(filename, "routes.png", sep=""), route_status, width=7, height=7)
 
 print("Graph Configs Sent")
 xds = read_delim("./jaeger.csv", ";")
@@ -89,11 +89,11 @@ configs_sent =ggplot(xds) +
   our_theme() %+replace%
     theme(legend.position="bottom")
 
-ggsave(paste(filename, "config.png", sep=""), configs_sent)
+ggsave(paste(filename, "config.png", sep=""), configs_sent, width=7, height=7)
 
 print("Latency between Config Sent and Route Working")
 scaleMicroToNano <- function(x, na.rm = FALSE) x * 10^3
-configs = xds %>% filter(Type == "Cluster") %>%
+configs = xds %>% filter(Type == "RouteConfiguration") %>%
   select(stamp=Timestamp, route=Routes) %>%
   mutate_at("stamp", scaleMicroToNano) %>%
   arrange(stamp, route) %>%
@@ -109,16 +109,33 @@ all.withtimes = left_join(configs, observations, by="route") %>%
   filter(route < halfRoute) %>%
   mutate(time_diff = stamp.y - stamp.x)
 
-ggplot(all.withtimes) +
+latency_by_route <- ggplot(all.withtimes) +
   labs(title="Latency from Config Sent to Route returns 200") +
-  xlab("Time (seconds)") +
-  scale_x_continuous(labels=secondsFromNanoseconds) +
-  ylab("Route Number") +
-  geom_point(mapping=aes(x=time_diff, y=route)) +
+  ylab("Time (seconds)") +
+  scale_y_continuous(labels=secondsFromNanoseconds) +
+  xlab("Route Number") +
+  geom_point(mapping=aes(y=time_diff, x=route)) +
   our_theme() %+replace%
     theme(legend.position="bottom")
 
-ggsave(paste(filename, "latency.png", sep=""))
+values = quantile(all.withtimes$time_diff, quantiles)
+cptails = tibble(mylabels, values)
+tail_latencies <- ggplot(cptails, aes(x=mylabels, y=values)) +
+  labs(title="Control Plane Latency by Percentile") +
+  ylab("Latency (s)") +
+  scale_y_continuous(labels=secondsFromNanoseconds) +
+  xlab("Percentile") +
+  scale_x_discrete(limits=mylabels) +
+  geom_line(mapping=aes(group="default does not work")) +
+  geom_point() +
+  # add line for goal
+  geom_hline(yintercept = fiveSecondsInNanoseconds, color="grey80") +
+  geom_text(mapping = aes(y=fiveSecondsInNanoseconds, x="p68", label="GOAL 5sec at p95"), size=2, vjust=1.5, hjust=1, color="grey25") +
+  scale_colour_brewer(palette = "Set1") +
+  our_theme() %+replace%
+    theme(legend.position="bottom")
+
+ggsave(paste(filename, "latency.png", sep=""), arrangeGrob(tail_latencies, latency_by_route), width=7, height=10)
 
 print("Client Usage")
 memstats = read_csv(paste(filename, "memstats.csv", sep=""))
