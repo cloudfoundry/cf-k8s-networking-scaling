@@ -1,0 +1,3 @@
+[submodule "envoy-scaling-experiment/yaml/kube-prometheus"]
+	path = envoy-scaling-experiment/yaml/kube-prometheus
+	url = https://github.com/coreos/kube-prometheus.git
