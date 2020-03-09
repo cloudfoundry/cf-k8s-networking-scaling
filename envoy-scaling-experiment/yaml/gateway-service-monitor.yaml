@@ -1,0 +1,41 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    prometheus: kube-prometheus
+  name: gateway-envoy
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: gateway
+  namespaceSelector:
+    matchNames:
+      - system
+  endpoints:
+  - port: admin
+    interval: 30s
+    path: /stats/prometheus
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus-k8s
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes/metrics
+  - services
+  - endpoints
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+

@@ -66,8 +66,8 @@ echo "INGRESS: $INGRESS_IP:$INGRESS_PORT"
 # wlog "Load container up"
 # sleep 10
 
+../scripts/prometheus_data.sh &
 # TODO
-# ../scripts/prometheus_data.sh &
 # ruby ./../scripts/endpoint_arrival.rb &
 
 echo "stamp,cpuid,usr,nice,sys,iowate,irq,soft,steal,guest,gnice,idle" > cpustats.csv
@@ -150,11 +150,8 @@ kill $(jobs -p)
 
 iwlog "TEST COMPLETE"
 
-# dump the list of nodes with their labels, only gotta do this once
-kubectl get nodes --show-labels | awk '{print $1","$2","$6}' > nodeswithlabels.csv
-kubectl get pods -o wide -n system | awk '{print $1","$6","$7}' > instance2pod.csv
-
 sleep 2 # let them quit
+
 # make extra sure they quit
 kill -9 $(jobs -p)
 

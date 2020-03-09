@@ -13,6 +13,9 @@ kubetpl render ../yaml/jaeger-all-in-one-template.yml ../yaml/navigator.yaml  ..
 # wait until ready
 kubectl wait --for=condition=podscheduled -n system pods --all
 
+# add Gateway to Prometheus targets
+kubectl apply -f ../yaml/gateway-service-monitor.yaml
+
 until [[ "$(kubectl -n system get services gateway -ojsonpath='{.status.loadBalancer.ingress[0].ip}')" != "" ]]; do
   sleep 5
 done
