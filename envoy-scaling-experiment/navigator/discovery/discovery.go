@@ -89,7 +89,7 @@ func (d *discoveryServerCallbacks) OnStreamResponse(streamID int64, req *xdspb.D
 		"type", typename,
 		"typeurl", out.TypeUrl,
 		"version", out.VersionInfo,
-		"full_response", out.String(),
+		//"full_response", out.String(),
 		"routes", serializeRouteNumbers(routeNumbers),
 	)
 	// This will cause duplicate span ID warning in Jaeger but it will merge all logs together for the last span
