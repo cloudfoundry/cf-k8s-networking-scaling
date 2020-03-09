@@ -122,7 +122,7 @@ set_routes "$(seq -s',' $HALF_ROUTES $LAST_ROUTE)" # precreate second half
 # wait for a known-configured route to work
 url="$LAST_ROUTE.example.com"
 status=$(curl -sS -w "%{http_code}" -H "Host:${url}" http://$INGRESS_IP:80/status/200 2>> curlstuff/route-$LAST_ROUTE.log)
-while [ $status != "200" ]; do
+while [ "$status" != "200" ]; do
   status=$(curl -sS -w "%{http_code}" -H "Host:${url}" http://$INGRESS_IP:80/status/200 2>> curlstuff/route-$LAST_ROUTE.log)
 done
 sleep 30 # so we can see that setup worked on the graphs
@@ -158,6 +158,7 @@ sleep 2 # let them quit
 # make extra sure they quit
 kill -9 $(jobs -p)
 
+cp ./../templates/index.html-onerun ./index.html # TODO template in vars.sh contents
 Rscript ../graph.R
 
 wlog "=== TEARDOWN ===="

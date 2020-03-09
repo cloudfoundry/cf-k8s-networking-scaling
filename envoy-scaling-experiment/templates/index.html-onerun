@@ -1,0 +1,40 @@
+<head>
+<style>
+body {
+  max-width: 950px;
+  margin: 20px auto;
+  padding: 0 15px;
+  font-size: 22px;
+  line-height: 1.4;
+}
+a {
+  text-decoration: none;
+  color: #2874A6;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+img {
+  width: 100%;
+}
+</style>
+</head>
+
+<body>
+  <h1>Experiment Results</h1>
+
+  <p>Variables used for this test run:</p>
+  <pre>{{vars}}</pre>
+
+  <hr>
+
+  <h3> Check if we hit our goal of 5sec at 95% for creating new routes </h3>
+  <img src="latency.png"></hr>
+  <img src="config.png"></hr>
+  <img src="routes.png"></hr>
+  <h3> Check that our client VM and k8s cluster are big enough</h3>
+  <img src="resources.png">
+  <img src="ifstats.png"><hr>
+
+</body>
