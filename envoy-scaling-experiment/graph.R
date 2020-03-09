@@ -118,3 +118,30 @@ ggplot(all.withtimes) +
 
 ggsave(paste(filename, "latency.png", sep=""))
 
+print("Client Usage")
+memstats = read_csv(paste(filename, "memstats.csv", sep=""))
+cpustats = read_csv(paste(filename, "cpustats.csv", sep=""))
+experiment_time_x_axis(ggplot(memstats) +
+  labs(title = "Client Resource Usage") +
+  ylab("Utilization %") + ylim(0,100) + lines() +
+  geom_line(mapping=aes(x=stamp,y=(used/total)*100, colour="memory")) +
+  geom_line(data=cpustats,mapping=aes(x=stamp,y=(100-idle), group=cpuid, colour=cpuid)) +
+  guides(colour = guide_legend(title = "CPU #")) +
+  lineLabels() +
+   our_theme() %+replace%
+     theme(legend.position="bottom"))
+ggsave(paste(filename, "resources.png", sep=""), width=7, height=3.5)
+
+print("Client Network")
+ifstats = read_csv(paste(filename, "ifstats.csv", sep=""))
+experiment_time_x_axis(ggplot(ifstats) +
+  labs(title = "Client Network Usage") +
+  ylab("Speed (kb/s)") + lines() +
+  geom_line(mapping=aes(x=stamp,y=down, colour="down")) +
+  geom_line(mapping=aes(x=stamp,y=up, colour="up")) +
+  guides(colour = guide_legend(title = "Key")) +
+  lineLabels() +
+   our_theme() %+replace%
+     theme(legend.position="bottom"))
+ggsave(paste(filename, "ifstats.png", sep=""), width=7, height=3.5)
+
