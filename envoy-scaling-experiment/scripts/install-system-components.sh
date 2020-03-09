@@ -2,6 +2,12 @@
 
 # set -ex
 
+# Prometheus
+kubectl create -f ../yaml/kube-prometheus/manifests/setup
+until kubectl get servicemonitors --all-namespaces ; do date; sleep 1; echo ""; done
+kubectl create -f ../yaml/kube-prometheus/manifests/
+
+# Jaeger, Navigator, Envoy
 kubetpl render ../yaml/jaeger-all-in-one-template.yml ../yaml/navigator.yaml  ../yaml/gateway.yaml | kubectl apply -n system -f -
 
 # wait until ready
