@@ -4,7 +4,7 @@ source ../scripts/utils.sh
 
 rm -f prometheus_errors.txt
 
-kubectl port-forward -n monitoring service/prometheus-k8s :9090 > promprotforwarding.log & # so that we can reach the Navigator API
+kubectl port-forward -n monitoring service/prometheus-k8s :9090 > promprotforwarding.log & # so that we can reach the Prometheus Query API
 sleep 5 # wait for port-forward
 PROMETHEUS_LOCALPORT=$(cat promprotforwarding.log | grep -P -o "127.0.0.1:\d+" | cut -d":" -f2)
 wlog "forwarding Prometheus API to localhost:${PROMETHEUS_LOCALPORT}"
@@ -51,7 +51,7 @@ do
      jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) + [.metric.nodename] + ["cpu"]) | @csv' >> nodemon.csv
 
   # Memory usage per node
-  queryprom '100 - (node_memory_MemFree_bytes / node_memory_MemTotal_bytes * 100)* on(instance) group_left(nodename) node_uname_info' |
+  queryprom '100 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100)* on(instance) group_left(nodename) node_uname_info' |
      jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) + [.metric.nodename] + ["memory"]) | @csv' >> nodemon.csv
 
   # Gateway memory usage

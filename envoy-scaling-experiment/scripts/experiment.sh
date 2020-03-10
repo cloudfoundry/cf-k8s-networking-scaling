@@ -67,8 +67,7 @@ echo "INGRESS: $INGRESS_IP:$INGRESS_PORT"
 # sleep 10
 
 ../scripts/prometheus_data.sh &
-# TODO
-# ruby ./../scripts/endpoint_arrival.rb &
+ruby ./../scripts/endpoint_arrival.rb &
 
 echo "stamp,cpuid,usr,nice,sys,iowate,irq,soft,steal,guest,gnice,idle" > cpustats.csv
 forever cpustats >> cpustats.csv &
