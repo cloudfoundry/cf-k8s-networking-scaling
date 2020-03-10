@@ -73,7 +73,7 @@ func Generate(hostnameFormat string, port uint32, numbers []int) (*RouteConfig, 
 func (c *Config) GenerateVirtualHosts() (vhs []*routepb.VirtualHost, err error) {
 	for _, n := range c.Numbers {
 		vhs = append(vhs, &routepb.VirtualHost{
-			Name:    fmt.Sprintf("route.%d", n),
+			Name:    c.routeName(n),
 			Domains: []string{c.domain(n)},
 			Routes: []*routepb.Route{{
 				Name: "",
@@ -157,7 +157,11 @@ func (c *Config) GenerateLoadAssignments() (endps []*xdspb.ClusterLoadAssignment
 }
 
 func (c *Config) clusterName(n int) string {
-	return fmt.Sprintf("service.%d", n)
+	return fmt.Sprintf("service_%d", n)
+}
+
+func (c *Config) routeName(n int) string {
+	return fmt.Sprintf("route_%d", n)
 }
 
 func (c *Config) clusterHostname(n int) string {

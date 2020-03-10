@@ -39,7 +39,7 @@ func TestGenerateVirtualHosts(t *testing.T) {
 			expected: &GenerateVirtualHostsResult{
 				vh: []*routepb.VirtualHost{
 					{
-						Name:    "route.1",
+						Name:    "route_1",
 						Domains: []string{"1.example.com"},
 						Routes: []*routepb.Route{{
 							Name: "",
@@ -51,7 +51,7 @@ func TestGenerateVirtualHosts(t *testing.T) {
 							Action: &routepb.Route_Route{
 								Route: &routepb.RouteAction{
 									ClusterSpecifier: &routepb.RouteAction_Cluster{
-										Cluster: "service.1",
+										Cluster: "service_1",
 									},
 								},
 							},
@@ -67,7 +67,7 @@ func TestGenerateVirtualHosts(t *testing.T) {
 			expected: &GenerateVirtualHostsResult{
 				vh: []*routepb.VirtualHost{
 					{
-						Name:    "route.1",
+						Name:    "route_1",
 						Domains: []string{"1.example.com"},
 						Routes: []*routepb.Route{{
 							Name: "",
@@ -79,14 +79,14 @@ func TestGenerateVirtualHosts(t *testing.T) {
 							Action: &routepb.Route_Route{
 								Route: &routepb.RouteAction{
 									ClusterSpecifier: &routepb.RouteAction_Cluster{
-										Cluster: "service.1",
+										Cluster: "service_1",
 									},
 								},
 							},
 						}},
 					},
 					{
-						Name:    "route.100",
+						Name:    "route_100",
 						Domains: []string{"100.example.com"},
 						Routes: []*routepb.Route{{
 							Name: "",
@@ -98,14 +98,14 @@ func TestGenerateVirtualHosts(t *testing.T) {
 							Action: &routepb.Route_Route{
 								Route: &routepb.RouteAction{
 									ClusterSpecifier: &routepb.RouteAction_Cluster{
-										Cluster: "service.100",
+										Cluster: "service_100",
 									},
 								},
 							},
 						}},
 					},
 					{
-						Name:    "route.500",
+						Name:    "route_500",
 						Domains: []string{"500.example.com"},
 						Routes: []*routepb.Route{{
 							Name: "",
@@ -117,7 +117,7 @@ func TestGenerateVirtualHosts(t *testing.T) {
 							Action: &routepb.Route_Route{
 								Route: &routepb.RouteAction{
 									ClusterSpecifier: &routepb.RouteAction_Cluster{
-										Cluster: "service.500",
+										Cluster: "service_500",
 									},
 								},
 							},
@@ -169,14 +169,14 @@ func TestGenerateClusters(t *testing.T) {
 			expected: &GenerateClustersResult{
 				cl: []*xdspb.Cluster{
 					{
-						Name: "service.1",
+						Name: "service_1",
 						ConnectTimeout: &duration.Duration{
 							Seconds: 1,
 						},
 						ClusterDiscoveryType: &xdspb.Cluster_Type{Type: xdspb.Cluster_EDS},
 						LbPolicy:             xdspb.Cluster_ROUND_ROBIN,
 						EdsClusterConfig: &xdspb.Cluster_EdsClusterConfig{
-							ServiceName: "service.1",
+							ServiceName: "service_1",
 							EdsConfig: &corepb.ConfigSource{
 								ConfigSourceSpecifier: &corepb.ConfigSource_Ads{
 									Ads: &corepb.AggregatedConfigSource{},
@@ -194,14 +194,14 @@ func TestGenerateClusters(t *testing.T) {
 			expected: &GenerateClustersResult{
 				cl: []*xdspb.Cluster{
 					{
-						Name: "service.1",
+						Name: "service_1",
 						ConnectTimeout: &duration.Duration{
 							Seconds: 1,
 						},
 						ClusterDiscoveryType: &xdspb.Cluster_Type{Type: xdspb.Cluster_EDS},
 						LbPolicy:             xdspb.Cluster_ROUND_ROBIN,
 						EdsClusterConfig: &xdspb.Cluster_EdsClusterConfig{
-							ServiceName: "service.1",
+							ServiceName: "service_1",
 							EdsConfig: &corepb.ConfigSource{
 								ConfigSourceSpecifier: &corepb.ConfigSource_Ads{
 									Ads: &corepb.AggregatedConfigSource{},
@@ -210,14 +210,14 @@ func TestGenerateClusters(t *testing.T) {
 						},
 					},
 					{
-						Name: "service.100",
+						Name: "service_100",
 						ConnectTimeout: &duration.Duration{
 							Seconds: 1,
 						},
 						ClusterDiscoveryType: &xdspb.Cluster_Type{Type: xdspb.Cluster_EDS},
 						LbPolicy:             xdspb.Cluster_ROUND_ROBIN,
 						EdsClusterConfig: &xdspb.Cluster_EdsClusterConfig{
-							ServiceName: "service.100",
+							ServiceName: "service_100",
 							EdsConfig: &corepb.ConfigSource{
 								ConfigSourceSpecifier: &corepb.ConfigSource_Ads{
 									Ads: &corepb.AggregatedConfigSource{},
@@ -284,7 +284,7 @@ func TestGenerateLoadAssignments(t *testing.T) {
 			expected: &GenerateLoadAssignmentsResult{
 				clas: []*xdspb.ClusterLoadAssignment{
 					{
-						ClusterName: "service.1",
+						ClusterName: "service_1",
 						Endpoints: []*endpb.LocalityLbEndpoints{
 							&endpb.LocalityLbEndpoints{
 								LbEndpoints: []*endpb.LbEndpoint{
