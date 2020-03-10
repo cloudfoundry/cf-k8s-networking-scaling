@@ -34,6 +34,8 @@ img {
   <img src="config.png"></hr>
   <img src="routes.png"></hr>
   <h3> Check that our client VM and k8s cluster are big enough</h3>
+  <img src="nodemon.png">
+  <img src="nodes4pods.png"><hr>
   <img src="resources.png">
   <img src="ifstats.png"><hr>
 

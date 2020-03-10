@@ -137,6 +137,55 @@ tail_latencies <- ggplot(cptails, aes(x=mylabels, y=values)) +
 
 ggsave(paste(filename, "latency.png", sep=""), arrangeGrob(tail_latencies, latency_by_route), width=7, height=10)
 
+print("Reading in pod-by-node data")
+# Read in timestamp-node-pod data
+nodes4pods = read_csv(paste(filename, "nodes4pods.csv", sep="")) %>%
+  extract(pod, "podtype", "([A-Za-z][A-Za-z0-9]+-?[A-Za-z]+)", remove=FALSE) %>%
+  extract(node, "nodename", "gke-.+-([A-Za-z0-9]+)")
+podcountsbynodetime = nodes4pods %>% select(-pod) %>% group_by(nodename, podtype, stamp) %>% summarize(n=n())
+podtypesbynode = nodes4pods %>% select(nodename, podtype) %>% distinct() %>% group_by(nodename) %>% summarize(podtypes = str_c(podtype, collapse=":"))
+
+print("Reading in node cpu/mem data")
+# Read in timestamp-node-cpu-mem data
+nodeusage = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(percent=col_number())) %>%
+  extract(nodename, "nodename", "gke-.+-([A-Za-z0-9]+)") %>%
+  pivot_wider(names_from=type, values_from=percent, values_fn = list(percent = max)) %>%
+  left_join(podtypesbynode, by="nodename", name="podtypes") %>%
+  mutate(hasEnvoy = if_else(str_detect(podtypes, "gateway"), "with Envoy", "without Envoy"))
+
+print("Picking busiest nodes")
+busynodenames = nodeusage %>% group_by(nodename) %>% summarize(maxcpu = max(cpu, na.rm=TRUE)) %>% top_n(3,maxcpu)
+busynodes = busynodenames %>% left_join(nodeusage) %>% select(timestamp, nodename, cpu, memory, hasEnvoy)
+
+nodeusage = nodeusage %>% gather(type, percent, -nodename, -timestamp, -hasEnvoy, -podtypes)
+busynodes = busynodes %>% gather(type, percent, -nodename, -timestamp, -hasEnvoy)
+
+print("Usage by Node")
+experiment_time_x_axis(ggplot(nodeusage) +
+  labs(title = "Node Utilization", subtitle="100% = utilizing the whole machine") +
+  ylab("Utilization %") + ylim(0,100) + lines() +
+  facet_wrap(vars(hasEnvoy, type), ncol=1) +
+  geom_line(mapping = aes(x=timestamp,y=percent, group=nodename), color="gray15", alpha=0.15) +
+  geom_line(busynodes, mapping=aes(x=timestamp,y=percent, color=nodename), alpha=0.75) +
+  our_theme() %+replace%
+    theme(legend.position="bottom"))
+ggsave(paste(filename, "nodemon.png", sep=""), width=7, height=12)
+
+podcountsbusynodes = podcountsbynodetime %>% right_join(busynodenames) %>%
+  filter(podtype != "prometheus-to", podtype != "kube-proxy", podtype != "fluentd-gcp") %>%
+  mutate(podcategory = if_else(str_detect(podtype, "httpbin"), "workload", "system"))
+
+print("Pods on Busy Nodes")
+experiment_time_x_axis(ggplot(podcountsbusynodes) +
+  labs(title = "Pods by Node over Time") + lines() +
+  facet_wrap(vars(nodename), ncol=1) +
+  geom_count(mapping=aes(x=stamp,y=podtype,size=n,color=podtype), alpha=0.5) +
+  scale_size_area() +
+  our_theme() %+replace%
+    theme(legend.position="bottom"))
+numberofbusynodes = n_distinct(podcountsbusynodes$nodename)
+ggsave(paste(filename, "nodes4pods.png", sep=""), width=7, height=2.5 * numberofbusynodes)
+
 print("Client Usage")
 memstats = read_csv(paste(filename, "memstats.csv", sep=""))
 cpustats = read_csv(paste(filename, "cpustats.csv", sep=""))
