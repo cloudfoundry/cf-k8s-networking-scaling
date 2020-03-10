@@ -67,7 +67,6 @@ echo "INGRESS: $INGRESS_IP:$INGRESS_PORT"
 # sleep 10
 
 ../scripts/prometheus_data.sh &
-ADMIN_ADDR="${INGRESS_IP}:15000" ruby ./../scripts/endpoint_arrival.rb &
 
 echo "stamp,cpuid,usr,nice,sys,iowate,irq,soft,steal,guest,gnice,idle" > cpustats.csv
 forever cpustats >> cpustats.csv &
@@ -97,6 +96,8 @@ sleep 30 # wait for cluster to not be in a weird state after pushing so many pod
 
 echo "stamp,route,status" > route-status.csv
 ./../scripts/route-poller.sh >> route-status.csv &
+
+ADMIN_ADDR="${INGRESS_IP}:15000" ruby ./../scripts/endpoint_arrival.rb &
 
 set_routes()
 {
