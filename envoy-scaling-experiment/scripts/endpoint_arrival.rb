@@ -13,10 +13,11 @@ class Gateway
   end
 
   def process_rds
-    clusters = `curl -s "http://#{@address}/config_dump" | jq .configs[4].dynamic_route_configs[].route_config.virtual_hosts[]?.routes[0].route.cluster`.split("\n")
+    clusters = `curl -s "http://#{@address}/config_dump" | jq .configs[4].dynamic_route_configs[].route_config.virtual_hosts[]?.routes[0].route.cluster 2>&1`.split("\n")
 
     if clusters.empty?
-      puts "Failed to reach #{@address}/config_dump, retrying"
+      puts "Failed to reach #{@address}/config_dump, retrying in 5 seconds"
+      sleep(5)
       process_rds
       return
     end
@@ -55,6 +56,7 @@ class Gateway
 
     if endpoints.empty?
       puts "Failed to reach #{@address}/clusters, retrying"
+      sleep(5)
       process_eds
       return
     end
