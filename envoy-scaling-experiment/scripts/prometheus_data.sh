@@ -39,6 +39,8 @@ echo "timestamp,percent,nodename,type" > nodemon.csv
 echo "timestamp,memory,podname" > gatewaystats.csv
 echo "stamp,count,instance,pod" > envoyclusters.csv
 echo "stamp,node,pod" > nodes4pods.csv
+echo "stamp,number,route" > envoy_cluster_update_attempts.csv
+echo "stamp,number,route" > envoy_cluster_update_successes.csv
 
 while true
 do
@@ -66,6 +68,12 @@ do
   echo "stamp,node,pod" > nodes4pods.csv
   queryprom 'sum(node_namespace_pod:kube_pod_info:) by (node, pod)' | \
      jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber)]) + [.metric.node, .metric.pod]) | @csv' >> nodes4pods.csv
+
+  queryprom 'envoy_cluster_update_attempt{envoy_cluster_name=~"service_.*"}' | \
+     jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber)]) + [.metric.envoy_cluster_name]) | @csv' >> envoy_cluster_update_attempts.csv
+
+  queryprom 'envoy_cluster_update_success{envoy_cluster_name=~"service_.*"}' | \
+     jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber)]) + [.metric.envoy_cluster_name]) | @csv' >> envoy_cluster_update_successes.csv
 
   echo "Prometheus data collected"
   START=$END
