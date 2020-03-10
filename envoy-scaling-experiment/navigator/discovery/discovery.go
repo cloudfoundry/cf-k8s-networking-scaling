@@ -264,7 +264,7 @@ func parseRouteNumbers(resources []string) ([]int, error) {
 	nums := make([]int, len(resources))
 
 	for i, res := range resources {
-		numStr := res[strings.LastIndex(res, ".")+1:]
+		numStr := res[strings.LastIndex(res, "_")+1:]
 		num, err := strconv.Atoi(numStr)
 		if err != nil {
 			return nil, err

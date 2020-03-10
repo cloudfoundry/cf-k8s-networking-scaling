@@ -136,10 +136,10 @@ func marshalResources(resources []cache.Resource, typeURL string) ([]*anypb.Any,
 
 func TestParseRouteNumbers(t *testing.T) {
 	resourcesNames := []string{
-		"resource.1",
-		"resource.2",
-		"resource.3",
-		"resource.4",
+		"resource_1",
+		"resource_2",
+		"resource_3",
+		"resource_4",
 	}
 	expectedRoutes := []int{1, 2, 3, 4}
 	routes, err := parseRouteNumbers(resourcesNames)
