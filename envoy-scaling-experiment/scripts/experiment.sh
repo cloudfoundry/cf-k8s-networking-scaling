@@ -97,8 +97,6 @@ sleep 30 # wait for cluster to not be in a weird state after pushing so many pod
 echo "stamp,route,status" > route-status.csv
 ./../scripts/route-poller.sh >> route-status.csv &
 
-ADMIN_ADDR="${INGRESS_IP}:15000" ruby ./../scripts/endpoint_arrival.rb &
-
 set_routes()
 {
   response_code=$(curl -sS -XPOST http://localhost:${navigator_port}/set-routes -d "{\"numbers\":[$1]}" --write-out '%{http_code}' -o /tmp/navigator_output)
@@ -126,6 +124,8 @@ while [ "$status" != "200" ]; do
   status=$(curl -sS -w "%{http_code}" -H "Host:${url}" http://$INGRESS_IP:80/status/200 2>> curlstuff/route-$LAST_ROUTE.log)
 done
 sleep 30 # so we can see that setup worked on the graphs
+
+ADMIN_ADDR="${INGRESS_IP}:15000" ruby ./../scripts/endpoint_arrival.rb &
 
 iwlog "GENERATE CP LOAD"
 
