@@ -95,7 +95,6 @@ print("Latency between Config Sent and Route Working")
 scaleMicroToNano <- function(x, na.rm = FALSE) x * 10^3
 configs = xds %>% filter(Type == "RouteConfiguration") %>%
   select(stamp=Timestamp, route=Routes) %>%
-  mutate_at("stamp", scaleMicroToNano) %>%
   arrange(stamp, route) %>%
   group_by(route) %>%  slice(1L) %>% ungroup()
 

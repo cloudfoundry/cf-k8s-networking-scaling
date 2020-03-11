@@ -36,7 +36,7 @@ func CreateCSV(events []*Event, out io.Writer) error {
 
 func toRecord(e *Event) []string {
 	return []string{
-		fmt.Sprintf("%d", e.Timestamp),
+		fmt.Sprintf("%d", e.Timestamp*1000),
 		e.Datetime,
 		e.Version,
 		e.Type,
