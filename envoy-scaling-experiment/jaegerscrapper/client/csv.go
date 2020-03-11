@@ -16,7 +16,6 @@ var headers = []string{
 
 func CreateCSV(events []*Event, out io.Writer) error {
 	w := csv.NewWriter(out)
-	w.Comma = ';'
 
 	if err := w.Write(headers); err != nil {
 		return err

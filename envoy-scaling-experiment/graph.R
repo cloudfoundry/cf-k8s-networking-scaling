@@ -75,7 +75,7 @@ route_status = experiment_time_x_axis(ggplot(routes) +
 ggsave(paste(filename, "routes.png", sep=""), route_status, width=7, height=7)
 
 print("Graph Configs Sent")
-xds = read_delim("./jaeger.csv", ";")
+xds = read_csv("./jaeger.csv")
 xds = xds %>%
   separate_rows(Routes, convert = TRUE) %>%  # one row per observation of a route being configured
   drop_na() # sometimes route is NA, so drop those
