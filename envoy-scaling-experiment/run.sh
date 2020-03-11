@@ -33,10 +33,10 @@ done
 mkdir $EXPERIMENT_NAME
 mv $EXPERIMENT_NAME-* $EXPERIMENT_NAME/
 
-# pushd $EXPERIMENT_NAME
-#   ./../combine/target/debug/combine .
-#   Rscript ../graphManyToo.R
-# popd
+pushd $EXPERIMENT_NAME
+  ./../combine/target/debug/combine .
+  Rscript ../graphMany.R
+popd
 
 mv $EXPERIMENT_NAME experiments/
 
