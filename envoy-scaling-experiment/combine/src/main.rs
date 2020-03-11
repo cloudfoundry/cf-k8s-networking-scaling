@@ -225,9 +225,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let filenames_that_start_with_timestamps = [
         "cpustats.csv",
         "envoyclusters.csv",
-        //"endpoints_arrival.csv",
-        //"envoy_cluster_update_attempts.csv",
-        //"envoy_cluster_update_successes.csv",
+        "endpoints_arrival.csv",
+        "envoy_cluster_update_attempts.csv",
+        "envoy_cluster_update_successes.csv",
         "gatewaystats.csv",
         "ifstats.csv",
         "importanttimes.csv",
@@ -237,7 +237,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         "nodes4pods.csv",
         "podalive.csv",
         "route-status.csv",
-        //"routes_arrival.csv",
+        "routes_arrival.csv",
     ];
 
     //TODO should check if vars.sh are all the same
