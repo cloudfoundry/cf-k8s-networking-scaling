@@ -45,7 +45,7 @@ func Generate(hostnameFormat string, port uint32, numbers []int) (*RouteConfig, 
 		hostnameFormat,
 		port,
 		numbers,
-		&HostnameResolver{},
+		NewHostnameResolver(),
 	}
 	rc := &RouteConfig{}
 
@@ -119,15 +119,12 @@ func (c *Config) GenerateClusters() (cls []*xdspb.Cluster, err error) {
 }
 
 func (c *Config) GenerateLoadAssignments() (endps []*xdspb.ClusterLoadAssignment, err error) {
-	for _, n := range c.Numbers {
-		hostname := c.clusterHostname(n)
-		addr, err := c.Resolver.ResolveAddr(hostname)
-		if err != nil {
-			return nil, fmt.Errorf("cannot resolve addr for service: %s, because: %s", hostname, err)
-		} else {
-			log.Printf("resolved addr for service %s to %s", hostname, addr)
-		}
+	addresses, err := c.generateAddresses()
+	if err != nil {
+		return nil, err
+	}
 
+	for _, n := range c.Numbers {
 		endps = append(endps, &xdspb.ClusterLoadAssignment{
 			ClusterName: c.clusterName(n),
 			Endpoints: []*endpb.LocalityLbEndpoints{
@@ -139,7 +136,7 @@ func (c *Config) GenerateLoadAssignments() (endps []*xdspb.ClusterLoadAssignment
 									Address: &corepb.Address{
 										Address: &corepb.Address_SocketAddress{
 											SocketAddress: &corepb.SocketAddress{
-												Address: addr,
+												Address: addresses[n],
 												PortSpecifier: &corepb.SocketAddress_PortValue{
 													PortValue: c.Port,
 												},
@@ -172,9 +169,57 @@ func (c *Config) domain(n int) string {
 	return fmt.Sprintf("%d.example.com", n)
 }
 
-type HostnameResolver struct{}
+func (c *Config) generateAddresses() (map[int]string, error) {
+	n := len(c.Numbers)
+	results := map[int]string{}
 
-func (hr *HostnameResolver) ResolveAddr(hostname string) (string, error) {
-	return resolve.ResolveAddr(hostname)
+	sem := make(chan struct{}, n)
+	errChan := make(chan error, 1)
+
+	for _, n := range c.Numbers {
+		go func(n int) {
+			h := c.clusterHostname(n)
+			addr, err := c.Resolver.ResolveAddr(h)
+			if err != nil {
+				errChan <- fmt.Errorf("cannot resolve addr for service: %s, because: %s", h, err)
+				return
+			}
+			results[n] = addr
+			sem <- struct{}{}
+		}(n)
+	}
+
+	for i := 0; i < n; i++ {
+		select {
+		case <-sem:
+		case err := <-errChan:
+			return nil, err
+		}
+	}
+
+	return results, nil
 }
 
+type HostnameResolver struct {
+	cache map[string]string
+}
+
+func NewHostnameResolver() *HostnameResolver {
+	return &HostnameResolver{cache: make(map[string]string)}
+}
+
+func (hr *HostnameResolver) ResolveAddr(hostname string) (string, error) {
+	if addr, ok := hr.cache[hostname]; ok {
+		return addr, nil
+	}
+
+	addr, err := resolve.ResolveAddr(hostname)
+	if err != nil {
+		return "", err
+	}
+
+	log.Printf("resolved addr for service %s to %s", hostname, addr)
+
+	hr.cache[hostname] = addr
+	return addr, nil
+}
