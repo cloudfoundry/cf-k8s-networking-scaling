@@ -1,4 +1,5 @@
 **/*.rs.bk
+target/
 
 testpods.y*ml
 
