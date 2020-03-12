@@ -60,7 +60,6 @@ fiveSecondsInNanoseconds = 5 * 1000 * 1000 * 1000
 
 print("Graph Route Statuses")
 routes = read_csv("./route-status.csv", col_types=cols(status=col_factor(), route=col_integer())) %>% drop_na()
-only_errors = filter(routes, status != "200")
 route_status = experiment_time_x_axis(ggplot(routes) +
   labs(title="Route Status over Time") +
   ylab("Route Number") +
@@ -87,16 +86,37 @@ configs_sent =ggplot(xds) +
   scale_size_area() +
   scale_colour_distiller(palette="Spectral") +
   our_theme() %+replace%
+    theme(legend.position="none")
+
+# Get the first time a route number appears in each type of config
+configs.all = xds %>%
+  select(stamp=Timestamp, route=Routes, type=Type) %>%
+  arrange(stamp, route) %>%
+  group_by(type, route) %>% slice(1L) %>% ungroup()
+
+# For each type of config, get the relative time from
+# when the first config type for a new route was sent
+scale_times = configs.all %>% group_by(route) %>%
+  summarize(first = min(stamp)) %>%
+  select(route, first) %>%
+  right_join(configs.all, by="route") %>%
+  mutate(scaled_time = stamp - first)
+
+timestampByType = ggplot(scale_times, aes(x=route)) +
+  labs(title="Difference Between First and Last Config Sent") +
+  xlab("Route Number") +
+  ylab("Latency from first config sent (s)") +
+  scale_y_continuous(labels=secondsFromNanoseconds) +
+  scale_colour_brewer(palette = "Set1") +
+  scale_size_area() +
+  geom_point(mapping =  aes(y=scaled_time, color=type), size=0.1) +
+  our_theme() %+replace%
     theme(legend.position="bottom")
 
-ggsave(paste(filename, "config.png", sep=""), configs_sent, width=7, height=7)
+ggsave(paste(filename, "config.png", sep=""), arrangeGrob(configs_sent,timestampByType) , width=7, height=7)
 
 print("Latency between Config Sent and Route Working")
-scaleMicroToNano <- function(x, na.rm = FALSE) x * 10^3
-configs = xds %>% filter(Type == "RouteConfiguration") %>%
-  select(stamp=Timestamp, route=Routes) %>%
-  arrange(stamp, route) %>%
-  group_by(route) %>%  slice(1L) %>% ungroup()
+configs = configs.all %>% filter(type == "RouteConfiguration")
 
 observations = routes %>% filter(status == "200") %>%
   select(stamp, route) %>%
