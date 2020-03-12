@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	xdspb "github.com/envoyproxy/go-control-plane/envoy/api/v2"
 	corepb "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	lispb "github.com/envoyproxy/go-control-plane/envoy/api/v2/listener"
@@ -63,12 +62,12 @@ func (d *discoveryServerCallbacks) OnStreamClosed(streamID int64) {
 }
 
 func (d *discoveryServerCallbacks) OnStreamRequest(streamID int64, req *xdspb.DiscoveryRequest) error {
-	log.Printf("Callback: OnStreamRequest: streamId = %d\nreq = %s\n\n", streamID, spew.Sdump(*req))
+	log.Printf("Callback: OnStreamRequest: streamId = %d\nreq = %s\n\n", streamID, req.ResponseNonce)
 	return nil
 }
 
 func (d *discoveryServerCallbacks) OnStreamResponse(streamID int64, req *xdspb.DiscoveryRequest, out *xdspb.DiscoveryResponse) {
-	log.Printf("Callback: OnStreamResponse: streamId = %d\nreq = %s\nout = %s\n\n", streamID, spew.Sdump(*req), spew.Sdump(*out))
+	log.Printf("Callback: OnStreamResponse: streamId = %d\nreq = %s\nout = %s\n\n", streamID, req.ResponseNonce, out.Nonce)
 	typename := out.TypeUrl[strings.LastIndex(out.TypeUrl, ".")+1:]
 	if typename == "Listener" {
 		return
@@ -97,12 +96,12 @@ func (d *discoveryServerCallbacks) OnStreamResponse(streamID int64, req *xdspb.D
 }
 
 func (d *discoveryServerCallbacks) OnFetchRequest(ctx context.Context, req *xdspb.DiscoveryRequest) error {
-	log.Printf("Callback: OnFetchRequest: \nreq = %s\n\n", spew.Sdump(*req))
+	log.Printf("Callback: OnFetchRequest: \nreq = %s\n\n", req.ResponseNonce)
 	return nil
 }
 
 func (d *discoveryServerCallbacks) OnFetchResponse(req *xdspb.DiscoveryRequest, res *xdspb.DiscoveryResponse) {
-	log.Printf("Callback: OnFetchResponse: \nreq = %s\nres = %s\n\n", spew.Sdump(*req), spew.Sdump(*res))
+	log.Printf("Callback: OnFetchResponse: \nreq = %s\nres = %s\n\n", req.ResponseNonce, res.Nonce)
 }
 
 type logger struct {

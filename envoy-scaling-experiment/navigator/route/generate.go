@@ -3,6 +3,7 @@ package route
 import (
 	"fmt"
 	"log"
+	"sync"
 
 	"code.cloudfoundry.org/navigator/resolve"
 	xdspb "github.com/envoyproxy/go-control-plane/envoy/api/v2"
@@ -169,11 +170,16 @@ func (c *Config) domain(n int) string {
 	return fmt.Sprintf("%d.example.com", n)
 }
 
+type resolveResult struct {
+	adddress string
+	number   int
+}
+
 func (c *Config) generateAddresses() (map[int]string, error) {
 	n := len(c.Numbers)
 	results := map[int]string{}
 
-	sem := make(chan struct{}, n)
+	retChan := make(chan resolveResult, n)
 	errChan := make(chan error, 1)
 
 	for _, n := range c.Numbers {
@@ -184,14 +190,17 @@ func (c *Config) generateAddresses() (map[int]string, error) {
 				errChan <- fmt.Errorf("cannot resolve addr for service: %s, because: %s", h, err)
 				return
 			}
-			results[n] = addr
-			sem <- struct{}{}
+			retChan <- resolveResult{
+				addr,
+				n,
+			}
 		}(n)
 	}
 
 	for i := 0; i < n; i++ {
 		select {
-		case <-sem:
+		case ret := <-retChan:
+			results[ret.number] = ret.adddress
 		case err := <-errChan:
 			return nil, err
 		}
@@ -202,14 +211,20 @@ func (c *Config) generateAddresses() (map[int]string, error) {
 
 type HostnameResolver struct {
 	cache map[string]string
+	mu    sync.Mutex
 }
 
 func NewHostnameResolver() *HostnameResolver {
-	return &HostnameResolver{cache: make(map[string]string)}
+	return &HostnameResolver{
+		cache: make(map[string]string),
+	}
 }
 
 func (hr *HostnameResolver) ResolveAddr(hostname string) (string, error) {
-	if addr, ok := hr.cache[hostname]; ok {
+	hr.mu.Lock()
+	addr, ok := hr.cache[hostname]
+	hr.mu.Unlock()
+	if ok {
 		return addr, nil
 	}
 
@@ -220,6 +235,8 @@ func (hr *HostnameResolver) ResolveAddr(hostname string) (string, error) {
 
 	log.Printf("resolved addr for service %s to %s", hostname, addr)
 
+	hr.mu.Lock()
 	hr.cache[hostname] = addr
+	hr.mu.Unlock()
 	return addr, nil
 }

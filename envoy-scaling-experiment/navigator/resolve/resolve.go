@@ -70,6 +70,5 @@ func ResolveAddr(addr string, lookupIPAddr ...lookupIPAddrType) (string, error) 
 			break
 		}
 	}
-	log.Printf("Addr resolved to: %s", resolvedAddr)
 	return resolvedAddr, nil
 }
