@@ -78,6 +78,7 @@ xds = read_csv("./jaeger.csv")
 xds = xds %>%
   separate_rows(Routes, convert = TRUE) %>%  # one row per observation of a route being configured
   drop_na() # sometimes route is NA, so drop those
+
 configs_sent =ggplot(xds) +
   labs(title="Config Sent over Time") +
   ylab("Route Number") +
@@ -88,6 +89,11 @@ configs_sent =ggplot(xds) +
   our_theme() %+replace%
     theme(legend.position="none")
 
+configs.by_version = xds %>%
+  select(stamp=Timestamp, route=Routes, type=Type, version=Version) %>%
+  arrange(version)
+configs.by_version$version = group_indices(configs.by_version, version)
+
 # Get the first time a route number appears in each type of config
 configs.all = xds %>%
   select(stamp=Timestamp, route=Routes, type=Type) %>%
@@ -96,14 +102,20 @@ configs.all = xds %>%
 
 # For each type of config, get the relative time from
 # when the first config type for a new route was sent
-scale_times = configs.all %>% group_by(route) %>%
+scale_times.per_route = configs.all %>% group_by(route) %>%
   summarize(first = min(stamp)) %>%
   select(route, first) %>%
   right_join(configs.all, by="route") %>%
   mutate(scaled_time = stamp - first)
 
-timestampByType = ggplot(scale_times, aes(x=route)) +
-  labs(title="Difference Between First and Last Config Sent") +
+scale_times.per_version = configs.by_version %>% group_by(version) %>%
+  summarize(first = min(stamp)) %>%
+  select(version, first) %>%
+  right_join(configs.by_version, by="version") %>%
+  mutate(scaled_time = stamp - first)
+
+timestampByType.per_route = ggplot(scale_times.per_route, aes(x=route)) +
+  labs(title="Difference Between First and Last Config Sent Per Route") +
   xlab("Route Number") +
   ylab("Latency from first config sent (s)") +
   scale_y_continuous(labels=secondsFromNanoseconds) +
@@ -113,7 +125,18 @@ timestampByType = ggplot(scale_times, aes(x=route)) +
   our_theme() %+replace%
     theme(legend.position="bottom")
 
-ggsave(paste(filename, "config.png", sep=""), arrangeGrob(configs_sent,timestampByType) , width=7, height=7)
+timestampByType.per_version = ggplot(scale_times.per_version, aes(x=version)) +
+  labs(title="Difference Between First and Last Config Sent Per Version") +
+  xlab("Version") +
+  ylab("Latency from first config sent (s)") +
+  scale_y_continuous(labels=secondsFromNanoseconds) +
+  scale_colour_brewer(palette = "Set1") +
+  scale_size_area() +
+  geom_point(mapping =  aes(y=scaled_time, color=type), size=0.1) +
+  our_theme() %+replace%
+    theme(legend.position="bottom")
+
+ggsave(paste(filename, "config.png", sep=""), arrangeGrob(configs_sent, timestampByType.per_route, timestampByType.per_version) , width=7, height=11)
 
 print("Latency between Config Sent and Route Working")
 configs = configs.all %>% filter(type == "RouteConfiguration")
