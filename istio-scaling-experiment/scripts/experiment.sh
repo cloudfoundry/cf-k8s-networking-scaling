@@ -28,7 +28,9 @@ prometheusnode=$(kubectl get nodes | awk 'NR > 1 {print $1}' | tail -n1)
 kubectl taint nodes $prometheusnode scalers.istio=prometheus:NoSchedule
 kubectl label nodes $prometheusnode scalers.istio=prometheus
 
-./../scripts/install-istio.sh
+# New istio
+./../scripts/install-istio-1.5.sh
+# ./../scripts/install-istio.sh
 
 # schedule the dataplane pod
 kubetpl render ../yaml/service.yaml ../yaml/httpbin-loadtest.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
