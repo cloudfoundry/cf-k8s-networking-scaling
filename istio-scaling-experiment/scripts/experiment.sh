@@ -29,8 +29,8 @@ kubectl taint nodes $prometheusnode scalers.istio=prometheus:NoSchedule
 kubectl label nodes $prometheusnode scalers.istio=prometheus
 
 # New istio
-./../scripts/install-istio-1.5.sh
-# ./../scripts/install-istio.sh
+# ./../scripts/install-istio-1.5.sh
+./../scripts/install-istio.sh
 
 # schedule the dataplane pod
 kubetpl render ../yaml/service.yaml ../yaml/httpbin-loadtest.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
