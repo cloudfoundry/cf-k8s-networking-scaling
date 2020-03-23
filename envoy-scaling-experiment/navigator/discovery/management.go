@@ -27,6 +27,7 @@ func NewManagmentServer(hostnameFormat string, port int, discoveryServer *Discov
 		handler:       mux,
 	}
 	mux.HandleFunc("/set-routes", s.HandleSetRoutes)
+	mux.HandleFunc("/", s.HandleIndex)
 
 	return s
 }
@@ -42,6 +43,14 @@ func (s *ManagementServer) ListenAndServe(addr string) error {
 
 type HandleSetRoutesPaylaod struct {
 	Numbers []int
+}
+
+func (s *ManagementServer) HandleIndex(w http.ResponseWriter, req *http.Request) {
+	_, _ = w.Write([]byte("Registered nodes:\n"))
+	for nodeID := range s.xdsServer.nodes {
+		_, _ = w.Write([]byte("\t" + nodeID + "\n"))
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func (s *ManagementServer) HandleSetRoutes(w http.ResponseWriter, req *http.Request) {
