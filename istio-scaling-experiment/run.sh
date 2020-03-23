@@ -32,7 +32,7 @@ for ((i=0;i<$COUNT;i++)); do
 
   popd
 
-  if [ $i < $(expr $COUNT - 1) ]; then
+  if [[ $i < $(expr $COUNT - 1) ]]; then
     sleep 600 # sleep for 10min to give the other cluster time to get out of the way
   fi
 done
