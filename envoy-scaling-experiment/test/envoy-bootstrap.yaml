@@ -104,17 +104,6 @@ static_resources:
                             cluster: jaeger
                 http_filters:
                   name: envoy.router
-          tls_context:
-            common_tls_context:
-              tls_certificates:
-              - certificate_chain:
-                  filename: /etc/certs/our.crt
-                private_key:
-                  filename: /etc/certs/our.key
-              alpn_protocols:
-                - h2
-                - http/1.1
-            require_client_certificate: false
     - address:
         socket_address:
           protocol: TCP
