@@ -2,13 +2,16 @@
 
 # set -ex
 
+source ../vars.sh
+source ../scripts/utils.sh
+
 # Prometheus
 kubectl create -f ../yaml/kube-prometheus/manifests/setup
 until kubectl get servicemonitors --all-namespaces ; do date; sleep 1; echo ""; done
 kubectl create -f ../yaml/kube-prometheus/manifests/
 
 # Jaeger, Navigator, Envoy
-kubetpl render ../yaml/jaeger-all-in-one-template.yml ../yaml/navigator.yaml  ../yaml/gateway.yaml | kubectl apply -n system -f -
+kubetpl render -s GATEWAY_REPLICAS=${GATEWAY_NUM} ../yaml/jaeger-all-in-one-template.yml ../yaml/navigator.yaml  ../yaml/gateway.yaml | kubectl apply -n system -f -
 
 # wait until ready
 kubectl wait --for=condition=podscheduled -n system pods --all
