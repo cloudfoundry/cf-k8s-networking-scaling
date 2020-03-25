@@ -16,8 +16,8 @@ pushd interpret
   cargo build
 popd
 
-trap "exit" INT TERM ERR
-trap "kill 0" EXIT
+# trap "exit" INT TERM ERR
+# trap "kill 0" EXIT
 
 for ((i=0;i<$COUNT;i++)); do
   filename="$1-$i"
@@ -47,6 +47,6 @@ popd
 
 mv $1 experiments/
 
-pushd experiments/$1
-  ruby ../../minmax.rb
-popd
+# pushd experiments/$1
+#   ruby ../../minmax.rb
+# popd
