@@ -12,6 +12,8 @@ pushd $ISTIO_FOLDER
 
   helm template install/kubernetes/helm/istio-init --name istio-init --namespace istio-system | kubectl apply -f -
 
+  kubectl -n istio-system wait --for=condition=complete job --all
+
   # wait until istio CRDs are loaded
   until [ $(kubectl get crds | grep -c 'istio.io') -ge "23" ]; do true; done
 
