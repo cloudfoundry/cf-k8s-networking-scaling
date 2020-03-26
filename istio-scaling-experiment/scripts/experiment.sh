@@ -28,9 +28,14 @@ prometheusnode=$(kubectl get nodes | awk 'NR > 1 {print $1}' | tail -n1)
 kubectl taint nodes $prometheusnode scalers.istio=prometheus:NoSchedule
 kubectl label nodes $prometheusnode scalers.istio=prometheus
 
-# New istio
-# ./../scripts/install-istio-1.5.sh
-./../scripts/install-istio.sh
+if [ "$ISTIO_USE_OPERATOR" -eq 1 ]; then
+  ./../scripts/install-istio-with-istioctl.sh
+  if [ "$ISTIO_NO_EDS_DEBOUNCE" -eq 1 ]; then
+    kubectl patch -n istio-system deployment istiod --patch "$(cat ../yaml/patch-add-no-pilot-eds-debounce-to-istiod.yaml)"
+  fi
+else
+  ./../scripts/install-istio.sh
+fi
 
 # schedule the dataplane pod
 kubetpl render ../yaml/service.yaml ../yaml/httpbin-loadtest.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
