@@ -24,7 +24,11 @@ for ((i=0;i<$COUNT;i++)); do
   mkdir $filename
 
   cp vars.sh $filename/
-  cp values.yaml $filename/
+  if [ "$ISTIO_USE_OPERATOR" -eq 1]; then
+    cp istio-operator-values.yaml $filename/values.yml
+  else
+    cp values.yaml $filename/
+  fi
 
   pushd $filename
 
