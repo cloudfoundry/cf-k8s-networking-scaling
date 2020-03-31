@@ -25,7 +25,7 @@ for ((i=0;i<$COUNT;i++)); do
 
   cp vars.sh $filename/
   if [ "$ISTIO_USE_OPERATOR" -eq 1 ]; then
-    cp istio-operator-values.yaml $filename/values.yml
+    cp istio-operator-values.yaml $filename/values.yaml
   else
     cp values.yaml $filename/
   fi
