@@ -40,7 +40,7 @@ fi
 # schedule the dataplane pod
 kubetpl render ../yaml/service.yaml ../yaml/httpbin-loadtest.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
 kubectl wait --for=condition=available deployment $(kubectl get deployments | grep httpbin | awk '{print $1}')
-kubectl wait --for=condition=podscheduled pods $( kubectl get pods -ojsonpath='{range $.items[*]}{@.metadata.name}{"\n"}{end}' | grep htttpin)
+kubectl wait --for=condition=podscheduled pods $(kubectl get pods -ojsonpath='{range $.items[*]}{@.metadata.name}{"\n"}{end}' | grep httpbin)
 
 wlog "Curling to see if load test container is up"
 export INGRESS_HOST=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')

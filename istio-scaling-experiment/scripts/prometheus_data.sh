@@ -52,7 +52,7 @@ spec:
 ---
 EOF
 
-rm prometheus_errors.txt
+rm -f prometheus_errors.txt
 
 INGRESS_IP=$(kubectl get svc -n istio-system istio-ingressgateway | awk 'NR>1 {print $4}')
 START=$(date +%s)
