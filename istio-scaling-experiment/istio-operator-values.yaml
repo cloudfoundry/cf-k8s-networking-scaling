@@ -1,20 +1,85 @@
+# kubetpl:syntax:go-template
+
+# kubetpl:set:ENABLE_GALLEY=false
+# kubetpl:set:GALLEY_REPLICAS=10
+# kubetpl:set:PILOT_REPLICAS=20
+# kubetpl:set:GATEWAY_REPLICAS=20
+# kubetpl:set:ENABLE_MTLS=false
+# kubetpl:set:ENABLE_TELEMETRY=false
+---
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
   profile: default
   values:
     global:
-      useMCP: false
+      controlPlaneSecurityEnabled: {{ if (eq .ENABLE_GALLEY "true") }} false {{ else }} true {{ end }}
+      mtls:
+        auto: {{ .ENABLE_MTLS }}
+    telemetry:
+      enabled: {{ .ENABLE_TELEMETRY }}
+      v1:
+        enabled: {{ .ENABLE_TELEMETRY }}
+      v2:
+        enabled: {{ .ENABLE_TELEMETRY }}
     gateways:
       istio-ingressgateway:
         autoscaleEnabled: false
+        replicaCount: {{ .GATEWAY_REPLICAS }}
+        tolerations:
+        - key: "scalers.istio"
+          operator: "Equal"
+          value: "dedicated"
+          effect: "NoSchedule"
+        nodeSelector:
+          scalers.istio: dedicated
+        podAntiAffinityTermLabelSelector:
+        - key: istio
+          operator: In
+          values: ingressgateway
+          topologyKey: "kubernetes.io/hostname"
+
     pilot:
       autoscaleEnabled: false
-    mixer:
-      policy:
-        enabled: false
-      telemetry:
-        enabled: false
+      replicaCount: {{ .PILOT_REPLICAS }}
+      tolerations:
+      - key: "scalers.istio"
+        operator: "Equal"
+        value: "dedicated"
+        effect: "NoSchedule"
+      nodeSelector:
+        scalers.istio: dedicated
+      podAntiAffinityTermLabelSelector:
+      - key: istio
+        operator: In
+        values: pilot
+        topologyKey: "kubernetes.io/hostname"
+
+    galley:
+      enabled: {{ .ENABLE_GALLEY }}
+      replicaCount: {{ .GALLEY_REPLICAS }}
+      tolerations:
+      - key: "scalers.istio"
+        operator: "Equal"
+        value: "dedicated"
+        effect: "NoSchedule"
+      nodeSelector:
+        scalers.istio: dedicated
+      podAntiAffinityTermLabelSelector:
+      - key: istio
+        operator: In
+        values: galley
+        topologyKey: "kubernetes.io/hostname"
+
+    grafana:
+      enabled: true
+      nodeSelector:
+        scalers.istio: prometheus
+      tolerations:
+      - key: "scalers.istio"
+        operator: "Equal"
+        value: "prometheus"
+        effect: "NoSchedule"
     prometheus:
       nodeSelector:
         scalers.istio: prometheus
@@ -25,45 +90,18 @@ spec:
         effect: "NoSchedule"
   components:
     ingressGateways:
-    - name: ingressgateway
+    - name: istio-ingressgateway
       enabled: true
       k8s:
-        replicaCount: 20
-        tolerations:
-        - key: "scalers.istio"
-          operator: "Equal"
-          value: "dedicated"
-          effect: "NoSchedule"
-        nodeSelector:
-          scalers.istio: dedicated
-        affinity:
-          podAntiAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchLabels: { "istio": "ingressgateway" }
-              topologyKey: "kubernetes.io/hostname"
-            - labelSelector:
-                matchLabels: { "istio": "pilot" }
-              topologyKey: "kubernetes.io/hostname"
+        replicaCount: {{ .GATEWAY_REPLICAS }}
     pilot:
       k8s:
-        replicaCount: 20
-        tolerations:
-        - key: "scalers.istio"
-          operator: "Equal"
-          value: "dedicated"
-          effect: "NoSchedule"
-        nodeSelector:
-          scalers.istio: dedicated
-        affinity:
-          podAntiAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchLabels: { "istio": "ingressgateway" }
-              topologyKey: "kubernetes.io/hostname"
-            - labelSelector:
-                matchLabels: { "istio": "pilot" }
-              topologyKey: "kubernetes.io/hostname"
+        replicaCount: {{ .PILOT_REPLICAS }}
+
+    galley:
+      enabled: {{ .ENABLE_GALLEY }}
+      k8s:
+        replicaCount: {{ .GALLEY_REPLICAS }}
 
     sidecarInjector:
       enabled: true

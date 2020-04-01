@@ -1,10 +1,19 @@
+# kubetpl:syntax:go-template
+
+# kubetpl:set:ENABLE_GALLEY=false
+# kubetpl:set:GALLEY_REPLICAS=10
+# kubetpl:set:PILOT_REPLICAS=20
+# kubetpl:set:GATEWAY_REPLICAS=20
+# kubetpl:set:ENABLE_MTLS=false
+# kubetpl:set:ENABLE_TELEMETRY=false
+---
 global:
-  useMCP: false
+  useMCP: {{ .ENABLE_GALLEY }}
 
 gateways:
   istio-ingressgateway:
     autoscaleEnabled: false
-    replicaCount: 20
+    replicaCount: {{ .GATEWAY_REPLICAS }}
     # autoscaleMin: 1
     # autoscaleMax: 20
     tolerations:
@@ -19,14 +28,10 @@ gateways:
       operator: In
       values: ingressgateway
       topologyKey: "kubernetes.io/hostname"
-    - key: istio
-      operator: In
-      values: pilot
-      topologyKey: "kubernetes.io/hostname"
 
 pilot:
   autoscaleEnabled: false
-  replicaCount: 20
+  replicaCount: {{ .PILOT_REPLICAS }}
   # autoscaleMin: 1
   # autoscaleMax: 20
   tolerations:
@@ -41,25 +46,21 @@ pilot:
     operator: In
     values: pilot
     topologyKey: "kubernetes.io/hostname"
+
+galley:
+  replicaCount: {{ .GALLEY_REPLICAS }}
+  tolerations:
+  - key: "scalers.istio"
+    operator: "Equal"
+    value: "dedicated"
+    effect: "NoSchedule"
+  nodeSelector:
+    scalers.istio: dedicated
+  podAntiAffinityTermLabelSelector:
   - key: istio
     operator: In
-    values: ingressgateway
+    values: galley
     topologyKey: "kubernetes.io/hostname"
-
-# galley:
-#   replicaCount: 10
-#   tolerations:
-#   - key: "scalers.istio"
-#     operator: "Equal"
-#     value: "dedicated"
-#     effect: "NoSchedule"
-#   nodeSelector:
-#     scalers.istio: dedicated
-#   podAntiAffinityTermLabelSelector:
-#   - key: istio
-#     operator: In
-#     values: galley
-#     topologyKey: "kubernetes.io/hostname"
 
 prometheus:
   nodeSelector:
@@ -74,5 +75,16 @@ mixer:
   policy:
     enabled: false
   telemetry:
-    enabled: false
+    enabled: {{ .ENABLE_TELEMETRY }}
 
+grafana:
+  mtls:
+    auto: {{ .ENABLE_MTLS }}
+  enabled: true
+  nodeSelector:
+    scalers.istio: prometheus
+  tolerations:
+  - key: "scalers.istio"
+    operator: "Equal"
+    value: "prometheus"
+    effect: "NoSchedule"

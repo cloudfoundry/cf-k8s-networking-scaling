@@ -1,22 +1,29 @@
-CLUSTER_VERSION=1.14.10-gke.24
-NUM_NODES=120
+CLUSTER_VERSION=1.14.10-gke.32
+NUM_NODES=100
 MACHINE_TYPE=n1-standard-8
 DATAPLANE_NUM_CONNECTIONS=10
 
-ISTIO_FOLDER=/home/pivotal/istio-1.4.2
+ISTIO_FOLDER=/home/pivotal/istio-1.5.1
 ISTIO_TAINT=1
-NODES_FOR_ISTIO=40
-
+NODES_FOR_ISTIO=20
+ISTIO_USE_OPERATOR=1
 MIXERLESS_TELEMETRY=0
 
-NUM_APPS=10 # NUM_APPS >= NUM_USERS * NUM_GROUPS && NUM_APPS % NUM_GROUPS == 0
-NUM_USERS=$NUM_APPS
+ENABLE_GALLEY=true
+ENABLE_MTLS=false
+ENABLE_TELEMETRY=false
+PILOT_REPLICAS=20
+GATEWAY_REPLICAS=20
+GALLEY_REPLICAS=10
+
+NUM_APPS=2000 # NUM_APPS >= NUM_USERS * NUM_GROUPS && NUM_APPS % NUM_GROUPS == 0
+NUM_USERS=1000
 USER_DELAY=1 # in seconds
-USER_POLL_DELAY=3 # how often to poll for upness of a route, 1 is fine for USER_DELAY > 10
+USER_POLL_DELAY=2 # how often to poll for upness of a route, 1 is fine for USER_DELAY > 10
 
 NAMESPACES=0 # if 0, groups within the default namespace will be used
-NUM_GROUPS=1 # set to 1 for everything in one group or namespace
+NUM_GROUPS=1000 # set to 1 for everything in one group or namespace
 
 # steady state experiment where the number of virtualservices and gateways (routes) is constant
 #   through the test, every time a user creates a route they also delete another one
-STEADY_STATE=0
+STEADY_STATE=1
