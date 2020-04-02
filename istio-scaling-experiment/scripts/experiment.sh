@@ -114,6 +114,6 @@ kill -9 $(jobs -p)
 
 wlog "=== TEARDOWN ===="
 
-./destroy-cluster.sh $CLUSTER_NAME
+./../scripts/destroy-cluster.sh $CLUSTER_NAME
 
 exit
