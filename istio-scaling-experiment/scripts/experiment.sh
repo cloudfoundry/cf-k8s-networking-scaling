@@ -114,7 +114,6 @@ kill -9 $(jobs -p)
 
 wlog "=== TEARDOWN ===="
 
-AVAILABILITY_ZONE=$(gcloud compute instances list | grep "$(hostname) " | awk '{print $2}')
-gcloud -q container clusters delete $CLUSTER_NAME --zone $AVAILABILITY_ZONE
+./destroy-cluster.sh $CLUSTER_NAME
 
 exit
