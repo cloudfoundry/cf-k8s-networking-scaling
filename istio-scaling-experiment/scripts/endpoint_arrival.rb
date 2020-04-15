@@ -7,6 +7,7 @@ class Gateway
   def initialize(name)
     @name = name
     @endpoints = {}
+    @envoy_endpoints = {}
     @missing = Hash.new([])
   end
 
@@ -55,6 +56,34 @@ class Gateway
     end
     out.join("\n")
   end
+
+  def process_eds
+    # get endpoints with IPs only
+    endpoints = `curl -sS "#{@route}/clusters" | grep -P '(\\d{1,3}\\.?){4,4}:\\d{1,}' | awk -F '::' '{print $1}' | uniq 2>&1`.split("\n")
+
+    if endpoints.empty?
+      puts "Failed to reach #{@route}/clusters, retrying"
+      sleep(5)
+      process_eds
+      return
+    end
+
+    endpoints.each do |e|
+      next if e.include?('*')
+
+      if @envoy_endpoints[e].nil?
+        @envoy_endpoints[e] = Time.now.to_i
+      end
+    end
+  end
+
+  def envoy_endpoints_to_csv
+    out = []
+    @envoy_endpoints.keys.each do |e|
+      out << ["#{@envoy_endpoints[e]}000000000", @name, e, @route, "appears"].join(',')
+    end
+    out.join("\n")
+  end
 end
 
 gateway_names = `kubectl get pods -n istio-system | grep ingressgateway | awk '{print $1}'`.split("\n")
@@ -73,6 +102,13 @@ begin
     open("endpoint_arrival.csv", 'w') do |f|
       f.puts "stamp,gateway,route,local_port,event"
       f.puts gateways.map(&:to_csv).join("\n")
+    end
+
+    gateways.map(&:process_eds)
+
+    open("envoy_endpoint_arrival.csv", 'w') do |f|
+      f.puts "stamp,gateway,route,local_port,event"
+      f.puts gateways.map(&:envoy_endpoints_to_csv).join("\n")
     end
     sleep(0.25)
   end
