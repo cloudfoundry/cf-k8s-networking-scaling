@@ -32,14 +32,17 @@ type RouteConfig struct {
 	VirutalHosts    []*routepb.VirtualHost
 }
 
-func Generate(hostnameFormat string, port uint32, numbers []int) (*RouteConfig, error) {
-	numbersSeen := map[int]struct{}{}
+func Generate(hostnameFormat string, port uint32, numbers []int, extraClusters []int) (*RouteConfig, error) {
+	err := validateNumbers(numbers)
+	if err != nil {
+		return nil, err
+	}
 
-	for _, n := range numbers {
-		if _, seen := numbersSeen[n]; seen {
-			return nil, fmt.Errorf("expected numbers to be unique, however number %d is repeated", n)
+	if len(extraClusters) > 0 {
+		err = validateNumbers(extraClusters)
+		if err != nil {
+			return nil, err
 		}
-		numbersSeen[n] = struct{}{}
 	}
 
 	c := Config{
@@ -67,6 +70,15 @@ func Generate(hostnameFormat string, port uint32, numbers []int) (*RouteConfig, 
 		return nil, errors.Wrap(err, "cannot generate cluster load assignemnts")
 	}
 	rc.LoadAssignments = clas
+
+	if len(extraClusters) > 0 {
+		c.Numbers = extraClusters
+		extraCls, err := c.GenerateClusters()
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot generate extra clusters")
+		}
+		rc.Clusters = append(rc.Clusters, extraCls...)
+	}
 
 	return rc, nil
 }
@@ -239,4 +251,17 @@ func (hr *HostnameResolver) ResolveAddr(hostname string) (string, error) {
 	hr.cache[hostname] = addr
 	hr.mu.Unlock()
 	return addr, nil
+}
+
+func validateNumbers(numbers []int) error {
+	numbersSeen := map[int]struct{}{}
+
+	for _, n := range numbers {
+		if _, seen := numbersSeen[n]; seen {
+			return fmt.Errorf("expected numbers to be unique, however number %d is repeated", n)
+		}
+		numbersSeen[n] = struct{}{}
+	}
+
+	return nil
 }

@@ -43,6 +43,19 @@ spec:
           - containerPort: 8081
             name: http
             protocol: TCP
+      tolerations:
+        - key: "scalers.cp"
+          operator: "Equal"
+          value: "dedicated"
+          effect: "NoSchedule"
+      # nodeSelector:
+      #   scalers.cp: dedicated
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels: { "app": "navigator" }
+            topologyKey: "kubernetes.io/hostname"
 ---
 apiVersion: v1
 kind: Service

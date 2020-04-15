@@ -29,6 +29,7 @@ type DiscoverServer struct {
 	configSpan  opentracing.Span
 	ingressPort uint32
 	nodes       map[string]int64
+	spans       map[int64]map[string]opentracing.Span
 }
 
 func NewDiscoveryServer(ingressPort uint32) *DiscoverServer {
@@ -38,6 +39,7 @@ func NewDiscoveryServer(ingressPort uint32) *DiscoverServer {
 		ingressPort: ingressPort,
 		cache:       snapshotCache,
 		nodes:       map[string]int64{},
+		spans:       map[int64]map[string]opentracing.Span{},
 	}
 	ds.Server = xds.NewServer(context.Background(), snapshotCache, newCallbacks(ds))
 	// _ = ds.UpdateRoutes(nil, nil, nil)
@@ -65,7 +67,7 @@ func (ds *DiscoverServer) DeregisterNodeByStreamID(streamID int64) {
 
 func (ds *DiscoverServer) UpdateRoutes(clusters []*xdspb.Cluster, loadAssignments []*xdspb.ClusterLoadAssignment, virtualHosts []*routepb.VirtualHost) (int, error) {
 	updatedNodes := 0
-	for nodeId  := range ds.nodes {
+	for nodeId := range ds.nodes {
 		err := ds.UpdateNodeRoutes(nodeId, clusters, loadAssignments, virtualHosts)
 		if err != nil {
 			return updatedNodes, err
@@ -178,17 +180,28 @@ func newCallbacks(ds *DiscoverServer) *discoveryServerCallbacks {
 
 func (d *discoveryServerCallbacks) OnStreamOpen(ctx context.Context, streamID int64, url string) error {
 	log.Printf("Callback: OnStreamOpen: streamID = %d, url = %s\n\n", streamID, url)
+	d.discoverServer.spans[streamID] = map[string]opentracing.Span{}
 	return nil
 }
 
 func (d *discoveryServerCallbacks) OnStreamClosed(streamID int64) {
 	log.Printf("Callback: OnStreamClosed: streamID = %d\n\n", streamID)
 	d.discoverServer.DeregisterNodeByStreamID(streamID)
+	delete(d.discoverServer.spans, streamID)
 }
 
 func (d *discoveryServerCallbacks) OnStreamRequest(streamID int64, req *xdspb.DiscoveryRequest) error {
 	log.Printf("Callback: OnStreamRequest: streamID = %d\nreq = %s\n\n", streamID, req.ResponseNonce)
 	d.discoverServer.RegisterNode(req.Node.Id, streamID)
+
+	if spans, ok := d.discoverServer.spans[streamID]; ok {
+		if span, ok := spans[req.ResponseNonce]; ok {
+			span.SetTag("timeout", false)
+			span.Finish()
+			delete(d.discoverServer.spans[streamID], req.ResponseNonce)
+		}
+	}
+
 	return nil
 }
 
@@ -209,17 +222,40 @@ func (d *discoveryServerCallbacks) OnStreamResponse(streamID int64, req *xdspb.D
 		log.Fatalf("cannot parse resource number, err: %s", err)
 	}
 
+	routeNumbersStr := serializeRouteNumbers(routeNumbers)
 	d.discoverServer.configSpan.LogKV(
 		"event", fmt.Sprintf("Sending %s", typename),
 		"type", typename,
 		"typeurl", out.TypeUrl,
 		"version", out.VersionInfo,
-		//"full_response", out.String(),
-		"routes", serializeRouteNumbers(routeNumbers),
+		"routes", routeNumbersStr,
 		"node", req.Node.Id,
 	)
 	// This will cause duplicate span ID warning in Jaeger but it will merge all logs together for the last span
 	d.discoverServer.configSpan.Finish()
+
+	requestSpan := opentracing.GlobalTracer().StartSpan("sendConfig")
+	requestSpan.LogKV(
+		"event", fmt.Sprintf("Sending %s", typename),
+		"type", typename,
+		"typeurl", out.TypeUrl,
+		"version", out.VersionInfo,
+		"routes", routeNumbersStr,
+		"node", req.Node.Id,
+	)
+	d.discoverServer.spans[streamID][out.Nonce] = requestSpan
+
+	go func(streamID int64, nonce string) {
+		for range time.After(2 * time.Minute) {
+			if spans, ok := d.discoverServer.spans[streamID]; ok {
+				if span, ok := spans[nonce]; ok {
+					span.SetTag("timeout", true)
+					span.Finish()
+					delete(spans, nonce)
+				}
+			}
+		}
+	}(streamID, out.Nonce)
 }
 
 func (d *discoveryServerCallbacks) OnFetchRequest(ctx context.Context, req *xdspb.DiscoveryRequest) error {

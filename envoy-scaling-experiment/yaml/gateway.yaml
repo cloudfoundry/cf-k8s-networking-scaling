@@ -181,6 +181,19 @@ spec:
         - name: boostrap-config
           configMap:
             name: gateway-bootstrap
+      tolerations:
+        - key: "scalers.cp"
+          operator: "Equal"
+          value: "dedicated"
+          effect: "NoSchedule"
+      # nodeSelector:
+      #   scalers.cp: dedicated
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels: { "app": "gateway" }
+            topologyKey: "kubernetes.io/hostname"
 # mount boostrap config
 # (optinal) mount cert/key pair
 #

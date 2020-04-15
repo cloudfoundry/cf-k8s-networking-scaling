@@ -22,14 +22,12 @@ echo "stamp,event" > importanttimes.csv
 ./../scripts/build-cluster.sh $CLUSTER_NAME
 
 # TODO
-# taint nodes for pilot and ingress-gateways
-# if [ $NODES_FOR_ISTIO -gt 0 ]; then
-#   nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | head -n$NODES_FOR_ISTIO)
-#   if [ "$ISTIO_TAINT" -eq 1 ]; then
-#     kubectl taint nodes $nodes scalers.istio=dedicated:NoSchedule
-#   fi
-#   kubectl label nodes $nodes scalers.istio=dedicated
-# fi
+taint nodes for pilot and ingress-gateways
+if [ $NODES_FOR_CP -gt 0 ]; then
+  nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | head -n$NODES_FOR_CP)
+  kubectl taint nodes $nodes scalers.cp=dedicated:NoSchedule
+  kubectl label nodes $nodes scalers.cp=dedicated
+fi
 
 # taint a node for the dataplane pod
 # datanode=$(kubectl get nodes | awk 'NR > 1 {print $1}' | tail -n2 | head -n1)
@@ -140,7 +138,8 @@ iwlog "CP LOAD COMPLETE"
 sleep 10
 
 JAEGER_QUERY_IP=$(kubectl -n system get services jaeger-query -ojsonpath='{.status.loadBalancer.ingress[0].ip}')
-./../jaegerscrapper/bin/scrapper -csvPath ./jaeger.csv -jaegerQueryAddr $JAEGER_QUERY_IP
+./../jaegerscrapper/bin/scrapper -csvPath ./jaeger.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName createSnapshot
+./../jaegerscrapper/bin/scrapper -csvPath ./sendconfigjaeger.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName sendConfig
 
 sleep 600 # wait for cluster to level out after CP load, gather data for cluster without
           # CP load but with lots of configuration
@@ -160,7 +159,6 @@ Rscript ../graph.R
 
 wlog "=== TEARDOWN ===="
 
-AVAILABILITY_ZONE=$(gcloud compute instances list | grep "$(hostname) " | awk '{print $2}')
-gcloud -q container clusters delete $CLUSTER_NAME --zone $AVAILABILITY_ZONE
+./destroy-cluster.sh "$CLUSTER_NAME"
 
 exit

@@ -42,7 +42,8 @@ func (s *ManagementServer) ListenAndServe(addr string) error {
 }
 
 type HandleSetRoutesPaylaod struct {
-	Numbers []int
+	Numbers  []int
+	Clusters []int
 }
 
 func (s *ManagementServer) HandleIndex(w http.ResponseWriter, req *http.Request) {
@@ -54,13 +55,13 @@ func (s *ManagementServer) HandleIndex(w http.ResponseWriter, req *http.Request)
 }
 
 func (s *ManagementServer) HandleSetRoutes(w http.ResponseWriter, req *http.Request) {
-	var payload HandleSetRoutesPaylaod
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	var payload HandleSetRoutesPaylaod
 	err = json.Unmarshal(body, &payload)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -68,7 +69,7 @@ func (s *ManagementServer) HandleSetRoutes(w http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	c, err := route.Generate(s.hostnameForat, uint32(s.port), payload.Numbers)
+	c, err := route.Generate(s.hostnameForat, uint32(s.port), payload.Numbers, payload.Clusters)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte(errors.Wrap(err, "cannot create route config").Error()))
@@ -86,4 +87,3 @@ func (s *ManagementServer) HandleSetRoutes(w http.ResponseWriter, req *http.Requ
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 }
-

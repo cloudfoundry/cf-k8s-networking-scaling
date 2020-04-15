@@ -20,7 +20,7 @@ func TestGenerateEvents(t *testing.T) {
 		t.Error("Could not parse traces.json", err)
 	}
 
-	events := ProduceEvents(traces)
+	events := ProduceEvents(traces, "createSnapshot")
 
 	if len(events) == 0 {
 		t.Error("Definitely should have some events")
@@ -34,6 +34,7 @@ func TestGenerateEvents(t *testing.T) {
 			Type:      "Cluster",
 			Routes:    []int{6, 7, 8, 9},
 			RoutesStr: "6,7,8,9",
+			Duration:  8057080193,
 		},
 		{
 			Version:   "1583262975",
@@ -42,6 +43,7 @@ func TestGenerateEvents(t *testing.T) {
 			Type:      "RouteConfiguration",
 			Routes:    []int{6, 7, 8, 9},
 			RoutesStr: "6,7,8,9",
+			Duration:  8057080193,
 		},
 		{
 			Version:   "1583262975",
@@ -50,6 +52,7 @@ func TestGenerateEvents(t *testing.T) {
 			Type:      "ClusterLoadAssignment",
 			Routes:    []int{6, 7, 8, 9},
 			RoutesStr: "6,7,8,9",
+			Duration:  8057080193,
 		},
 		{
 			Version:   "1583271032",
@@ -58,6 +61,7 @@ func TestGenerateEvents(t *testing.T) {
 			Type:      "Cluster",
 			Routes:    []int{4, 5, 1, 2, 3},
 			RoutesStr: "4,5,1,2,3",
+			Duration:  17316,
 		},
 		{
 			Version:   "1583271032",
@@ -66,6 +70,7 @@ func TestGenerateEvents(t *testing.T) {
 			Type:      "RouteConfiguration",
 			Routes:    []int{1, 2, 3, 4, 5},
 			RoutesStr: "1,2,3,4,5",
+			Duration:  17316,
 		},
 		{
 			Version:   "1583271032",
@@ -74,6 +79,7 @@ func TestGenerateEvents(t *testing.T) {
 			Type:      "ClusterLoadAssignment",
 			Routes:    []int{1, 2, 3, 4, 5},
 			RoutesStr: "1,2,3,4,5",
+			Duration:  17316,
 		},
 	}
 

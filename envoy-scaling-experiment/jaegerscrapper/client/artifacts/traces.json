@@ -112,6 +112,257 @@
           "traceID": "20ba210d658e0895",
           "spanID": "20ba210d658e0895",
           "flags": 1,
+          "operationName": "sendConfig",
+          "references": [],
+          "startTime": 1583262975619487,
+          "duration": 1729,
+          "tags": [
+            {
+              "key": "sampler.type",
+              "type": "string",
+              "value": "const"
+            },
+            {
+              "key": "sampler.param",
+              "type": "bool",
+              "value": true
+            },
+            {
+              "key": "version",
+              "type": "string",
+              "value": "1583262975"
+            },
+            {
+              "key": "internal.span.format",
+              "type": "string",
+              "value": "proto"
+            }
+          ],
+          "logs": [
+            {
+              "timestamp": 1583262975620460,
+              "fields": [
+                {
+                  "key": "event",
+                  "type": "string",
+                  "value": "Sending Cluster"
+                },
+                {
+                  "key": "full_response",
+                  "type": "string",
+                  "value": "version_info:\"1583262975\" resources:\u003ctype_url:\"type.googleapis.com/envoy.api.v2.Cluster\" value:\"\\n\\tservice.6\\032\\017\\n\\002\\032\\000\\022\\tservice.6\\\"\\002\\010\\001\\020\\003\" \u003e resources:\u003ctype_url:\"type.googleapis.com/envoy.api.v2.Cluster\" value:\"\\n\\tservice.7\\032\\017\\n\\002\\032\\000\\022\\tservice.7\\\"\\002\\010\\001\\020\\003\" \u003e resources:\u003ctype_url:\"type.googleapis.com/envoy.api.v2.Cluster\" value:\"\\n\\tservice.8\\032\\017\\n\\002\\032\\000\\022\\tservice.8\\\"\\002\\010\\001\\020\\003\" \u003e resources:\u003ctype_url:\"type.googleapis.com/envoy.api.v2.Cluster\" value:\"\\n\\tservice.9\\032\\017\\n\\002\\032\\000\\022\\tservice.9\\\"\\002\\010\\001\\020\\003\" \u003e type_url:\"type.googleapis.com/envoy.api.v2.Cluster\" nonce:\"5\" "
+                },
+                {
+                  "key": "routes",
+                  "type": "string",
+                  "value": "6,7,8,9"
+                },
+                {
+                  "key": "type",
+                  "type": "string",
+                  "value": "Cluster"
+                },
+                {
+                  "key": "typeurl",
+                  "type": "string",
+                  "value": "type.googleapis.com/envoy.api.v2.Cluster"
+                },
+                {
+                  "key": "version",
+                  "type": "string",
+                  "value": "1583262975"
+                }
+              ]
+            },
+            {
+              "timestamp": 1583262975621216,
+              "fields": [
+                {
+                  "key": "event",
+                  "type": "string",
+                  "value": "Sending RouteConfiguration"
+                },
+                {
+                  "key": "full_response",
+                  "type": "string",
+                  "value": "version_info:\"1583262975\" resources:\u003ctype_url:\"type.googleapis.com/envoy.api.v2.RouteConfiguration\" value:\"\\n\\ningress_80\\022,\\n\\007route.6\\022\\r6.example.com\\032\\022\\n\\003\\n\\001/\\022\\013\\n\\tservice.6\\022,\\n\\007route.7\\022\\r7.example.com\\032\\022\\n\\003\\n\\001/\\022\\013\\n\\tservice.7\\022,\\n\\007route.8\\022\\r8.example.com\\032\\022\\n\\003\\n\\001/\\022\\013\\n\\tservice.8\\022,\\n\\007route.9\\022\\r9.example.com\\032\\022\\n\\003\\n\\001/\\022\\013\\n\\tservice.9\" \u003e type_url:\"type.googleapis.com/envoy.api.v2.RouteConfiguration\" nonce:\"6\" "
+                },
+                {
+                  "key": "routes",
+                  "type": "string",
+                  "value": "6,7,8,9"
+                },
+                {
+                  "key": "type",
+                  "type": "string",
+                  "value": "RouteConfiguration"
+                },
+                {
+                  "key": "typeurl",
+                  "type": "string",
+                  "value": "type.googleapis.com/envoy.api.v2.RouteConfiguration"
+                },
+                {
+                  "key": "version",
+                  "type": "string",
+                  "value": "1583262975"
+                }
+              ]
+            }
+          ],
+          "processID": "p1",
+          "warnings": [
+            "duplicate span IDs; skipping clock skew adjustment",
+            "duplicate span IDs; skipping clock skew adjustment",
+            "duplicate span IDs; skipping clock skew adjustment",
+            "duplicate span IDs; skipping clock skew adjustment",
+            "duplicate span IDs; skipping clock skew adjustment",
+            "duplicate span IDs; skipping clock skew adjustment",
+            "duplicate span IDs; skipping clock skew adjustment"
+          ]
+        }
+      ],
+      "processes": {
+        "p1": {
+          "serviceName": "navigator",
+          "tags": [
+            {
+              "key": "client-uuid",
+              "type": "string",
+              "value": "30e989c384e47bec"
+            },
+            {
+              "key": "hostname",
+              "type": "string",
+              "value": "navigator-7987b8df58-9wvzf"
+            },
+            {
+              "key": "ip",
+              "type": "string",
+              "value": "10.40.1.8"
+            },
+            {
+              "key": "jaeger.version",
+              "type": "string",
+              "value": "Go-2.22.1"
+            }
+          ]
+        }
+      },
+      "warnings": null
+    },
+    {
+      "traceID": "20ba210d658e0895",
+      "spans": [
+        {
+          "traceID": "20ba210d658e0895",
+          "spanID": "20ba210d658e0895",
+          "flags": 1,
+          "operationName": "sendConfig",
+          "references": [],
+          "startTime": 1583262975619487,
+          "duration": 1729,
+          "tags": [
+            {
+              "key": "sampler.type",
+              "type": "string",
+              "value": "const"
+            },
+            {
+              "key": "sampler.param",
+              "type": "bool",
+              "value": true
+            },
+            {
+              "key": "version",
+              "type": "string",
+              "value": "1583262975"
+            },
+            {
+              "key": "internal.span.format",
+              "type": "string",
+              "value": "proto"
+            }
+          ],
+          "logs": [
+            {
+              "timestamp": 1583262975620460,
+              "fields": [
+                {
+                  "key": "event",
+                  "type": "string",
+                  "value": "Sending Cluster"
+                },
+                {
+                  "key": "full_response",
+                  "type": "string",
+                  "value": "version_info:\"1583262975\" resources:\u003ctype_url:\"type.googleapis.com/envoy.api.v2.Cluster\" value:\"\\n\\tservice.6\\032\\017\\n\\002\\032\\000\\022\\tservice.6\\\"\\002\\010\\001\\020\\003\" \u003e resources:\u003ctype_url:\"type.googleapis.com/envoy.api.v2.Cluster\" value:\"\\n\\tservice.7\\032\\017\\n\\002\\032\\000\\022\\tservice.7\\\"\\002\\010\\001\\020\\003\" \u003e resources:\u003ctype_url:\"type.googleapis.com/envoy.api.v2.Cluster\" value:\"\\n\\tservice.8\\032\\017\\n\\002\\032\\000\\022\\tservice.8\\\"\\002\\010\\001\\020\\003\" \u003e resources:\u003ctype_url:\"type.googleapis.com/envoy.api.v2.Cluster\" value:\"\\n\\tservice.9\\032\\017\\n\\002\\032\\000\\022\\tservice.9\\\"\\002\\010\\001\\020\\003\" \u003e type_url:\"type.googleapis.com/envoy.api.v2.Cluster\" nonce:\"5\" "
+                },
+                {
+                  "key": "routes",
+                  "type": "string",
+                  "value": "6,7,8,9"
+                },
+                {
+                  "key": "type",
+                  "type": "string",
+                  "value": "Cluster"
+                },
+                {
+                  "key": "typeurl",
+                  "type": "string",
+                  "value": "type.googleapis.com/envoy.api.v2.Cluster"
+                },
+                {
+                  "key": "version",
+                  "type": "string",
+                  "value": "1583262975"
+                }
+              ]
+            },
+            {
+              "timestamp": 1583262975621216,
+              "fields": [
+                {
+                  "key": "event",
+                  "type": "string",
+                  "value": "Sending RouteConfiguration"
+                },
+                {
+                  "key": "full_response",
+                  "type": "string",
+                  "value": "version_info:\"1583262975\" resources:\u003ctype_url:\"type.googleapis.com/envoy.api.v2.RouteConfiguration\" value:\"\\n\\ningress_80\\022,\\n\\007route.6\\022\\r6.example.com\\032\\022\\n\\003\\n\\001/\\022\\013\\n\\tservice.6\\022,\\n\\007route.7\\022\\r7.example.com\\032\\022\\n\\003\\n\\001/\\022\\013\\n\\tservice.7\\022,\\n\\007route.8\\022\\r8.example.com\\032\\022\\n\\003\\n\\001/\\022\\013\\n\\tservice.8\\022,\\n\\007route.9\\022\\r9.example.com\\032\\022\\n\\003\\n\\001/\\022\\013\\n\\tservice.9\" \u003e type_url:\"type.googleapis.com/envoy.api.v2.RouteConfiguration\" nonce:\"6\" "
+                },
+                {
+                  "key": "routes",
+                  "type": "string",
+                  "value": "6,7,8,9"
+                },
+                {
+                  "key": "type",
+                  "type": "string",
+                  "value": "RouteConfiguration"
+                },
+                {
+                  "key": "typeurl",
+                  "type": "string",
+                  "value": "type.googleapis.com/envoy.api.v2.RouteConfiguration"
+                },
+                {
+                  "key": "version",
+                  "type": "string",
+                  "value": "1583262975"
+                }
+              ]
+            }
+          ],
+          "processID": "p1",
+          "warnings": null
+        },
+        {
+          "traceID": "20ba210d658e0895",
+          "spanID": "20ba210d658e0895",
+          "flags": 1,
           "operationName": "createSnapshot",
           "references": [],
           "startTime": 1583262975619487,

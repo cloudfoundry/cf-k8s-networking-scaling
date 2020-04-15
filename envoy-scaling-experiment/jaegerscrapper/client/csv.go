@@ -11,7 +11,9 @@ var headers = []string{
 	"Date",
 	"Version",
 	"Type",
+	"Duration",
 	"Routes",
+	"Timeout",
 }
 
 func CreateCSV(events []*Event, out io.Writer) error {
@@ -39,6 +41,8 @@ func toRecord(e *Event) []string {
 		e.Datetime,
 		e.Version,
 		e.Type,
+		fmt.Sprintf("%d", e.Duration),
 		e.RoutesStr,
+		fmt.Sprintf("%t", e.Timeout),
 	}
 }
