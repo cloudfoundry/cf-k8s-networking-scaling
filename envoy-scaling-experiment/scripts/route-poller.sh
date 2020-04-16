@@ -9,7 +9,7 @@ poll() {
   user="${1}"
   url="${user}.example.com"
   start="$(udate)"
-  : status=$(curl -sS -w "%{http_code}" -H "Host:${url}" http://$INGRESS_IP:80/status/200 2>> curlstuff/route-${user}.log)
+  status=$(curl -sS -w "%{http_code}" -H "Host:${url}" http://$INGRESS_IP:80/status/200 2>> curlstuff/route-${user}.log)
   echo "$(udate),${user},${status},${start}"
 }
 

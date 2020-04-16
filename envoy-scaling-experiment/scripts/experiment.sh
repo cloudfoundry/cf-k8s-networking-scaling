@@ -92,7 +92,7 @@ kubectl wait --for=condition=podscheduled pods $(kubectl get pods | grep httpbin
 sleep 30 # wait for cluster to not be in a weird state after pushing so many pods
          # and get data for cluster without CP load or configuration as control
 
-echo "stamp,route,status" > route-status.csv
+echo "stamp,route,status,startstamp" > route-status.csv
 ./../scripts/route-poller.sh >> route-status.csv &
 
 set_routes()
