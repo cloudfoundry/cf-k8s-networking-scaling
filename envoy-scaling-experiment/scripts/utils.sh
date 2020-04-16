@@ -57,3 +57,31 @@ time_wait ()
 {
   netstat -on | grep TIME_WAIT | wc | awk '{$10=systime(); print $10 "0000000000," $1}'
 }
+
+set_routes()
+{
+  navigator_port="${1}"
+  response_code=$(curl -sS -XPOST http://localhost:${navigator_port}/set-routes -d "{\"numbers\":[$2]}" --write-out '%{http_code}' -o /tmp/navigator_output)
+  if [[ "${response_code}" != "200" ]]; then
+    echo "Navigator returned ${response_code}"
+    cat /tmp/navigator_output
+    echo
+  fi
+}
+
+wait_for_pods() {
+  local n="${1}"
+  shift
+  local pods=("${@}")
+  let chunk_size="${#pods[@]} / ${n}"
+  let chunks_num="$((${n} - 1))"
+
+  for i in $(seq 0 ${chunks_num}); do
+    let start="${i} * ${chunk_size}"
+    let end="${start} + ${chunk_size}"
+    local selector="app in ($(echo "${pods[@]:$start:$end}" | tr ' ' ','))"
+    kubectl wait --for=condition=podscheduled pods -l "${selector}" &
+  done
+
+  wait
+}

@@ -92,18 +92,6 @@ kubectl wait --for=condition=podscheduled pods $(kubectl get pods | grep httpbin
 sleep 30 # wait for cluster to not be in a weird state after pushing so many pods
          # and get data for cluster without CP load or configuration as control
 
-echo "stamp,route,status,startstamp" > route-status.csv
-./../scripts/route-poller.sh >> route-status.csv &
-
-set_routes()
-{
-  response_code=$(curl -sS -XPOST http://localhost:${navigator_port}/set-routes -d "{\"numbers\":[$1]}" --write-out '%{http_code}' -o /tmp/navigator_output)
-  if [[ "${response_code}" != "200" ]]; then
-    echo "Navigator returned ${response_code}"
-    cat /tmp/navigator_output
-    echo
-  fi
-}
 
 # ensure port 8081 is free before forwarding to it
 kubectl port-forward -n system service/navigator :8081 > portforward.log & # so that we can reach the Navigator API
@@ -111,27 +99,26 @@ sleep 5 # wait for port-forward
 navigator_port=$(cat portforward.log | grep -P -o "127.0.0.1:\d+" | cut -d":" -f2)
 wlog "forwarding Navigator API to localhost:${navigator_port}"
 
-LAST_ROUTE=$(($NUM_APPS - 1))
-HALF_ROUTES=$(($NUM_APPS / 2))
-set_routes "$(seq -s',' $HALF_ROUTES $LAST_ROUTE)" # precreate second half
+let last_route="$NUM_APPS - 1"
+let half_routes="$NUM_APPS / 2"
+set_routes "${navigator_port}" "$(seq -s',' $half_routes $last_route)" # precreate second half
+
+mkdir -p curlstuff
 
 # wait for a known-configured route to work
-url="$LAST_ROUTE.example.com"
-status=$(curl -sS -w "%{http_code}" -H "Host:${url}" http://$INGRESS_IP:80/status/200 2>> curlstuff/route-$LAST_ROUTE.log)
+url="$last_route.example.com"
+status=$(curl -sS -w "%{http_code}" -H "Host:${url}" http://$INGRESS_IP:80/status/200 2>> curlstuff/route-$last_route.log)
 while [ "$status" != "200" ]; do
-  status=$(curl -sS -w "%{http_code}" -H "Host:${url}" http://$INGRESS_IP:80/status/200 2>> curlstuff/route-$LAST_ROUTE.log)
+  status=$(curl -sS -w "%{http_code}" -H "Host:${url}" http://$INGRESS_IP:80/status/200 2>> curlstuff/route-$last_route.log)
 done
 sleep 30 # so we can see that setup worked on the graphs
 
-ADMIN_ADDR="${INGRESS_IP}:15000" ruby ./../scripts/endpoint_arrival.rb &
+echo "stamp,request" > envoy_requests.csv
+ADMIN_ADDR="${INGRESS_IP}:15000" ruby ./../scripts/endpoint_arrival.rb > envoy_requests.csv &
 
 iwlog "GENERATE CP LOAD"
 
-for i in $(seq 0 $(($NUM_USERS - 1)) ); do
-  wlog "creating route $i"
-  set_routes "$(seq -s',' 0 $i),$(seq -s',' $(($HALF_ROUTES + $i)) $LAST_ROUTE)"
-  sleep $USER_DELAY
-done
+./../scripts/cpload.sh "${navigator_port}" "${last_route}" "${half_routes}" > route-status.csv
 
 iwlog "CP LOAD COMPLETE"
 

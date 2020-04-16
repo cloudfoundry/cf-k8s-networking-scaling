@@ -14,9 +14,10 @@ class Gateway
 
   def process_rds
     clusters = `curl -s "http://#{@address}/config_dump" | jq -r .configs[4].dynamic_route_configs[].route_config.virtual_hosts[]?.routes[0].route.cluster 2>&1`.split("\n")
+    puts "#{Time.now.to_i},/config_dump"
 
     if clusters.empty?
-      puts "Failed to reach #{@address}/config_dump, retrying in 5 seconds"
+      # puts "Failed to reach #{@address}/config_dump, retrying in 5 seconds"
       sleep(5)
       process_rds
       return
@@ -53,10 +54,11 @@ class Gateway
   def process_eds
     # get endpoints with IPs only
     endpoints = `curl -sS "http://#{@address}/clusters" | grep -P '(\\d{1,3}\\.?){4,4}:\\d{1,}' | awk -F '::' '{print $1}' | uniq 2>&1`.split("\n")
+    puts "#{Time.now.to_i},/clusters"
 
     if endpoints.empty?
-      puts "Failed to reach #{@address}/clusters, retrying"
-      sleep(5)
+      # puts "Failed to reach #{@address}/clusters, retrying"
+      sleep(1)
       process_eds
       return
     end

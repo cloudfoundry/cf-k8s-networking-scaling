@@ -18,12 +18,17 @@ times=read_csv(paste(filename, "importanttimes.csv", sep=""))
 # Set up x-axis in experimental time (all data has normalized timestamps)
 maxSec = max(times$stamp)
 breaksFromZero <- seq(from=0, to=maxSec, by=20 * 60 * 1000 * 1000 * 1000)
+
 secondsFromNanoseconds <- function(x) {
   return(round(x/(1000*1000*1000), digits=1))
 }
 minutesFromNanoseconds <- function(x) {
   return(round(x/(60*1000*1000*1000), digits=1))
 }
+nanosecondsFromSeconds <- function(x) {
+ x*1000*1000*1000
+}
+
 experiment_time_x_axis <- function(p) {
   return(
          p + xlab("Time (minutes)") +
@@ -58,50 +63,117 @@ mylabels = c("p68", "p90", "p99", "p999", "max")
 fiveSecondsInNanoseconds = 5 * 1000 * 1000 * 1000
 
 
-print("Graph Route Statuses")
+print("Collect Route Status Data")
 # timestamp, runID, status, route
-routes = read_csv("./route-status.csv", col_types=cols(status=col_factor(), route=col_integer())) %>% drop_na()
+routes = read_csv("./route-status.csv", col_types=cols(runID=col_factor(), status=col_factor(), route=col_integer())) %>% drop_na()
+print(routes)
+time_when_route_first_works = routes %>% filter(status == "200") %>%
+  select(runID, stamp, route) %>%
+  arrange(stamp) %>%
+  group_by(runID, route) %>%  slice(1L) %>% ungroup()
 
-print("Graph Configs Sent")
-xds = read_csv("./jaeger.csv")
+print(time_when_route_first_works)
+
+obs_deltas = routes %>%
+  arrange(stamp) %>%
+  group_by(runID) %>%
+  # filter(route < 1000) %>%
+  # filter(status == "200") %>%
+  mutate(delta = stamp - lag(stamp, default=stamp[1])) %>%
+  summarize(m = median(delta))
+
+print(obs_deltas$m / 1e6)
+
+
+print("Collect Config Send Data")
+xds = read_csv("./jaeger.csv", col_types=cols(runID=col_factor()))
 xds = xds %>%
   separate_rows(Routes, convert = TRUE) %>%  # one row per observation of a route being configured
   drop_na() # sometimes route is NA, so drop those
 
-print("Latency between Config Sent and Route Working")
-scaleMicroToNano <- function(x, na.rm = FALSE) x * 10^3
-configs = xds %>% filter(Type == "RouteConfiguration") %>%
+# RouteConfiguration is the first type sent. ClusterLoadAllocation is last.
+time_when_route_first_sent = xds %>% filter(Type == "RouteConfiguration") %>%
   select(runID, stamp=Timestamp, route=Routes) %>%
   arrange(stamp) %>%
   group_by(runID, route) %>%  slice(1L) %>% ungroup()
-observations = routes %>% filter(status == "200") %>%
-  select(runID, stamp, route) %>%
-  arrange(stamp) %>%
-  group_by(runID, route) %>%  slice(1L) %>% ungroup()
-halfRoute = max(configs$route) / 2
-all.withtimes = left_join(configs, observations, by=c("runID","route")) %>%
-  filter(route < halfRoute) %>%
-  mutate(time_diff = stamp.y - stamp.x)
 
-values = quantile(all.withtimes$time_diff, quantiles)
-cptails = tibble(mylabels, values)
-ggplot(cptails, aes(x=mylabels, y=values)) +
+print("Collect /clusters Data")
+time_when_cluster_appears = read_csv("endpoints_arrival.csv", col_types=cols(runID=col_factor())) %>%
+  filter(str_detect(route, "service_.*")) %>%
+  select(runID, stamp, route) %>%
+  extract("route", "route", regex = "service_([[:alnum:]]+)", convert=TRUE)
+
+print("Calculate Control Plane Latency")
+halfRoute = 1000 # max(time_when_route_first_sent$route) / 2
+
+from_config_sent_to_works = left_join(time_when_route_first_sent, time_when_route_first_works, by=c("runID","route")) %>%
+  filter(route < halfRoute) %>% # only include routes from CP load
+  mutate(time_diff = stamp.y - stamp.x) # when it works minus when it was sent
+
+from_clusters_to_works = left_join(time_when_cluster_appears, time_when_route_first_works, by=c("runID", "route")) %>%
+  mutate(time_diff = stamp.y - stamp.x) %>% # route works - cluster exists
+  arrange(route)
+
+from_config_sent_to_clusters = left_join(time_when_route_first_sent, time_when_cluster_appears, by=c("runID", "route")) %>%
+  mutate(time_diff = stamp.y - stamp.x) %>% # cluster exists - route sent
+  arrange(route)
+
+print("Calculate Quantiles")
+from_config_sent_to_works.q = quantile(from_config_sent_to_works$time_diff, quantiles)
+from_clusters_to_works.q = quantile(from_clusters_to_works$time_diff, quantiles)
+cptails = tibble(mylabels,
+                 from_config_sent=from_config_sent_to_works.q,
+                 from_clusters=from_clusters_to_works.q) %>%
+  pivot_longer(c(from_config_sent, from_clusters), names_to="type", values_to="time_diff")
+
+print("Calculate Time Spent Per Step")
+latencies_by_route = bind_rows(
+    "from_config_sent_to_clusters"=from_config_sent_to_clusters,
+    "from_clusters_to_works"=from_clusters_to_works,
+    .id="type"
+  ) %>%
+  filter(route < halfRoute)
+
+# TODO make negative time_diff zero
+print(latencies_by_route)
+
+print("Graph Latency to Route Working")
+tail_colors <- c("from_config_sent"="black", "from_clusters"="gray85")
+tail_latencies = ggplot(cptails, aes(x=mylabels, y=time_diff)) +
   labs(title="Control Plane Latency by Percentile") +
   ylab("Latency (s)") +
   scale_y_continuous(labels=secondsFromNanoseconds) +
   xlab("Percentile") +
   scale_x_discrete(limits=mylabels) +
-  geom_line(mapping=aes(group="default does not work")) +
+  geom_line(mapping=aes(color=type, group=type)) +
   geom_point() +
-  # add line for goal
-  geom_hline(yintercept = fiveSecondsInNanoseconds, color="grey80") +
-  geom_text(mapping = aes(y=fiveSecondsInNanoseconds, x="p68", label="GOAL 5sec at p95"), size=2, vjust=1.5, hjust=1, color="grey25") +
+  geom_text(vjust = -0.5, aes(label = secondsFromNanoseconds(time_diff))) +
+  scale_colour_manual(values = tail_colors) +
+  our_theme() %+replace%
+    theme(legend.position="bottom")
+
+latencies_bars = ggplot(latencies_by_route, aes(x=route, y=time_diff)) +
+  labs(title="Control Plane Latency by Route") +
+  ylab("Latency (s)") +
+  scale_y_continuous(labels=secondsFromNanoseconds) +
+  xlab("Route") +
+  # facet_wrap(vars(runID), ncol=1) +
+  # geom_bar(mapping=aes(fill=type), stat="identity") +
+  facet_wrap(vars(type), ncol=1) +
+  geom_point(color="black", alpha=0.25) +
+  stat_summary_bin(aes(colour="max"), fun.y = "max", bins=100, geom="line") +
+  stat_summary_bin(aes(colour="median"), fun.y = "median", bins=100, geom="line") +
+  geom_hline(yintercept = 0, color="grey45") +
   scale_colour_brewer(palette = "Set1") +
   our_theme() %+replace%
     theme(legend.position="bottom")
-ggsave(paste(filename, "latency.png", sep=""), width=7, height=4)
+
+ggsave(paste(filename, "latency.png", sep=""),
+       arrangeGrob(tail_latencies, latencies_bars), width=3 * 7, height=3 * 10)
 
 
+exit()
+print("Graph Node Usage")
 nodemon = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(percent=col_number()))
 experiment_time_x_axis(ggplot(nodemon) +
   labs(title = "Node Utilization") +
@@ -116,6 +188,7 @@ experiment_time_x_axis(ggplot(nodemon) +
     theme(legend.position="none", axis.title.x=element_blank(), axis.text.x=element_blank()))
 ggsave(paste(filename, "nodemon.png", sep=""), width=7, height=3.5)
 
+print("Graph Client VM Usage")
 memstats = read_csv(paste(filename, "memstats.csv", sep="")) %>% mutate(memory = (used/total) * 100) %>% select(runID, timestamp=stamp, memory)
 cpustats = read_csv(paste(filename, "cpustats.csv", sep="")) %>% filter(cpuid == "all") %>% mutate(cpu = (100 - idle)) %>% select(runID, timestamp=stamp, cpuid, cpu)
 clientstats = full_join(memstats, cpustats) %>% gather("metric", "percent", -runID, -cpuid, -timestamp)
