@@ -21,7 +21,7 @@ poll_user() {
   done
 }
 
-for (( i = 0; i < ${NUM_APPS}; i++)); do
+for (( i = 0; i < ${NUM_USERS}; i++)); do
   poll_user "${i}" &
 done
 

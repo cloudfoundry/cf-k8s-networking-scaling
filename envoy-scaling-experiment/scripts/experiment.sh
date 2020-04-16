@@ -159,6 +159,6 @@ Rscript ../graph.R
 
 wlog "=== TEARDOWN ===="
 
-./destroy-cluster.sh "$CLUSTER_NAME"
+./../scripts/destroy-cluster.sh "$CLUSTER_NAME"
 
 exit

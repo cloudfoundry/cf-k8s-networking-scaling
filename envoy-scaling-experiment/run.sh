@@ -9,7 +9,8 @@ CLUSTER_NAME=${EXPERIMENT_NAME}
 COUNT=${2:-3}
 
 # make sure we always have current builds
-make
+make navigator gateway
+make jaegerscrapper combine
 
 
 trap "exit" INT TERM ERR
