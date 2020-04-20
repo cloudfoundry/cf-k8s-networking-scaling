@@ -85,13 +85,13 @@ gateway = Gateway.new("gateway", ENV["ADMIN_ADDR"])
 
 begin
   while true
-    gateway.process_rds
+    # gateway.process_rds
     gateway.process_eds
 
-    open("routes_arrival.csv", 'w') do |f|
-      f.puts "stamp,gateway,route,local_port,event"
-      f.puts gateway.routes_to_csv
-    end
+    # open("routes_arrival.csv", 'w') do |f|
+    #   f.puts "stamp,gateway,route,local_port,event"
+    #   f.puts gateway.routes_to_csv
+    # end
     open("endpoints_arrival.csv", 'w') do |f|
       f.puts "stamp,gateway,route,local_port,event"
       f.puts gateway.endpoints_to_csv

@@ -95,10 +95,6 @@ from_clusters_to_works = left_join(time_when_cluster_appears, time_when_route_fi
 from_config_sent_to_clusters = left_join(time_when_route_first_sent, time_when_cluster_appears, by=c("route")) %>%
   mutate(time_diff = stamp.y - stamp.x) # cluster exists - route sent
 
-print(from_config_sent_to_works)
-print(from_clusters_to_works)
-print(from_config_sent_to_clusters)
-
 print("Calculate Quantiles")
 from_config_sent_to_works.q = quantile(from_config_sent_to_works$time_diff, quantiles)
 from_clusters_to_works.q = quantile(from_clusters_to_works$time_diff, quantiles)
@@ -164,20 +160,30 @@ ggplot(data) +
 
 ggsave(paste(filename, "duration.png", sep=""))
 
-# print("Graph Configs Sent")
-# xds = read_csv("./jaeger.csv") # duration is invalid
+print("Graph Configs Sent")
+xds.version_incremental = read_csv('./sendconfigjaeger.csv') %>%
+  select(stamp=Timestamp, route=Routes, type=Type, version=Version) %>%
+  arrange(version)
+xds.version_incremental$version = group_indices(xds.version_incremental, version)
 
-# xds.version_inc = xds %>%
-#   select(stamp=Timestamp, route=Routes, type=Type, version=Version) %>%
-#   arrange(version)
-# xds.version_inc$version = group_indices(xds.version_inc, version)
+config_apply_total_time_per_version = xds.version_incremental %>%
+  group_by(version) %>%
+  summarize(time_diff = max(stamp) - min(stamp), n = n())
 
-# types_per_version = xds.version_inc %>% group_by(version) %>% summarize(n = n())
-# versions_not_full = filter(types_per_version, n != 3)
+versions_with_not_all_configs = filter(config_apply_total_time_per_version, n != 3)
 
-# xds = xds %>%
-#   separate_rows(Routes, convert = TRUE) %>%  # one row per observation of a route being configured
-#   drop_na() # sometimes route is NA, so drop those
+config_apply_type_by_version_graph = ggplot(config_apply_total_time_per_version, aes(x=version, y=time_diff)) +
+  labs(title="Config Apply Time by Version") +
+  ylab("Time (seconds)") +
+  scale_y_continuous(labels=secondsFromNanoseconds) +
+  xlab("Version") +
+  geom_point(alpha=0.5, size=0.4) +
+  geom_vline(xintercept = versions_with_not_all_configs$version, color="grey80", size=0.1) +
+  scale_size_area() +
+  our_theme() %+replace%
+    theme(legend.position="bottom")
+
+ggsave(paste(filename, "config.png", sep=""), config_apply_type_by_version_graph, width=7, height=7)
 
 # # configs_sent = ggplot(xds) +
 # #   labs(title="Config Sent over Time") +
@@ -311,7 +317,7 @@ experiment_time_x_axis(ggplot(nodeusage) +
   geom_line(busynodes, mapping=aes(x=timestamp,y=percent, color=nodename), alpha=0.75) +
   our_theme() %+replace%
     theme(legend.position="bottom"))
-# ggsave(paste(filename, "nodemon.png", sep=""), width=7, height=12)
+ggsave(paste(filename, "nodemon.png", sep=""), width=7, height=12)
 
 podcountsbusynodes = podcountsbynodetime %>% right_join(busynodenames) %>%
   filter(podtype != "prometheus-to", podtype != "kube-proxy", podtype != "fluentd-gcp") %>%
@@ -326,7 +332,7 @@ experiment_time_x_axis(ggplot(podcountsbusynodes) +
   our_theme() %+replace%
     theme(legend.position="bottom"))
 numberofbusynodes = n_distinct(podcountsbusynodes$nodename)
-# ggsave(paste(filename, "nodes4pods.png", sep=""), width=7, height=2.5 * numberofbusynodes)
+ggsave(paste(filename, "nodes4pods.png", sep=""), width=7, height=2.5 * numberofbusynodes)
 
 print("Client Usage")
 memstats = read_csv(paste(filename, "memstats.csv", sep=""))
@@ -340,7 +346,7 @@ experiment_time_x_axis(ggplot(memstats) +
   lineLabels() +
    our_theme() %+replace%
      theme(legend.position="bottom"))
-# ggsave(paste(filename, "resources.png", sep=""), width=7, height=3.5)
+ggsave(paste(filename, "resources.png", sep=""), width=7, height=3.5)
 
 print("Client Network")
 ifstats = read_csv(paste(filename, "ifstats.csv", sep=""))
@@ -353,5 +359,5 @@ experiment_time_x_axis(ggplot(ifstats) +
   lineLabels() +
    our_theme() %+replace%
      theme(legend.position="bottom"))
-# ggsave(paste(filename, "ifstats.png", sep=""), width=7, height=3.5)
+ggsave(paste(filename, "ifstats.png", sep=""), width=7, height=3.5)
 
