@@ -66,23 +66,34 @@ fiveSecondsInNanoseconds = 5 * 1000 * 1000 * 1000
 print("Collect Route Status Data")
 # timestamp, runID, status, route
 routes = read_csv("./route-status.csv", col_types=cols(runID=col_factor(), status=col_factor(), route=col_integer())) %>% drop_na()
-print(routes)
+halfRoute = max(routes$route) # the route-status.csv will only include routes created during CP load
+print(paste("halfRoute = ", halfRoute))
 time_when_route_first_works = routes %>% filter(status == "200") %>%
   select(runID, stamp, route) %>%
   arrange(stamp) %>%
   group_by(runID, route) %>%  slice(1L) %>% ungroup()
 
-print(time_when_route_first_works)
-
 obs_deltas = routes %>%
+  filter(route < halfRoute) %>%
   arrange(stamp) %>%
+  group_by(runID, route) %>%
+  mutate(delta = stamp - lag(stamp, default=stamp[1])) %>%
+  filter(delta != 0) %>%
+  summarize(m = mean(delta), n = n()) %>%
   group_by(runID) %>%
-  # filter(route < 1000) %>%
-  # filter(status == "200") %>%
+  summarize(m = mean(m)) %>%
+  mutate(m = m / 1e6)
+
+
+print(obs_deltas)
+envoy_polls = read_csv('./envoy_requests.csv') %>%
+  group_by(runID) %>%
   mutate(delta = stamp - lag(stamp, default=stamp[1])) %>%
   summarize(m = median(delta))
 
-print(obs_deltas$m / 1e6)
+
+# print(envoy_polls)
+# quit()
 
 
 print("Collect Config Send Data")
@@ -95,19 +106,18 @@ xds = xds %>%
 time_when_route_first_sent = xds %>% filter(Type == "RouteConfiguration") %>%
   select(runID, stamp=Timestamp, route=Routes) %>%
   arrange(stamp) %>%
-  group_by(runID, route) %>%  slice(1L) %>% ungroup()
+  group_by(runID, route) %>%  slice(1L) %>% ungroup() %>%
+  filter(route < halfRoute)
 
 print("Collect /clusters Data")
 time_when_cluster_appears = read_csv("endpoints_arrival.csv", col_types=cols(runID=col_factor())) %>%
   filter(str_detect(route, "service_.*")) %>%
   select(runID, stamp, route) %>%
-  extract("route", "route", regex = "service_([[:alnum:]]+)", convert=TRUE)
+  extract("route", "route", regex = "service_([[:alnum:]]+)", convert=TRUE) %>%
+  filter(route < halfRoute) %>% # only include routes from CP load
 
 print("Calculate Control Plane Latency")
-halfRoute = 1000 # max(time_when_route_first_sent$route) / 2
-
 from_config_sent_to_works = left_join(time_when_route_first_sent, time_when_route_first_works, by=c("runID","route")) %>%
-  filter(route < halfRoute) %>% # only include routes from CP load
   mutate(time_diff = stamp.y - stamp.x) # when it works minus when it was sent
 
 from_clusters_to_works = left_join(time_when_cluster_appears, time_when_route_first_works, by=c("runID", "route")) %>%
@@ -118,6 +128,7 @@ from_config_sent_to_clusters = left_join(time_when_route_first_sent, time_when_c
   mutate(time_diff = stamp.y - stamp.x) %>% # cluster exists - route sent
   arrange(route)
 
+print(filter(from_clusters_to_works, is.na(time_diff)))
 print("Calculate Quantiles")
 from_config_sent_to_works.q = quantile(from_config_sent_to_works$time_diff, quantiles)
 from_clusters_to_works.q = quantile(from_clusters_to_works$time_diff, quantiles)
@@ -172,7 +183,6 @@ ggsave(paste(filename, "latency.png", sep=""),
        arrangeGrob(tail_latencies, latencies_bars), width=3 * 7, height=3 * 10)
 
 
-exit()
 print("Graph Node Usage")
 nodemon = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(percent=col_number()))
 experiment_time_x_axis(ggplot(nodemon) +

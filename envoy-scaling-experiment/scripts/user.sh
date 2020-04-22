@@ -23,7 +23,7 @@ user() {
   local navigator_port="${2}"
   local routes="${3}"
 
-  set_routes "${navigator_port}" "${routes}"
+  set_routes "${navigator_port}" "${routes}" 2>&1 > curlstuff/navigator-${user}.log
   poll "${user}"
 }
 

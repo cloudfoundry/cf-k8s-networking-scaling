@@ -10,3 +10,5 @@ jaegerscrapper:
 	$(MAKE) -C jaegerscrapper
 combine:
 	$(MAKE) -C combine
+combinev2:
+	$(MAKE) -C combinev2
