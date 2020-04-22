@@ -22,7 +22,7 @@ echo "stamp,event" > importanttimes.csv
 ./../scripts/build-cluster.sh $CLUSTER_NAME
 
 # TODO
-taint nodes for pilot and ingress-gateways
+# taint nodes for pilot and ingress-gateways
 if [ $NODES_FOR_CP -gt 0 ]; then
   nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | head -n$NODES_FOR_CP)
   kubectl taint nodes $nodes scalers.cp=dedicated:NoSchedule
