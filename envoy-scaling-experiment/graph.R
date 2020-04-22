@@ -60,7 +60,10 @@ fiveSecondsInNanoseconds = 5 * 1000 * 1000 * 1000
 
 print("Collect Route Status Data")
 # timestamp, status, route, startstamp
-routes = read_csv("./route-status.csv", col_types=cols(status=col_factor(), route=col_integer())) %>% drop_na()
+routes = read_csv("./route-status.csv", col_types=cols(status=col_factor(), route=col_integer())) %>%
+  drop_na() %>%
+  filter(status == "200")
+
 halfRoute = max(routes$route) # the route-status.csv will only include routes created during CP load
 
 time_when_route_first_works = routes %>% select(stamp, route)
@@ -107,8 +110,11 @@ print("Calculate Time Spent Per Step")
 latencies_by_route = bind_rows(
     "from_config_sent_to_clusters"=from_config_sent_to_clusters,
     "from_clusters_to_works"=from_clusters_to_works,
+    "from_config_sent_to_works"=from_config_sent_to_works,
     .id="type"
   )
+
+# print(latencies_by_route %>% group_by(route) %>% summarize(n = n()) %>% filter(n != 3))
 
 print("Graph Latency to Route Working")
 tail_colors <- c("from_config_sent"="black", "from_clusters"="gray85")
@@ -125,15 +131,18 @@ tail_latencies = ggplot(cptails, aes(x=mylabels, y=time_diff)) +
   our_theme() %+replace%
     theme(legend.position="bottom")
 
-latencies_bars = ggplot(latencies_by_route, aes(x=route, y=time_diff)) +
+latencies_bars = ggplot(latencies_by_route, aes(x=route, y=time_diff, group=type, color=type)) +
   labs(title="Control Plane Latency by Route") +
   ylab("Latency (s)") +
   scale_y_continuous(labels=secondsFromNanoseconds) +
   xlab("Route") +
-  facet_wrap(vars(type), ncol=1) +
-  geom_point(color="black", alpha=0.25) +
-  stat_summary_bin(aes(colour="max"), fun.y = "max", bins=100, geom="line") +
-  stat_summary_bin(aes(colour="median"), fun.y = "median", bins=100, geom="line") +
+  # facet_wrap(vars(type), ncol=1) +
+  # geom_point(mapping=aes(y=stamp.x), group="x", color="black", alpha=0.25, size=0.1) +
+  geom_line(alpha=0.5) +
+  # stat_summary_bin(fun.y = "max", bins=100, geom="line") +
+  # stat_summary_bin(aes(color="max"), fun.y = "max", bins=100, geom="line") +
+  # stat_summary_bin(aes(color="median"), fun.y = "median", bins=100, geom="line") +
+  # stat_summary_bin(aes(color="min"), fun.y = "min", bins=100, geom="line") +
   geom_hline(yintercept = 0, color="grey45") +
   scale_colour_brewer(palette = "Set1") +
   our_theme() %+replace%
@@ -141,6 +150,8 @@ latencies_bars = ggplot(latencies_by_route, aes(x=route, y=time_diff)) +
 
 ggsave(paste(filename, "latency.png", sep=""),
        arrangeGrob(tail_latencies, latencies_bars), width=7, height=10)
+
+# quit()
 
 print("Graph Durations of Each Send")
 data = read_csv("./sendconfigjaeger.csv") %>% arrange(Timestamp)
@@ -183,7 +194,7 @@ config_apply_type_by_version_graph = ggplot(config_apply_total_time_per_version,
   our_theme() %+replace%
     theme(legend.position="bottom")
 
-ggsave(paste(filename, "config.png", sep=""), config_apply_type_by_version_graph, width=7, height=7)
+ggsave(paste(filename, "config.png", sep=""), config_apply_type_by_version_graph, width=7, height=3)
 
 # # configs_sent = ggplot(xds) +
 # #   labs(title="Config Sent over Time") +

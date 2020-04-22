@@ -225,7 +225,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let filenames_that_start_with_timestamps = [
         "cpustats.csv",
         "envoyclusters.csv",
-        "endpoints_arrival.csv",
+        // "endpoints_arrival.csv",
         "envoy_cluster_update_attempts.csv",
         "envoy_cluster_update_successes.csv",
         "gatewaystats.csv",
@@ -277,62 +277,62 @@ fn main() -> Result<(), Box<dyn Error>> {
     vars_path.push("vars.sh");
     let vars = fs::read_to_string(vars_path)?;
 
-    // Create all top-level CSV files and setup headers
-    setup_headers(
-        &toppath,
-        &folderpaths[0],
-        filenames_that_start_with_timestamps
-            .iter()
-            .cloned()
-            .collect(),
-    )
-    .expect(
-        format!(
-            "Failed to setup headers in combined CSVs based on {}",
-            folderpaths[0].to_str().ok_or(
-                "failed to read folder path in order to print failed-to-setup-headers error"
-            )?
-        )
-        .as_str(),
-    );
+    // // Create all top-level CSV files and setup headers
+    // setup_headers(
+    //     &toppath,
+    //     &folderpaths[0],
+    //     filenames_that_start_with_timestamps
+    //         .iter()
+    //         .cloned()
+    //         .collect(),
+    // )
+    // .expect(
+    //     format!(
+    //         "Failed to setup headers in combined CSVs based on {}",
+    //         folderpaths[0].to_str().ok_or(
+    //             "failed to read folder path in order to print failed-to-setup-headers error"
+    //         )?
+    //     )
+    //     .as_str(),
+    // );
 
-    let mut handles = vec![];
+    // let mut handles = vec![];
 
-    // For each file, spawn a thread
-    for filename in filenames_that_start_with_timestamps.iter() {
-        // Make a copy of all the data we need, so we can be independent
-        let f = filename.clone();
-        let fs = folderpaths.clone();
-        let tp = toppath.clone();
-        handles.push(thread::Builder::new().name(filename.to_string()).spawn(move || {
-            println!("Processing {}...", f);
-            add_runid_and_normalize_timestamp(&tp, &fs, f)
-                .expect(format!("Something went wrong processing {}", f).as_str());
-        }).unwrap());
-    }
+    // // For each file, spawn a thread
+    // for filename in filenames_that_start_with_timestamps.iter() {
+    //     // Make a copy of all the data we need, so we can be independent
+    //     let f = filename.clone();
+    //     let fs = folderpaths.clone();
+    //     let tp = toppath.clone();
+    //     handles.push(thread::Builder::new().name(filename.to_string()).spawn(move || {
+    //         println!("Processing {}...", f);
+    //         add_runid_and_normalize_timestamp(&tp, &fs, f)
+    //             .expect(format!("Something went wrong processing {}", f).as_str());
+    //     }).unwrap());
+    // }
 
-    // wait for processing to finish
-    for handle in handles {
-        handle
-            .join()
-            .expect("Something went wrong waiting for thread");
-    }
+    // // wait for processing to finish
+    // for handle in handles {
+    //     handle
+    //         .join()
+    //         .expect("Something went wrong waiting for thread");
+    // }
 
-    // collect names of non-directory files
-    for file in fs::read_dir(&toppath)? {
-        let file = file?;
-        let file_path = file.path();
+    // // collect names of non-directory files
+    // for file in fs::read_dir(&toppath)? {
+    //     let file = file?;
+    //     let file_path = file.path();
 
-        if !file.metadata()?.is_dir() {
-            filenames.push(format!(
-                "{}",
-                file_path
-                    .file_name()
-                    .expect("let me make my own mistakes rust")
-                    .to_string_lossy()
-            ));
-        }
-    }
+    //     if !file.metadata()?.is_dir() {
+    //         filenames.push(format!(
+    //             "{}",
+    //             file_path
+    //                 .file_name()
+    //                 .expect("let me make my own mistakes rust")
+    //                 .to_string_lossy()
+    //         ));
+    //     }
+    // }
 
     // Create a summary index.html
     let index = IndexTemplate {

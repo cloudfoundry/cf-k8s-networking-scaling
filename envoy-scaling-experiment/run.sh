@@ -10,7 +10,7 @@ COUNT=${2:-3}
 
 # make sure we always have current builds
 make navigator gateway
-make jaegerscrapper combine
+make jaegerscrapper combine combinev2
 
 
 trap "exit" INT TERM ERR
@@ -35,7 +35,8 @@ mkdir $EXPERIMENT_NAME
 mv $EXPERIMENT_NAME-* $EXPERIMENT_NAME/
 
 pushd $EXPERIMENT_NAME
-  ./../combine/target/debug/combine .
+  ./../combine/target/debug/combine . # for html files
+  ./../combinev2/combine . # for csv files
   Rscript ../graphMany.R
 popd
 
