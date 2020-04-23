@@ -20,16 +20,20 @@ zeroPoint = min(times$stamp)
 maxSec = max(times$stamp)
 
 ## Create time axis for experiment
-breaksFromZero = seq(from=zeroPoint, to=maxSec, by=5 * 60 * 1000 * 1000 * 1000)
+breaksFromZero = seq(from=zeroPoint, to=maxSec, by=10 * 60 * 1000 * 1000 * 1000)
 
 secondsFromZero = function(x) {
   return (secondsFromNanoseconds(x - zeroPoint))
 }
 
+minutesFromZero = function(x) {
+  return (secondsFromZero(x) / 60)
+}
+
 experiment_time_x_axis = function(p) {
   return(
-         p + xlab("Time (seconds)") +
-         scale_x_continuous(labels=secondsFromZero, breaks=breaksFromZero)
+         p + xlab("Time (minutes)") +
+         scale_x_continuous(labels=minutesFromZero, breaks=breaksFromZero)
        )
 }
 
@@ -195,6 +199,21 @@ config_apply_type_by_version_graph = ggplot(config_apply_total_time_per_version,
     theme(legend.position="bottom")
 
 ggsave(paste(filename, "config.png", sep=""), config_apply_type_by_version_graph, width=7, height=3)
+
+
+envoy_requests = read_csv('./envoy_requests.csv') %>%
+  mutate(stamp = 1e9 * stamp)
+
+experiment_time_x_axis(ggplot(envoy_requests, aes(x=stamp, y="poll")) +
+  labs(title="Envoy Polling") +
+  lines() +
+  geom_jitter(alpha=0.5) +
+  our_theme() %+replace%
+    theme(legend.position="bottom"))
+
+ggsave(paste(filename, "polling.png", sep=""))
+
+
 
 # # configs_sent = ggplot(xds) +
 # #   labs(title="Config Sent over Time") +

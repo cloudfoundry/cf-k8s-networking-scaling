@@ -86,10 +86,10 @@ obs_deltas = routes %>%
 
 
 print(obs_deltas)
-envoy_polls = read_csv('./envoy_requests.csv') %>%
-  group_by(runID) %>%
-  mutate(delta = stamp - lag(stamp, default=stamp[1])) %>%
-  summarize(m = median(delta))
+# envoy_polls = read_csv('./envoy_requests.csv') %>%
+#   group_by(runID) %>%
+#   mutate(delta = stamp - lag(stamp, default=stamp[1])) %>%
+#   summarize(m = median(delta))
 
 
 # print(envoy_polls)

@@ -32,6 +32,7 @@ img {
   <h3> Check if we hit our goal of 5sec at 95% for creating new routes </h3>
   <img src="latency.png"></hr>
   <img src="config.png"></hr>
+  <img src="polling.png"></hr>
   <img src="duration.png"></hr>
   <img src="routes.png"></hr>
   <img src="endpoints_arrival.png"></hr>
