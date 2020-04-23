@@ -113,8 +113,8 @@ while [ "$status" != "200" ]; do
 done
 sleep 30 # so we can see that setup worked on the graphs
 
-echo "stamp,request" > envoy_requests.csv
-ADMIN_ADDR="${INGRESS_IP}:15000" ruby ./../scripts/endpoint_arrival.rb > envoy_requests.csv &
+echo "stamp,status" > envoy_requests.csv
+ADMIN_ADDR="${INGRESS_IP}:15000" ruby ./../scripts/endpoint_arrival.rb >> envoy_requests.csv &
 
 iwlog "GENERATE CP LOAD"
 

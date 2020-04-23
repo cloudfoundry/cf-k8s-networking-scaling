@@ -53,8 +53,10 @@ class Gateway
 
   def process_eds
     # get endpoints with IPs only
-    endpoints = `curl -sS "http://#{@address}/clusters" | grep -P '(\\d{1,3}\\.?){4,4}:\\d{1,}' | awk -F '::' '{print $1}' | uniq 2>&1`.split("\n")
-    puts "#{Time.now.to_i},/clusters"
+    clusters_response = `2>&1 curl -sS --max-time 10 -w "%{http_code}" "http://#{@address}/clusters"`.split("\n")
+    status_code = clusters_response.pop
+    endpoints = `echo "#{clusters_response.join("\n")}" | grep -P '(\\d{1,3}\\.?){4,4}:\\d{1,}' | awk -F '::' '{print $1}' | uniq 2>&1`.split("\n")
+    puts "#{Time.now.to_i},#{status_code}"
 
     if endpoints.empty?
       # puts "Failed to reach #{@address}/clusters, retrying"
