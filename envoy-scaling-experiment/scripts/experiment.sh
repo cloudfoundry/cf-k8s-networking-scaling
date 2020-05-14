@@ -89,6 +89,8 @@ kubectl apply -f testpods.yaml
 # wait for all httpbins to be scheduled
 kubectl wait --for=condition=podscheduled pods $(kubectl get pods | grep httpbin | awk '{print $1}')
 
+exit
+
 sleep 30 # wait for cluster to not be in a weird state after pushing so many pods
          # and get data for cluster without CP load or configuration as control
 
@@ -146,6 +148,7 @@ Rscript ../graph.R
 
 wlog "=== TEARDOWN ===="
 
-./../scripts/destroy-cluster.sh "$CLUSTER_NAME"
+sleep 10000
+# ./../scripts/destroy-cluster.sh "$CLUSTER_NAME"
 
 exit
