@@ -16,7 +16,13 @@ main() {
   let num_users_minus_one="${NUM_USERS} - 1"
   for (( i = 0; i < ${NUM_USERS}; i++ )); do
     draw_progress_bar "${i}" "${num_users_minus_one}" "users" >&2
-    ./../scripts/user.sh "${i}" "${navigator_port}" "$(seq -s',' 0 $i),$(seq -s',' $(($half_routes + $i)) $last_route)" &
+    let half_plus_one="$half_routes + $i"
+    routes1="$(seq -s',' 0 $i)"
+    routes2="$(seq -s',' $half_plus_one $last_route )"
+    routes="$routes1,$routes2"
+    # echo "Half: $half_routes" >&2
+    # echo "${routes1}::${routes2}" >&2
+    ./../scripts/user.sh "${i}" ${navigator_port} "${routes}"  &
     sleep $USER_DELAY
   done
 

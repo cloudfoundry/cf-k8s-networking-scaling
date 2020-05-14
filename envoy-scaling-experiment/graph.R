@@ -201,10 +201,9 @@ config_apply_type_by_version_graph = ggplot(config_apply_total_time_per_version,
 ggsave(paste(filename, "config.png", sep=""), config_apply_type_by_version_graph, width=7, height=3)
 
 
-envoy_requests = read_csv('./envoy_requests.csv') %>%
-  mutate(stamp = 1e9 * stamp)
+envoy_requests = read_csv('./envoy_requests.csv')
 
-experiment_time_x_axis(ggplot(envoy_requests, aes(x=stamp, y="poll")) +
+experiment_time_x_axis(ggplot(envoy_requests, aes(x=stamp, y=status, color=status)) +
   labs(title="Envoy Polling") +
   lines() +
   geom_jitter(alpha=0.5) +

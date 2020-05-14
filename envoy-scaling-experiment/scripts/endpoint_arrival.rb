@@ -53,10 +53,14 @@ class Gateway
 
   def process_eds
     # get endpoints with IPs only
-    clusters_response = `2>&1 curl -sS --max-time 10 -w "%{http_code}" "http://#{@address}/clusters"`.split("\n")
+    clusters_response = `2>&1 curl -sS --max-time 10 -w "%{http_code}" "http://#{@address}/clusters?format=json"`.split("\n")
     status_code = clusters_response.pop
-    endpoints = `echo "#{clusters_response.join("\n")}" | grep -P '(\\d{1,3}\\.?){4,4}:\\d{1,}' | awk -F '::' '{print $1}' | uniq 2>&1`.split("\n")
-    puts "#{Time.now.to_i},#{status_code}"
+    puts "#{(Time.now.to_f * 1e9).to_i},#{status_code}"
+
+    clusters = JSON.parse(clusters_response.join("\n"))
+    endpoints = clusters["cluster_statuses"]
+      .select { |cluster| cluster["added_via_api"] }
+      .map { |cluster| cluster["name"] }
 
     if endpoints.empty?
       # puts "Failed to reach #{@address}/clusters, retrying"
@@ -69,7 +73,7 @@ class Gateway
       next if e.include?('*')
 
       if @endpoints[e].nil?
-        @endpoints[e] = Time.now.to_i
+        @endpoints[e] = (Time.now.to_f * 1e9).to_i
       end
     end
   end
@@ -77,7 +81,7 @@ class Gateway
   def endpoints_to_csv
     out = []
     @endpoints.keys.each do |e|
-      out << ["#{@endpoints[e]}000000000", @name, e, @address, "appears"].join(',')
+      out << ["#{@endpoints[e]}", @name, e, @address, "appears"].join(',')
     end
     out.join("\n")
   end
