@@ -197,6 +197,7 @@ func (d *discoveryServerCallbacks) OnStreamRequest(streamID int64, req *xdspb.Di
 	if spans, ok := d.discoverServer.spans[streamID]; ok {
 		if span, ok := spans[req.ResponseNonce]; ok {
 			span.SetTag("timeout", false)
+			span.SetTag("nonce", req.ResponseNonce)
 			span.Finish()
 			delete(d.discoverServer.spans[streamID], req.ResponseNonce)
 		}

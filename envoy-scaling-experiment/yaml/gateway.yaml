@@ -37,6 +37,15 @@ data:
         grpc_services:
           - envoy_grpc:
               cluster_name: xds-grpc
+    tracing:
+      http:
+        name: envoy.tracers.zipkin
+        typed_config:
+          "@type": type.googleapis.com/envoy.config.trace.v2.ZipkinConfig
+          collector_cluster: jaeger
+          collector_endpoint: "/api/v2/spans"
+          shared_span_context: false
+          collector_endpoint_version: HTTP_JSON
     static_resources:
       clusters:
         - name: jaeger
@@ -46,8 +55,8 @@ data:
           hosts:
             - socket_address:
                 protocol: TCP
-                address: jaeger-query
-                port_value: 16686
+                address: zipkin
+                port_value: 9411
         - name: prometheus_stats
           type: STATIC
           connect_timeout: 0.250s
@@ -125,7 +134,8 @@ spec:
     spec:
       serviceAccountName: gateway
       containers:
-      - image: gcr.io/cf-routing-desserts/envoy:latest
+      - image: gcr.io/cf-routing-desserts/proxyv2:latest
+        imagePullPolicy: Always
         name: gateway
         command:
           - "/usr/local/bin/envoy"
@@ -149,7 +159,7 @@ spec:
           - "--log-format"
           - "[Envoy (Epoch 0)] [%Y-%m-%d %T.%e][%t][%l][%n] %v"
           - "-l"
-          - "warning"
+          - "debug"
           - "--component-log-level"
           - "misc:error"
         resources: {}
