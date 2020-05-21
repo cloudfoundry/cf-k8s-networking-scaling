@@ -159,7 +159,7 @@ spec:
           - "--log-format"
           - "[Envoy (Epoch 0)] [%Y-%m-%d %T.%e][%t][%l][%n] %v"
           - "-l"
-          - "debug"
+          - "info"
           - "--component-log-level"
           - "misc:error"
         resources: {}

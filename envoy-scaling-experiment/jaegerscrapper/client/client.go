@@ -26,7 +26,7 @@ type Span struct {
 	SpanID        string `json:"spanID"`
 	OperationName string `json:"operationName"`
 	StartTime     int64  `json:"startTime"`
-	Duration      int    `json:"duration"`
+	Duration      int64  `json:"duration"`
 	Tags          []*Tag `json:"tags"`
 	Logs          []*Log `json:"logs"`
 }
@@ -47,8 +47,8 @@ type Log struct {
 }
 
 // http://35.223.181.191/api/traces?end=1583191141380000&limit=20&lookback=1h&maxDuration&minDuration&service=navigator&start=1583187541380000
-func Fetch(jaegerQueryAddr string) ([]byte, error) {
-	resp, err := http.Get(fmt.Sprintf("http://%s/api/traces?service=navigator&loopback=2d&limit=100000000", jaegerQueryAddr))
+func Fetch(jaegerQueryAddr, service string) ([]byte, error) {
+	resp, err := http.Get(fmt.Sprintf("http://%s/api/traces?service=%s&loopback=2d&limit=100000000", jaegerQueryAddr, service))
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot fetch Jaeger query")
 	}
@@ -71,12 +71,11 @@ func Parse(b []byte) ([]*Trace, error) {
 	return data.Data, nil
 }
 
-func FetchAndParse(jaegerQueryAddr string) ([]*Trace, error) {
-	b, err := Fetch(jaegerQueryAddr)
+func FetchAndParse(jaegerQueryAddr, service string) ([]*Trace, error) {
+	b, err := Fetch(jaegerQueryAddr, service)
 	if err != nil {
 		return nil, err
 	}
 
 	return Parse(b)
 }
-

@@ -8,14 +8,16 @@ import (
 )
 
 type Event struct {
-	Version   string
-	Timestamp int64
-	Datetime  string
-	Type      string // Cluster Route ClusterLoadAssignment Endpoints
-	RoutesStr string // Comman seprated list of routes we configure on Envoy
-	Routes    []int  // Routes we configure on Envoy
-	Duration  int
-	Timeout   bool
+	Version     string
+	Timestamp   int64
+	Datetime    string
+	Type        string // Cluster Route ClusterLoadAssignment Endpoints
+	RoutesStr   string // Comman seprated list of routes we configure on Envoy
+	Routes      []int  // Routes we configure on Envoy
+	Duration    int64
+	Timeout     bool
+	Resources   string // Used in Envoy
+	PayloadSize float64
 }
 
 func ProduceEvents(traces []*Trace, operationName string) []*Event {
@@ -69,23 +71,35 @@ func createEvents(spans []*Span) []*Event {
 	events := []*Event(nil)
 
 	for _, span := range spans {
-		for _, log := range span.Logs {
-			events = append(events, createEvent(log, span))
+		if len(span.Logs) > 0 {
+			for _, log := range span.Logs {
+				events = append(events, createEventFromLog(log, span))
+			}
+		} else {
+			events = append(events, createEventFromSpan(span))
 		}
 	}
 
 	return events
 }
 
-func createEvent(l *Log, s *Span) *Event {
+func createEventFromSpan(s *Span) *Event {
+	return createEvent(s.StartTime, s.Tags, s)
+}
+
+func createEventFromLog(l *Log, s *Span) *Event {
+	return createEvent(l.Timestamp, l.Fields, s)
+}
+
+func createEvent(timestamp int64, tags []*Tag, s *Span) *Event {
 	event := &Event{
-		Timestamp: l.Timestamp,
-		Datetime:  time.Unix(0, l.Timestamp*1000).Format(time.RFC3339),
-		Duration:  s.Duration,
+		Timestamp: timestamp,
+		Datetime:  time.Unix(0, milisecondsToNanosecods(timestamp)).Format(time.RFC3339),
+		Duration:  milisecondsToNanosecods(s.Duration),
 		Timeout:   extractTimeoutTag(s),
 	}
 
-	for _, field := range l.Fields {
+	for _, field := range tags {
 		switch field.Key {
 		case "type":
 			event.Type = field.Value.(string)
@@ -96,6 +110,14 @@ func createEvent(l *Log, s *Span) *Event {
 			event.Routes = mustParseRoutes(field.Value.(string))
 			if len(event.Routes) == 0 {
 				log.Printf("Warning: routes for event at %d are empty", event.Timestamp)
+			}
+		case "resources":
+			event.Resources = field.Value.(string)
+		case "size":
+			if field.Type == "string" {
+				event.PayloadSize, _ = strconv.ParseFloat(field.Value.(string), 64)
+			} else {
+				event.PayloadSize, _ = field.Value.(float64)
 			}
 		}
 	}
@@ -127,4 +149,8 @@ func mustParseRoutes(s string) []int {
 	}
 
 	return routes
+}
+
+func milisecondsToNanosecods(s int64) int64 {
+	return s * 1000
 }

@@ -6,9 +6,9 @@ source ../vars.sh
 source ../scripts/utils.sh
 
 # Prometheus
-# kubectl create -f ../yaml/kube-prometheus/manifests/setup
-# until kubectl get servicemonitors --all-namespaces ; do date; sleep 1; echo ""; done
-# kubectl create -f ../yaml/kube-prometheus/manifests/
+kubectl create -f ../yaml/kube-prometheus/manifests/setup
+until kubectl get servicemonitors --all-namespaces ; do date; sleep 1; echo ""; done
+kubectl create -f ../yaml/kube-prometheus/manifests/
 
 # Jaeger, Navigator, Envoy
 kubetpl render -s GATEWAY_REPLICAS=${GATEWAY_NUM} ../yaml/jaeger-all-in-one-template.yml ../yaml/navigator.yaml  ../yaml/gateway.yaml | kubectl apply -n system -f -
@@ -17,7 +17,7 @@ kubetpl render -s GATEWAY_REPLICAS=${GATEWAY_NUM} ../yaml/jaeger-all-in-one-temp
 kubectl wait --for=condition=podscheduled -n system pods --all
 
 # add Gateway to Prometheus targets
-# kubectl apply -f ../yaml/gateway-service-monitor.yaml
+kubectl apply -f ../yaml/gateway-service-monitor.yaml
 
 until [[ "$(kubectl -n system get services gateway -ojsonpath='{.status.loadBalancer.ingress[0].ip}')" != "" ]]; do
   sleep 5
