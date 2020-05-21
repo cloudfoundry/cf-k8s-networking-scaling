@@ -49,16 +49,15 @@ func main() {
 }
 
 func initJaeger(service string) (opentracing.Tracer, io.Closer) {
-	cfg := &config.Configuration{
-		Sampler: &config.SamplerConfig{
-			Type:  "const",
-			Param: 1,
-		},
-		Reporter: &config.ReporterConfig{
-			LogSpans:           true,
-			LocalAgentHostPort: "jaeger:6831",
-		},
+	cfg, err := config.FromEnv()
+	if err != nil {
+		panic(fmt.Sprintf("ERROR: cannot configure Jaeger: %v\n", err))
 	}
+
+	cfg.Sampler.Type = "const"
+	cfg.Sampler.Param = 1
+	cfg.Reporter.LogSpans = true
+
 	tracer, closer, err := cfg.New(service, config.Logger(jaeger.StdLogger))
 	if err != nil {
 		panic(fmt.Sprintf("ERROR: cannot init Jaeger: %v\n", err))

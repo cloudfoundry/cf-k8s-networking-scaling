@@ -13,9 +13,9 @@ gcloud container clusters create $CLUSTER_NAME \
   --zone $AVAILABILITY_ZONE \
   --enable-ip-alias \
   --project cf-routing-desserts
-  # --create-subnetwork name=$CLUSTER_NAME-network,range=10.5.0.0/16 \
+  # --create-subnetwork name=$CLUSTER_NAME-network,range=10.10.0.0/16 \
   # --cluster-ipv4-cidr=10.0.0.0/14 \
-  # --services-ipv4-cidr=10.4.0.0/16 
+  # --services-ipv4-cidr=10.4.0.0/16 \
 
 gcloud container clusters get-credentials $CLUSTER_NAME \
     --zone $AVAILABILITY_ZONE \

@@ -231,6 +231,7 @@ func (d *discoveryServerCallbacks) OnStreamResponse(streamID int64, req *xdspb.D
 		"version", out.VersionInfo,
 		"routes", routeNumbersStr,
 		"node", req.Node.Id,
+		"size", out.XXX_Size(),
 	)
 	// This will cause duplicate span ID warning in Jaeger but it will merge all logs together for the last span
 	d.discoverServer.configSpan.Finish()

@@ -4,7 +4,6 @@ go 1.13
 
 require (
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
-	github.com/davecgh/go-spew v1.1.1
 	github.com/envoyproxy/go-control-plane v0.9.4
 	github.com/go-test/deep v1.0.5
 	github.com/golang/protobuf v1.3.2
