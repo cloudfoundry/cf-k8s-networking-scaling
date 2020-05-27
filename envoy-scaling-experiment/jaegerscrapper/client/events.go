@@ -18,6 +18,7 @@ type Event struct {
 	Timeout     bool
 	Resources   string // Used in Envoy
 	PayloadSize float64
+	NodeID      string
 }
 
 func ProduceEvents(traces []*Trace, operationName string) []*Event {
@@ -119,6 +120,8 @@ func createEvent(timestamp int64, tags []*Tag, s *Span) *Event {
 			} else {
 				event.PayloadSize, _ = field.Value.(float64)
 			}
+		case "node_id":
+			event.NodeID = field.Value.(string)
 		}
 	}
 
