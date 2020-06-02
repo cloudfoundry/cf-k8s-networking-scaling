@@ -3,6 +3,16 @@
 source vars.sh
 source scripts/utils.sh
 
+# check dependencies
+if [[ "$(helm version | grep -Po "(v\d)(?=\.\d\.\d)")" != "v3" ]]; then
+  wlog "Istio experiment requires Helm >=v3. Please download or upgrade your Helm"
+  exit 1
+fi
+
+if grep -vq "${ISTIO_FOLDER}" <<< "${PATH}"; then
+  export PATH="${ISTIO_FOLDER}/bin:${PATH}"
+fi
+
 CLUSTER_NAME=$1
 
 COUNT=${2:-3}
@@ -14,6 +24,10 @@ popd
 
 pushd interpret
   cargo build
+popd
+
+pushd jaegerscrapper
+  make
 popd
 
 # trap "exit" INT TERM ERR

@@ -13,7 +13,7 @@ class Gateway
 
   def generate_route
     print "Generating route for #{@name}..."
-    @pid = spawn("~/istio-1.4.2/bin/istioctl -n istio-system dashboard envoy #{@name}", :out=>"route" )
+    @pid = spawn("istioctl -n istio-system dashboard envoy #{@name}", :out=>"route" )
     sleep(0.5)
     @route = File.read("route").split("\n").first
     puts "#{@route}"
@@ -33,13 +33,13 @@ class Gateway
       next if c.include?('*')
 
       if @endpoints[c].nil?
-        @endpoints[c] = Time.now.to_i
+        @endpoints[c] = (Time.now.to_f * 1e9).to_i
       end
     end
 
     @endpoints.keys.each do |e|
       if !clusters.include?(e)
-        @missing[e] += [Time.now.to_i]
+        @missing[e] += [(Time.now.to_f * 1e9).to_i]
       end
     end
   end
@@ -47,11 +47,11 @@ class Gateway
   def to_csv
     out = []
     @endpoints.keys.each do |e|
-      out << ["#{@endpoints[e]}000000000", @name, e, @route, "appears"].join(',')
+      out << [@endpoints[e], @name, e, @route, "appears"].join(',')
     end
     @missing.keys.each do |m|
       @missing[m].each do |time|
-        out << ["#{time}000000000", @name, m, @route, "missing"].join(',')
+        out << [time, @name, m, @route, "missing"].join(',')
       end
     end
     out.join("\n")
@@ -72,7 +72,7 @@ class Gateway
       next if e.include?('*')
 
       if @envoy_endpoints[e].nil?
-        @envoy_endpoints[e] = Time.now.to_i
+        @envoy_endpoints[e] = (Time.now.to_f * 1e9).to_i
       end
     end
   end
@@ -80,7 +80,7 @@ class Gateway
   def envoy_endpoints_to_csv
     out = []
     @envoy_endpoints.keys.each do |e|
-      out << ["#{@envoy_endpoints[e]}000000000", @name, e, @route, "appears"].join(',')
+      out << [@envoy_endpoints[e], @name, e, @route, "appears"].join(',')
     end
     out.join("\n")
   end

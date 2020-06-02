@@ -14,7 +14,7 @@ spec:
     istio: ingressgateway
   servers:
   - port:
-      number: 15030
+      number: 80
       name: http-prom
       protocol: HTTP
     hosts:
@@ -27,28 +27,17 @@ metadata:
   namespace: istio-system
 spec:
   hosts:
-  - "*"
+  - "prometheus.local"
   gateways:
   - prometheus-gateway
   http:
   - match:
-    - port: 15030
+    - port: 80
     route:
     - destination:
         host: prometheus
         port:
           number: 9090
----
-apiVersion: networking.istio.io/v1alpha3
-kind: DestinationRule
-metadata:
-  name: prometheus
-  namespace: istio-system
-spec:
-  host: prometheus
-  trafficPolicy:
-    tls:
-      mode: DISABLE
 ---
 EOF
 
@@ -58,7 +47,7 @@ INGRESS_IP=$(kubectl get svc -n istio-system istio-ingressgateway | awk 'NR>1 {p
 START=$(date +%s)
 STEP=15
 
-until [ $(curl -s -o /dev/null -w "%{http_code}" http://$INGRESS_IP:15030/graph) -eq 200 ]; do sleep 1; done
+until [ $(curl -s -o /dev/null -w "%{http_code}" -H "Host: prometheus.local" http://$INGRESS_IP/graph) -eq 200 ]; do sleep 1; done
 
 echo $INGRESS_IP
 
@@ -67,11 +56,12 @@ echo "Step size: $STEP"
 queryprom ()
 {
   data=$(curl -s -G \
+    -H "Host: prometheus.local" \
     --data-urlencode "query=$@" \
     --data-urlencode "start=$START" \
     --data-urlencode "end=$END" \
     --data-urlencode "step=$STEP" \
-    http://$INGRESS_IP:15030/api/v1/query_range)
+    http://${INGRESS_IP}/api/v1/query_range)
 
   printf "=========\nquery: $@\nstart: $START end: $END step: $STEP\nresult: $data\n" >> prometheus_errors.txt
 

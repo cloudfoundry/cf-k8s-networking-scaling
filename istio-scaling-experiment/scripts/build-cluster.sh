@@ -26,5 +26,3 @@ kubectl create clusterrolebinding cluster-admin-binding \
     --user=$(gcloud config get-value core/account)
 
 kubectl create namespace istio-system
-
-helm repo add istio.io https://storage.googleapis.com/istio-release/releases/$ISTIO_VERSION/charts/

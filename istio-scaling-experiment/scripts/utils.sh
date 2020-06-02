@@ -52,3 +52,16 @@ time_wait ()
 {
   netstat -on | grep TIME_WAIT | wc | awk '{$10=systime(); print $10 "0000000000," $1}'
 }
+
+port_forward()
+{
+  namespace="$1"
+  resource="$2"
+  resource_port="$3"
+
+  t="$(mktemp)"
+  kubectl port-forward -n "${namespace}" "${resource}" :"${resource_port}" > ${t} 2>/dev/null &
+  sleep 2
+  local_port=$(grep -P -o "127.0.0.1:\d+" < ${t} | cut -d":" -f2)
+  echo "${local_port}"
+}

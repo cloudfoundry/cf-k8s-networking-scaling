@@ -30,12 +30,13 @@ kubectl label nodes $prometheusnode scalers.istio=prometheus
 
 if [ "$ISTIO_USE_OPERATOR" -eq 1 ]; then
   ./../scripts/install-istio-with-istioctl.sh
-  if [ "$ISTIO_NO_EDS_DEBOUNCE" -eq 1 ]; then
-    kubectl patch -n istio-system deployment istiod --patch "$(cat ../yaml/patch-add-no-pilot-eds-debounce-to-istiod.yaml)"
-  fi
 else
   ./../scripts/install-istio.sh
 fi
+
+helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+helm repo update
+helm install node-exporter stable/prometheus-node-exporter
 
 # schedule the dataplane pod
 kubetpl render ../yaml/service.yaml ../yaml/httpbin-loadtest.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
@@ -106,6 +107,14 @@ kubectl get nodes --show-labels | awk '{print $1","$2","$6}' > nodeswithlabels.c
 kubectl get pods -o wide -n istio-system | awk '{print $1","$6","$7}' > instance2pod.csv
 
 sleep 2 # let them quit
+
+
+# collect spans
+jaeger_port=$(port_forward istio-system svc/tracing 80)
+jaeger_addr="127.0.0.1:${jaeger_port}/jaeger"
+./../jaegerscrapper/bin/scrapper -csvPath ./envoy_ondiscoveryresponse.csv -jaegerQueryAddr ${jaeger_addr} --operationName "GrpcMuxImpl::onDiscoveryResponse" --service istio-ingressgateway
+./../jaegerscrapper/bin/scrapper -csvPath ./envoy_pause.csv -jaegerQueryAddr ${jaeger_addr} --operationName "pause" --service istio-ingressgateway
+
 # make extra sure they quit
 kill -9 $(jobs -p)
 

@@ -12,6 +12,9 @@ kind: IstioOperator
 spec:
   profile: default
   values:
+    tracing:
+      enabled: true
+      provider: jaeger
     global:
       controlPlaneSecurityEnabled: {{ if (eq .ENABLE_GALLEY "true") }} false {{ else }} true {{ end }}
       mtls:
@@ -55,21 +58,21 @@ spec:
         values: pilot
         topologyKey: "kubernetes.io/hostname"
 
-    galley:
-      enabled: {{ .ENABLE_GALLEY }}
-      replicaCount: {{ .GALLEY_REPLICAS }}
-      tolerations:
-      - key: "scalers.istio"
-        operator: "Equal"
-        value: "dedicated"
-        effect: "NoSchedule"
-      nodeSelector:
-        scalers.istio: dedicated
-      podAntiAffinityTermLabelSelector:
-      - key: istio
-        operator: In
-        values: galley
-        topologyKey: "kubernetes.io/hostname"
+    # galley:
+    #   enabled: {{ .ENABLE_GALLEY }}
+    #   replicaCount: {{ .GALLEY_REPLICAS }}
+    #   tolerations:
+    #   - key: "scalers.istio"
+    #     operator: "Equal"
+    #     value: "dedicated"
+    #     effect: "NoSchedule"
+    #   nodeSelector:
+    #     scalers.istio: dedicated
+    #   podAntiAffinityTermLabelSelector:
+    #   - key: istio
+    #     operator: In
+    #     values: galley
+    #     topologyKey: "kubernetes.io/hostname"
 
     grafana:
       enabled: true
@@ -94,6 +97,43 @@ spec:
       enabled: true
       k8s:
         replicaCount: {{ .GATEWAY_REPLICAS }}
+        overlays:
+          - apiVersion: apps/v1                                                                                                                                                               │·························
+            kind: Deployment
+            name: istio-ingressgateway
+            patches:
+            - path: .spec.template.spec.containers[name:istio-proxy].image
+              value: gcr.io/cf-routing-desserts/proxyv2:1.6.0
+        #     - path: .spec.template.spec.containers[name:istio-proxy].volumes[name:custom-bootstrap-config]
+        #       value:
+        #         name: custom-bootstrap-config
+        #         configMap:
+        #           name: custom-bootstrap-config
+        #   - apiVersion: apps/v1                                                                                                                                                               │·························
+        #     kind: Deployment
+        #     name: istio-ingressgateway
+        #     patches:
+        #     - path: .spec.template.spec.containers[name:istio-proxy].volumeMounts[name:custom-bootstrap-config]
+        #       value:
+        #         name: custom-bootstrap-config
+        #         mountPath: /etc/istio/custom-config
+        #   - apiVersion: apps/v1                                                                                                                                                               │·························
+        #     kind: Deployment
+        #     name: istio-ingressgateway
+        #     patches:
+        #     - path: .spec.template.spec.containers[name:istio-proxy].args
+        #       value:
+        #         - proxy
+        #         - router
+        #         - --domain
+        #         - $(POD_NAMESPACE).svc.cluster.local
+        #         - --proxyLogLevel=warning
+        #         - --proxyComponentLogLevel=misc:error
+        #         - --log_output_level=default:info
+        #         - --serviceCluster
+        #         - istio-ingressgateway
+        #         - --trust-domain=cluster.local
+        #         - --customConfigFile /etc/istio/custom-config/envoy-bootstrap.json
     pilot:
       k8s:
         replicaCount: {{ .PILOT_REPLICAS }}
