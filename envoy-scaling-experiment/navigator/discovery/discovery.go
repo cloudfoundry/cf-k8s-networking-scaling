@@ -51,7 +51,7 @@ func (ds *DiscoverServer) RegisterNode(nodeId string, streamID int64) bool {
 	if !ok {
 		log.Printf("Registering node %s", nodeId)
 		ds.nodes[nodeId] = streamID
-		_ = ds.UpdateNodeRoutes(nodeId, nil, nil, nil)
+		_ = ds.UpdateNodeRoutes(nodeId, nil, nil, nil, false)
 	}
 	return ok
 }
@@ -65,10 +65,10 @@ func (ds *DiscoverServer) DeregisterNodeByStreamID(streamID int64) {
 	}
 }
 
-func (ds *DiscoverServer) UpdateRoutes(clusters []*xdspb.Cluster, loadAssignments []*xdspb.ClusterLoadAssignment, virtualHosts []*routepb.VirtualHost) (int, error) {
+func (ds *DiscoverServer) UpdateRoutes(clusters []*xdspb.Cluster, loadAssignments []*xdspb.ClusterLoadAssignment, virtualHosts []*routepb.VirtualHost, onlyEndpoints bool) (int, error) {
 	updatedNodes := 0
 	for nodeId := range ds.nodes {
-		err := ds.UpdateNodeRoutes(nodeId, clusters, loadAssignments, virtualHosts)
+		err := ds.UpdateNodeRoutes(nodeId, clusters, loadAssignments, virtualHosts, onlyEndpoints)
 		if err != nil {
 			return updatedNodes, err
 		}
@@ -78,15 +78,17 @@ func (ds *DiscoverServer) UpdateRoutes(clusters []*xdspb.Cluster, loadAssignment
 	return updatedNodes, nil
 }
 
-func (ds *DiscoverServer) UpdateNodeRoutes(nodeName string, clusters []*xdspb.Cluster, loadAssignments []*xdspb.ClusterLoadAssignment, virtualHosts []*routepb.VirtualHost) error {
+func (ds *DiscoverServer) UpdateNodeRoutes(nodeName string, clusters []*xdspb.Cluster, loadAssignments []*xdspb.ClusterLoadAssignment, virtualHosts []*routepb.VirtualHost, onlyEndpoints bool) error {
 	var clustersCache, endpointsCache, routesCache, runtimesCache []cache.Resource
 
 	// RDS
-	routesCache = []cache.Resource{
-		&xdspb.RouteConfiguration{
-			Name:         "ingress_80",
-			VirtualHosts: virtualHosts,
-		},
+	if !onlyEndpoints {
+		routesCache = []cache.Resource{
+			&xdspb.RouteConfiguration{
+				Name:         "ingress_80",
+				VirtualHosts: virtualHosts,
+			},
+		}
 	}
 
 	// EDS
@@ -96,9 +98,11 @@ func (ds *DiscoverServer) UpdateNodeRoutes(nodeName string, clusters []*xdspb.Cl
 	}
 
 	// CDS
-	clustersCache = make([]cache.Resource, len(clusters))
-	for i := range clusters {
-		clustersCache[i] = cache.Resource(clusters[i])
+	if !onlyEndpoints {
+		clustersCache = make([]cache.Resource, len(clusters))
+		for i := range clusters {
+			clustersCache[i] = cache.Resource(clusters[i])
+		}
 	}
 
 	version := getVersion()
@@ -152,9 +156,15 @@ func (ds *DiscoverServer) UpdateNodeRoutes(nodeName string, clusters []*xdspb.Cl
 			},
 		}
 		snapshot = cache.NewSnapshot(version, endpointsCache, clustersCache, routesCache, listenersCache, runtimesCache)
-	} else { // Previous snapshot; preserve listeners
+	} else {
 		snapshot = cache.NewSnapshot(version, endpointsCache, clustersCache, routesCache, nil, runtimesCache)
+		// Previous snapshot; preserve listeners
 		snapshot.Resources[cache.Listener] = prevSnapshot.Resources[cache.Listener]
+
+		if onlyEndpoints {
+			snapshot.Resources[cache.Cluster] = prevSnapshot.Resources[cache.Cluster]
+			snapshot.Resources[cache.Route] = prevSnapshot.Resources[cache.Route]
+		}
 	}
 
 	// Tell Jaeger that we are serving a new config version

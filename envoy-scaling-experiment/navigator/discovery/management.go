@@ -12,19 +12,21 @@ import (
 )
 
 type ManagementServer struct {
-	xdsServer     *DiscoverServer
-	handler       http.Handler
-	hostnameForat string
-	port          int
+	xdsServer       *DiscoverServer
+	handler         http.Handler
+	hostnameForat   string
+	port            int
+	configGenerator *route.ConfigGenerator
 }
 
 func NewManagmentServer(hostnameFormat string, port int, discoveryServer *DiscoverServer) *ManagementServer {
 	mux := http.NewServeMux()
 	s := &ManagementServer{
-		xdsServer:     discoveryServer,
-		hostnameForat: hostnameFormat,
-		port:          port,
-		handler:       mux,
+		xdsServer:       discoveryServer,
+		hostnameForat:   hostnameFormat,
+		port:            port,
+		handler:         mux,
+		configGenerator: route.NewConfigGenerator(),
 	}
 	mux.HandleFunc("/set-routes", s.HandleSetRoutes)
 	mux.HandleFunc("/", s.HandleIndex)
@@ -55,6 +57,7 @@ func (s *ManagementServer) HandleIndex(w http.ResponseWriter, req *http.Request)
 }
 
 func (s *ManagementServer) HandleSetRoutes(w http.ResponseWriter, req *http.Request) {
+	var err error
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -69,14 +72,22 @@ func (s *ManagementServer) HandleSetRoutes(w http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	c, err := route.Generate(s.hostnameForat, uint32(s.port), payload.Numbers, payload.Clusters)
+	var routeConfig *route.RouteConfig
+	onlyEndpoints := req.URL.Query()["onlyEndpoints"] != nil
+
+	if onlyEndpoints {
+		routeConfig, err = s.configGenerator.GenerateOnlyEndpoints(s.hostnameForat, uint32(s.port), payload.Numbers)
+	} else {
+		routeConfig, err = s.configGenerator.Generate(s.hostnameForat, uint32(s.port), payload.Numbers, payload.Clusters)
+	}
+
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte(errors.Wrap(err, "cannot create route config").Error()))
 		return
 	}
 
-	updated, err := s.xdsServer.UpdateRoutes(c.Clusters, c.LoadAssignments, c.VirutalHosts)
+	updated, err := s.xdsServer.UpdateRoutes(routeConfig.Clusters, routeConfig.LoadAssignments, routeConfig.VirutalHosts, onlyEndpoints)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte(errors.Wrap(err, "cannot update Discover Server routes").Error()))
