@@ -134,7 +134,7 @@ spec:
     spec:
       serviceAccountName: gateway
       containers:
-      - image: gcr.io/cf-routing-desserts/proxyv2:latest
+      - image: gcr.io/cf-routing-desserts/proxyv2:1.6.0
         imagePullPolicy: Always
         name: gateway
         command:
@@ -162,6 +162,7 @@ spec:
           - "info"
           - "--component-log-level"
           - "misc:error"
+          # - "misc:error,upstream:debug,router:debug"
         resources: {}
         ports:
           - containerPort: 80
@@ -196,8 +197,8 @@ spec:
           operator: "Equal"
           value: "dedicated"
           effect: "NoSchedule"
-      # nodeSelector:
-      #   scalers.cp: dedicated
+      nodeSelector:
+        scalers.cp: dedicated
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

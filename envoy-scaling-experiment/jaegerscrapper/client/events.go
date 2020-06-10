@@ -114,6 +114,8 @@ func createEvent(timestamp int64, tags []*Tag, s *Span) *Event {
 			}
 		case "resources":
 			event.Resources = field.Value.(string)
+		case "resource":
+			event.Resources = field.Value.(string)
 		case "size":
 			if field.Type == "string" {
 				event.PayloadSize, _ = strconv.ParseFloat(field.Value.(string), 64)

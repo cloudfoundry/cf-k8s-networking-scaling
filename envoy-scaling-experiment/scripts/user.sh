@@ -12,7 +12,7 @@ poll() {
   local status=0
 
   while [[ "${status}" != "200" ]]; do
-    status="$(curl -sS -w "%{http_code}" -H "Host:${url}" http://$INGRESS_IP:80/status/200 2>> curlstuff/route-${user}.log)"
+    status="$(curl -sS -w "%{http_code}" -H "Host:${url}" http://$INGRESS_IP:80/health 2>> curlstuff/route-${user}.log)"
     sleep ${USER_POLL_DELAY}
     echo "$(udate),${user},${status},${start}"
   done

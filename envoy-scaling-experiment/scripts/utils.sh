@@ -60,9 +60,9 @@ time_wait ()
 
 set_routes()
 {
-  navigator_port="${1}"
+  navigator_addr="${1}"
   rm -f /tmp/navigator_output
-  response_code=$(curl -sS -XPOST http://localhost:${navigator_port}/set-routes -d "{\"numbers\":[$2]}" --write-out '%{http_code}' -o /tmp/navigator_output)
+  response_code=$(curl -sS -XPOST http://${navigator_addr}/set-routes -d "{\"numbers\":[$2]}" --write-out '%{http_code}' -o /tmp/navigator_output)
   if [[ "${response_code}" != "200" ]]; then
     echo "Navigator returned ${response_code}"
     cat /tmp/navigator_output

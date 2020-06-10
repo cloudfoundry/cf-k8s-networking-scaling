@@ -1,6 +1,7 @@
 library(tidyverse)
 library(gridExtra)
 library(anytime)
+library(scales)
 options(digits.secs=6)                ## for fractional seconds below
 Sys.setenv(TZ=anytime:::getTZ())      ## helper function to try to get TZ
 filename = "./"
@@ -10,6 +11,9 @@ mb_from_bytes = function(x) {
   return(round(x/(1024*1024), digits=1))
 }
 
+nanosecondsFromSeconds = function(x) {
+  return(x*1000*1000*1000)
+}
 secondsFromNanoseconds = function(x) {
   return(round(x/(1000*1000*1000), digits=1))
 }
@@ -62,39 +66,106 @@ mylabels = c("p68", "p90", "p99", "p999", "max")
 fiveSecondsInNanoseconds = 5 * 1000 * 1000 * 1000
 
 print("Graph The Duration of Each Span")
+
+# Spans from Envoy
 discovery = read_csv("./envoy_ondiscoveryresponse.csv", col_types=cols(Version=col_character())) %>%
   arrange(Timestamp) %>%
   select(stamp=Timestamp, version=Version, duration=Duration, type=Type)
+# Spans from Envoy when it sends requests to xDS server
+discovery.request = read_csv("./envoy_senddiscoveryrequest.csv", col_types=cols(Version=col_character())) %>%
+  arrange(Timestamp) %>%
+  select(stamp=Timestamp, version=Version, duration=Duration, type=Type)
+# Spans from Navigator
 sendconfig = read_csv("./sendconfigjaeger.csv", col_types=cols(Version=col_character())) %>%
   select(stamp=Timestamp, version=Version, duration=Duration, type=Type)
+# Pause spans from Envoy
 pause = read_csv("./envoy_pause.csv", col_types=cols(Version=col_character())) %>%
   select(stamp=Timestamp, version=Version, duration=Duration, type=Type)
-print(pause)
+# EDS updates from Envoy
+eds_update = read_csv("./envoy_eds_update.csv", col_types=cols(Version=col_character())) %>%
+  select(stamp=Timestamp, version=Version, duration=Duration, type=Type) %>%
+  mutate(type="EDS update")
 
-all_spans = bind_rows("envoy"=discovery, "navigator"=sendconfig, "pause"=pause, .id="source") %>%
-  filter(type != "Listener")
-top_versions = all_spans %>% group_by(type) %>% top_n(5, duration)
+# Join together envoy stuff
+discovery = rbind(discovery, eds_update) %>%
+  arrange(stamp)
 
-top_spans = all_spans %>% semi_join(top_versions, by="version") %>%
-  mutate(durationns = duration * 1000,
-         estamp = stamp + durationns,
+# "Route works" spans from client vm
+routes = read_csv("./route-status.csv", col_types=cols(status=col_character(), route=col_integer())) %>%
+  drop_na() %>% filter(status == "200") %>% select(estamp=stamp, route, stamp=startstamp) %>%
+  mutate(duration = estamp - stamp, type="Route")
+halfRoute = max(routes$route) # the route-status.csv will only include routes created during CP load
+routes = routes %>% filter(route < halfRoute)
+
+# Get config version to new route mapping
+routes_by_config = read_csv("./sendconfigjaeger.csv", col_types=cols(Version=col_character())) %>%
+  select(version=Version, routes=Routes, type=Type) %>%
+  # filter(type == "RouteConfiguration") %>%
+  separate_rows(routes, convert = TRUE) %>%  # one row per observation of a route being configured
+  filter(routes < halfRoute) %>% # only include routes created during CP load
+  group_by(routes) %>% summarize(version = min(version)) %>%
+  select(route=routes, version)
+when_route_works = left_join(routes, routes_by_config, by="route")
+
+print("data loaded")
+all_spans = bind_rows(
+                      "envoy"=discovery,
+                      "navigator"=sendconfig,
+                      "pause"=pause,
+                      "client"=when_route_works,
+                      .id="source"
+                    ) %>%
+filter(type != "Listener")
+
+durations = all_spans %>% mutate(typeSource=paste(type, source)) %>%
+  select(typeSource, type, source, version, duration)
+
+top_versions = all_spans %>%
+  group_by(type) %>%
+  top_n(2, duration)
+
+
+# avg_versions = all_spans %>% filter(type=="Route") %>% top_n(10, -duration)
+
+print(all_spans)
+top_spans = all_spans %>%
+  # semi_join(top_versions, by="version") %>%
+  arrange(stamp) %>%
+  slice(300:500) %>%
+  mutate(estamp = stamp + duration,
          name=paste(version, type, source),
-         asdf=paste(type, source)) %>%
+         typeSource=paste(type, source)) %>%
   pivot_longer(c(stamp, estamp), names_to="timetype", values_to="time")
 
-# Calculate dotted lines between the rows for each version
-x.breaks = (top_spans %>% group_by(version, name) %>% summarize(m=1) %>% summarize(n=n()) %>% mutate(s = cumsum(n)))$s + 0.5
-labels = top_spans %>% filter(timetype=="stamp")
+print(top_spans)
+print(distinct(top_spans, typeSource))
 
-mycols <- c("Cluster envoy" = "darkgoldenrod",
-            "Cluster navigator" = "mediumorchid3",
+print("filter discovery.request")
+top_spans.discovery_request = discovery.request %>%
+  filter(stamp >= min(select(top_spans, time)), stamp <= max(select(top_spans, time))) %>%
+  mutate(typeSource=paste(type, "envoy"))
+
+# Calculate dotted lines between the rows for each version
+x.breaks = (top_spans %>% group_by(version, name) %>%
+            summarize(m=1) %>% summarize(n=n()) %>%
+            mutate(s = cumsum(n)))$s + 0.5
+# Calculate the labels for each version
+labels = top_spans %>% filter(timetype=="stamp")
+mycols <- c("Cluster envoy" = "firebrick4",
+            # "Cluster envoy request" = "green",
+            "Cluster navigator" = "darkblue",
             "Cluster pause" = "dimgray",
-            "ClusterLoadAssignment envoy" = "chocolate1",
-            "ClusterLoadAssignment navigator" = "orchid2",
+            "ClusterLoadAssignment envoy" = "firebrick1",
+            # "ClusterLoadAssignment envoy request" = "green",
+            "ClusterLoadAssignment navigator" = "dodgerblue2",
             "ClusterLoadAssignment pause" = "darkgray",
-            "RouteConfiguration envoy" = "orange",
-            "RouteConfiguration navigator" = "plum1",
-            "RouteConfiguration pause" = "snow2")
+            "EDS update envoy" = "orangered3",
+            "Listener envoy" = "orangered3",
+            "RouteConfiguration envoy" = "indianred1",
+            # "RouteConfiguration envoy request" = "green",
+            "RouteConfiguration navigator" = "deepskyblue",
+            "RouteConfiguration pause" = "snow2",
+            "Route client" = "purple")
 mycols.t <- c("Cluster" = "yellow",
             "ClusterLoadAssignment" = "orange",
             "RouteConfiguration" = "red")
@@ -102,26 +173,51 @@ mycols.s <- c("envoy" = "yellow",
             "navigator" = "blue",
             "pause" = "gray")
 
-ggplot(top_spans, aes(x=asdf, y=time, color=asdf, group=name)) +
+print("plotting")
+ggplot(top_spans, aes(x=typeSource, y=time, color=typeSource, group=name)) +
   labs(title="Navigator vs Envoy spans by config version and type") +
-  geom_line(size=2,alpha=0.75, lineend="square") +
-  #geom_text(labels, mapping=aes(label = secondsFromNanoseconds(durationns), y=time, x=name), vjust = -0.5, position=position_dodge(1)) +
-  scale_y_continuous(labels = function(breaks) {rep_along(breaks, element_blank())}) +
+  geom_line(size=0.5,alpha=0.5, lineend="square") +
+  geom_point(data=top_spans.discovery_request,
+             mapping=aes(y=stamp, x=typeSource, group=typeSource),
+             size=0.5, alpha=0.5) +
+  geom_text(labels, mapping=aes(label=str_sub(version, start=-2L, end=-1L)),
+            vjust = -2, position=position_dodge(1), size=1) +
+  geom_hline(data=top_spans %>% filter(timetype=="estamp") %>% filter(type=="EDS update"),
+             mapping=aes(yintercept=time), color="grey80", size=0.1) +
+  #geom_text(labels, mapping=aes(label = secondsFromNanoseconds(duration), y=time, x=name), vjust = -0.5, position=position_dodge(1)) +
+  scale_y_continuous(breaks = breaks_width(nanosecondsFromSeconds(1)), labels = function(breaks) {rep_along(breaks, element_blank())}) +
   #scale_y_continuous(labels=secondsFromZero) +
   ylab("Time (seconds)") +
   xlab("Config Version") +
   scale_x_discrete(labels = element_blank()) +
-  facet_wrap(vars(version), ncol=1, scales="free") +
+  # facet_wrap(vars(version), ncol=1, scales="free") +
   coord_flip() +
-  #scale_colour_brewer(palette = "Set1") +
+  # scale_colour_brewer(palette = "Set1") +
   scale_colour_manual(values = mycols) +
   our_theme() %+replace%
     theme(strip.text.x = element_blank(),
           strip.background = element_blank(),
           legend.position="bottom")
 
-ggsave(paste(filename, "duration.png", sep=""), width=15, height=10)
+ggsave(paste(filename, "duration.png", sep=""), width=20, height=4)
 
+print("histogram")
+ggplot(durations, aes(x=duration, fill=typeSource)) +
+  labs(title="Spans by Type and Source") +
+  ylab("Count") +
+  xlab("Duration (s)") +
+  facet_wrap(vars(typeSource), ncol=1) +
+  geom_histogram(bins=500) +
+  scale_colour_manual(values = mycols) +
+  scale_fill_manual(values = mycols) +
+  scale_x_continuous(labels = secondsFromNanoseconds) +
+  our_theme() %+replace%
+    theme(strip.text.x = element_blank(),
+          strip.background = element_blank(),
+          legend.position="bottom")
+ggsave(paste(filename, "span_duration_hist.png", sep=""), width=20, height=20)
+
+quit()
 print("Config duration")
 
 discovery = read_csv("./envoy_ondiscoveryresponse.csv", col_types=cols(Version=col_character())) %>%
@@ -130,7 +226,6 @@ discovery = read_csv("./envoy_ondiscoveryresponse.csv", col_types=cols(Version=c
   mutate(estamp = stamp + (duration * 1000)) %>%
   group_by(version) %>%
   summarize(duration=max(estamp) - min(stamp))
-print(discovery)
 
 values = quantile(discovery$duration, quantiles)
 tails = tibble(mylabels, values)
@@ -149,6 +244,7 @@ ggplot(tails, aes(x=mylabels, y=values)) +
 ggsave(paste(filename, "duration_percentile.png", sep=""), width=7, height=5)
 
 quit()
+
 print("Graph Durations of Each Send")
 discovery = read_csv("./envoy_ondiscoveryresponse.csv") %>%
   arrange(Timestamp) %>%
