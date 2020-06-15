@@ -204,6 +204,14 @@ func (d *discoveryServerCallbacks) OnStreamRequest(streamID int64, req *xdspb.Di
 	log.Printf("Callback: OnStreamRequest: streamID = %d\nreq = %s\n\n", streamID, req.ResponseNonce)
 	d.discoverServer.RegisterNode(req.Node.Id, streamID)
 
+	typename := req.TypeUrl[strings.LastIndex(req.TypeUrl, ".")+1:]
+	span := opentracing.GlobalTracer().StartSpan("OnStreamRequest")
+	span.SetTag("type", typename)
+	span.SetTag("typeurl", req.TypeUrl)
+	span.SetTag("version", req.VersionInfo)
+	span.SetTag("node", req.Node.Id)
+	span.Finish()
+
 	if spans, ok := d.discoverServer.spans[streamID]; ok {
 		if span, ok := spans[req.ResponseNonce]; ok {
 			span.SetTag("timeout", false)
@@ -222,6 +230,13 @@ func (d *discoveryServerCallbacks) OnStreamResponse(streamID int64, req *xdspb.D
 	if typename == "Listener" {
 		return
 	}
+
+	span := opentracing.GlobalTracer().StartSpan("OnStreamResponse")
+	span.SetTag("type", typename)
+	span.SetTag("typeurl", out.TypeUrl)
+	span.SetTag("version", out.VersionInfo)
+	span.SetTag("node", req.Node.Id)
+	span.Finish()
 
 	resourceNames, err := parseResourcesNames(out.Resources, out.TypeUrl)
 	if err != nil {
@@ -258,7 +273,7 @@ func (d *discoveryServerCallbacks) OnStreamResponse(streamID int64, req *xdspb.D
 	d.discoverServer.spans[streamID][out.Nonce] = requestSpan
 
 	go func(streamID int64, nonce string) {
-		for range time.After(2 * time.Minute) {
+		for range time.After(60 * time.Second) {
 			if spans, ok := d.discoverServer.spans[streamID]; ok {
 				if span, ok := spans[nonce]; ok {
 					span.SetTag("timeout", true)
