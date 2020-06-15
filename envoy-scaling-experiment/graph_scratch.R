@@ -20,6 +20,9 @@ secondsFromNanoseconds = function(x) {
 
 ## Calculate timestamp when experiment began
 times = read_csv(paste(filename, "importanttimes.csv", sep=""))
+times.dpload = filter(times, event == "GENERATE DP LOAD")$stamp
+times.cpload = filter(times, event == "GENERATE CP LOAD")$stamp
+times.finish = filter(times, event == "TEST COMPLETE")$stamp
 zeroPoint = min(times$stamp)
 maxSec = max(times$stamp)
 
@@ -74,9 +77,13 @@ discovery = read_csv("./envoy_ondiscoveryresponse.csv", col_types=cols(Version=c
 # Spans from Envoy when it sends requests to xDS server
 discovery.request = read_csv("./envoy_senddiscoveryrequest.csv", col_types=cols(Version=col_character())) %>%
   arrange(Timestamp) %>%
-  select(stamp=Timestamp, version=Version, duration=Duration, type=Type)
+  select(stamp=Timestamp, version=Version, duration=Duration, type=Type,resources=Resources)
 # Spans from Navigator
-sendconfig = read_csv("./sendconfigjaeger.csv", col_types=cols(Version=col_character())) %>%
+navigator.sendconfig = read_csv("./sendconfigjaeger.csv", col_types=cols(Version=col_character())) %>%
+  select(stamp=Timestamp, version=Version, duration=Duration, type=Type)
+navigator.request = read_csv("./navigator_onstreamrequest.csv", col_types=cols(Version=col_character())) %>%
+  select(stamp=Timestamp, version=Version, duration=Duration, type=Type)
+navigator.response = read_csv("./navigator_onstreamresponse.csv", col_types=cols(Version=col_character())) %>%
   select(stamp=Timestamp, version=Version, duration=Duration, type=Type)
 # Pause spans from Envoy
 pause = read_csv("./envoy_pause.csv", col_types=cols(Version=col_character())) %>%
@@ -110,7 +117,7 @@ when_route_works = left_join(routes, routes_by_config, by="route")
 print("data loaded")
 all_spans = bind_rows(
                       "envoy"=discovery,
-                      "navigator"=sendconfig,
+                      "navigator"=navigator.sendconfig,
                       "pause"=pause,
                       "client"=when_route_works,
                       .id="source"
@@ -120,30 +127,45 @@ filter(type != "Listener")
 durations = all_spans %>% mutate(typeSource=paste(type, source)) %>%
   select(typeSource, type, source, version, duration)
 
-top_versions = all_spans %>%
-  group_by(type) %>%
-  top_n(2, duration)
-
+# top_versions = all_spans %>%
+#   group_by(type) %>%
+#   top_n(2, duration)
 
 # avg_versions = all_spans %>% filter(type=="Route") %>% top_n(10, -duration)
 
-print(all_spans)
 top_spans = all_spans %>%
   # semi_join(top_versions, by="version") %>%
   arrange(stamp) %>%
-  slice(300:500) %>%
+  filter(stamp >= times.cpload) %>%
+  # slice(50:n()) %>%
   mutate(estamp = stamp + duration,
          name=paste(version, type, source),
          typeSource=paste(type, source)) %>%
   pivot_longer(c(stamp, estamp), names_to="timetype", values_to="time")
 
-print(top_spans)
 print(distinct(top_spans, typeSource))
 
-print("filter discovery.request")
 top_spans.discovery_request = discovery.request %>%
   filter(stamp >= min(select(top_spans, time)), stamp <= max(select(top_spans, time))) %>%
+  separate_rows(resources, sep=",", convert = TRUE) %>%  # one row per observation of a route being configured
+  extract("resources", "route", regex = "service_([[:alnum:]]+)", convert=TRUE) %>%
+  group_by(stamp, type) %>%
+  arrange(route) %>%
+  summarize(new_resources = paste0(route, collapse= ",")) %>%
+  filter(new_resources != "NA") %>%
+  arrange(stamp) %>%
   mutate(typeSource=paste(type, "envoy"))
+
+top_spans.discovery_request$resource_version = group_indices(top_spans.discovery_request, new_resources)
+print(top_spans.discovery_request)
+top_spans.navigator = bind_rows(
+    "request"=navigator.request, "response"=navigator.response, .id="direction"
+  )
+print(arrange(top_spans.navigator, stamp))
+
+top_spans.navigator = top_spans.navigator  %>%
+  filter(stamp >= min(select(top_spans, time)), stamp <= max(select(top_spans, time))) %>%
+  mutate(typeSource=paste(type, "navigator"))
 
 # Calculate dotted lines between the rows for each version
 x.breaks = (top_spans %>% group_by(version, name) %>%
@@ -165,7 +187,9 @@ mycols <- c("Cluster envoy" = "firebrick4",
             # "RouteConfiguration envoy request" = "green",
             "RouteConfiguration navigator" = "deepskyblue",
             "RouteConfiguration pause" = "snow2",
-            "Route client" = "purple")
+            "Route client" = "purple",
+            "request" = "green",
+            "response" = "black")
 mycols.t <- c("Cluster" = "yellow",
             "ClusterLoadAssignment" = "orange",
             "RouteConfiguration" = "red")
@@ -180,10 +204,20 @@ ggplot(top_spans, aes(x=typeSource, y=time, color=typeSource, group=name)) +
   geom_point(data=top_spans.discovery_request,
              mapping=aes(y=stamp, x=typeSource, group=typeSource),
              size=0.5, alpha=0.5) +
-  geom_text(labels, mapping=aes(label=str_sub(version, start=-2L, end=-1L)),
-            vjust = -2, position=position_dodge(1), size=1) +
-  geom_hline(data=top_spans %>% filter(timetype=="estamp") %>% filter(type=="EDS update"),
-             mapping=aes(yintercept=time), color="grey80", size=0.1) +
+  geom_point(data=top_spans.navigator,
+             mapping=aes(y=stamp, x=typeSource, group=typeSource, shape=direction, color=direction),
+             size=1, alpha=0.8) +
+  geom_text(labels, mapping=aes(label=str_sub(version, start=-1L, end=-1L)),
+            vjust = -2, size=1) +
+  geom_text(data=filter(top_spans.navigator, direction=="response"), mapping=aes(label=str_sub(version, start=-1L, end=-1L), y=stamp, x=typeSource, group=typeSource),
+            vjust = 3, size=1, position=position_dodge(1), color="black") +
+  geom_text(data=filter(top_spans.navigator, direction=="request"), mapping=aes(label=str_sub(version, start=-1L, end=-1L), y=stamp, x=typeSource, group=typeSource),
+            vjust = 2, size=1, position=position_dodge(1), color="green") +
+  geom_text(data=top_spans.discovery_request, mapping=aes(label=str_sub(resource_version, start=-1L, end=-1L), y=stamp, x=typeSource, group=typeSource),
+            vjust = 2, size=1, position=position_dodge(1)) +
+  # line for when Envoy finished configuring the config
+  # geom_hline(data=top_spans %>% filter(timetype=="estamp") %>% filter(type=="EDS update"),
+  #            mapping=aes(yintercept=time), color="grey80", size=0.1) +
   #geom_text(labels, mapping=aes(label = secondsFromNanoseconds(duration), y=time, x=name), vjust = -0.5, position=position_dodge(1)) +
   scale_y_continuous(breaks = breaks_width(nanosecondsFromSeconds(1)), labels = function(breaks) {rep_along(breaks, element_blank())}) +
   #scale_y_continuous(labels=secondsFromZero) +
@@ -194,13 +228,14 @@ ggplot(top_spans, aes(x=typeSource, y=time, color=typeSource, group=name)) +
   coord_flip() +
   # scale_colour_brewer(palette = "Set1") +
   scale_colour_manual(values = mycols) +
+  scale_shape_manual(values = c(1, 2)) +
   our_theme() %+replace%
     theme(strip.text.x = element_blank(),
           strip.background = element_blank(),
           legend.position="bottom")
 
-ggsave(paste(filename, "duration.png", sep=""), width=20, height=4)
-
+ggsave(paste(filename, "duration.png", sep=""), width=100, height=4, limitsize = FALSE)
+quit()
 print("histogram")
 ggplot(durations, aes(x=duration, fill=typeSource)) +
   labs(title="Spans by Type and Source") +
@@ -251,7 +286,7 @@ discovery = read_csv("./envoy_ondiscoveryresponse.csv") %>%
   select(version=Version, duration=Duration, type=Type, resources=Resources, size=PayloadSize) %>%
   mutate(durationms = duration / 1000)
 
-sendconfig = read_csv("./sendconfigjaeger.csv") %>%
+navigator.sendconfig = read_csv("./sendconfigjaeger.csv") %>%
   select(version=Version, duration=Duration, type=Type, routes=Routes, size=PayloadSize) %>%
   mutate(durationms = duration / 1000)
 
@@ -259,7 +294,7 @@ normalize = function (c) {
   (c - min(c)) / (max(c) - min(c))
 }
 
-data = left_join(discovery, sendconfig, by=c("version","type")) %>%
+data = left_join(discovery, navigator.sendconfig, by=c("version","type")) %>%
   mutate(diff = durationms.y - durationms.x) %>%
   mutate(size_diff = size.y - size.x) %>%
   mutate(size_norm = normalize(size.x))
