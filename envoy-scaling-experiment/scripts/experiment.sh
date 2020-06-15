@@ -119,6 +119,9 @@ JAEGER_QUERY_IP=$(kubectl -n system get services jaeger-query -ojsonpath='{.stat
 ./../jaegerscrapper/bin/scrapper -csvPath ./envoy_pause.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName "pause" --service ingressgateway
 ./../jaegerscrapper/bin/scrapper -csvPath ./envoy_eds_update.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName "EdsClusterImpl::onConfigUpdate" --service ingressgateway
 ./../jaegerscrapper/bin/scrapper -csvPath ./envoy_senddiscoveryrequest.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName "GrpcMuxImpl::sendDiscoveryRequest" --service ingressgateway
+./../jaegerscrapper/bin/scrapper -csvPath ./navigator_onstreamrequest.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName "OnStreamRequest" --service navigator
+./../jaegerscrapper/bin/scrapper -csvPath ./navigator_onstreamresponse.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName "OnStreamResponse" --service navigator
+curl -sS "http://${JAEGER_QUERY_IP}/api/traces?service=GrpcMuxImpl::onDiscoveryResponse&loopback=2d&limit=100000000" > jaeger_traces_envoy_ondiscoveryresponse.json
 
 sleep 10 # wait for cluster to level out after CP load, gather data for cluster without
           # CP load but with lots of configuration
