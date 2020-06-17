@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 
 	"code.cloudfoundry.org/navigator/route"
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
 type ManagementServer struct {
@@ -58,6 +59,9 @@ func (s *ManagementServer) HandleIndex(w http.ResponseWriter, req *http.Request)
 
 func (s *ManagementServer) HandleSetRoutes(w http.ResponseWriter, req *http.Request) {
 	var err error
+	span := opentracing.GlobalTracer().StartSpan("setRoutes")
+	defer span.Finish()
+
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -71,6 +75,8 @@ func (s *ManagementServer) HandleSetRoutes(w http.ResponseWriter, req *http.Requ
 		_, _ = w.Write([]byte(errors.Wrap(err, "cannot parse JSON").Error()))
 		return
 	}
+
+	span.SetTag("routes", payload.Numbers)
 
 	var routeConfig *route.RouteConfig
 	onlyEndpoints := req.URL.Query()["onlyEndpoints"] != nil
