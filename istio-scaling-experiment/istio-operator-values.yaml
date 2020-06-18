@@ -137,7 +137,13 @@ spec:
     pilot:
       k8s:
         replicaCount: {{ .PILOT_REPLICAS }}
-
+        overlays:
+          - apiVersion: apps/v1                                                                                                                                                               │·························
+            kind: Deployment
+            name: istiod
+            patches:
+            - path: .spec.template.spec.containers[name:istio-proxy].image
+              value: gcr.io/cf-routing-desserts/pilot:scalerstuff
     galley:
       enabled: {{ .ENABLE_GALLEY }}
       k8s:
