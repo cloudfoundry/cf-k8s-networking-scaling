@@ -1,0 +1,23 @@
+# kubetpl:syntax:$
+
+# kubetpl:set:NAMESPACE=default
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: $NAME
+  namespace: $NAMESPACE
+spec:
+  hosts:
+  - "$NAME.example.com"
+  gateways:
+  - apps-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        port:
+          number: 8000
+        host: $NAME

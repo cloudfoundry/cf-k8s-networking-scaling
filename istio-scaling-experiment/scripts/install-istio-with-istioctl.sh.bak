@@ -3,9 +3,9 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 source $DIR/../vars.sh
-source $DIR/utils.sh
+source $DIR//utils.sh
 
-PATH_TO_VALUES_TPL=$DIR/../istio-operator-values.yaml
+PATH_TO_VALUES_TPL=$(pwd)/$DIR/../istio-operator-values.yaml
 PATH_TO_VALUES=$(pwd)/values.yaml
 
 kubetpl render ${PATH_TO_VALUES_TPL} \

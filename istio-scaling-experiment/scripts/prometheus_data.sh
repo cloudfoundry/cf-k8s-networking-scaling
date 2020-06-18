@@ -1,5 +1,7 @@
 #!/bin/bash
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
 echo "Exposing prometheus for data collection"
 
 # expose prometheus through istio's ingress gateway

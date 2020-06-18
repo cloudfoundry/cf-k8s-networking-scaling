@@ -1,7 +1,8 @@
 #!/bin/bash
 
-source vars.sh
-source scripts/utils.sh
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source $DIR/vars.sh
+source $DIR/scripts/utils.sh
 
 # check dependencies
 if [[ "$(helm version | grep -Po "(v\d)(?=\.\d\.\d)")" != "v3" ]]; then
@@ -18,15 +19,15 @@ CLUSTER_NAME=$1
 COUNT=${2:-3}
 
 # make sure we always have current builds of rust programs
-pushd combine
+pushd $DIR/combine
   cargo build
 popd
 
-pushd interpret
+pushd $DIR/interpret
   cargo build
 popd
 
-pushd jaegerscrapper
+pushd $DIR/../shared/jaegerscrapper
   make
 popd
 
@@ -37,17 +38,15 @@ for ((i=0;i<$COUNT;i++)); do
   filename="$1-$i"
   mkdir $filename
 
-  cp vars.sh $filename/
+  cp $DIR/vars.sh $DIR/$filename/
   # if [ "$ISTIO_USE_OPERATOR" -eq 1 ]; then
   #   cp istio-operator-values.yaml $filename/values.yaml
   # else
   #   cp values.yaml $filename/
   # fi
 
-  pushd $filename
-
+  pushd $DIR/$filename
     time ../scripts/experiment.sh $1-$i 2>&1 | tee experiment.log
-
   popd
 
   if [[ $i < $(expr $COUNT - 1) ]]; then
@@ -55,15 +54,15 @@ for ((i=0;i<$COUNT;i++)); do
   fi
 done
 
-mkdir $1
-mv $1-* $1/
+mkdir $DIR/$1
+mv $DIR/$1-* $DIR/$1
 
-pushd $1
-  ./../combine/target/debug/combine .
-  Rscript ../graphManyToo.R
+pushd $DIR/$1
+  $DIR/combine/target/debug/combine .
+  Rscript $DIR/graphManyToo.R
 popd
 
-mv $1 experiments/
+mv $DIR/$1 experiments/
 
 # pushd experiments/$1
 #   ruby ../../minmax.rb
