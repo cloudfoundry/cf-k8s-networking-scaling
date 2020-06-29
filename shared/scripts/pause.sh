@@ -1,5 +1,7 @@
-echo "I am paused, run"
+seconds=${1:-10000000000}
+
+echo "I am paused for ${seconds} seconds, run"
 echo "kill $BASHPID"
 echo "to continue"
 
-sleep 10000000000000
+sleep ${seconds}

@@ -55,13 +55,14 @@ until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -
   export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].port}')
   export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].port}')
   export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
-  sleep 1
+  ${DIR}/../../shared/scripts/pause.sh 1
 done
 wlog "Load container up"
-sleep 10
+${DIR}/../../shared/scripts/pause.sh 10
 
 ${DIR}/prometheus_data.sh &
-ruby ${DIR}/endpoint_arrival.rb &
+echo "stamp,event,message" > endpoint_arrival_log.csv
+ruby ${DIR}/endpoint_arrival.rb >> endpoint_arrival_log.csv &
 
 iwlog "GENERATE DP LOAD"
 echo "stamp,cpuid,usr,nice,sys,iowate,irq,soft,steal,guest,gnice,idle" > cpustats.csv
@@ -73,7 +74,7 @@ forever memstats  >> memstats.csv &
 echo "stamp,sockets" > time_wait.csv
 forever time_wait  >> time_wait.csv &
 until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -eq 200 ]; do true; done
-sleep 10 # wait because otherwise the dataload sometimes fails to work at first
+${DIR}/../../shared/scripts/pause.sh 10 # wait because otherwise the dataload sometimes fails to work at first
 
 # create data plane load with apib
 ${DIR}/dataload.sh http://${GATEWAY_URL}/anything > dataload.csv 2>&1 &
@@ -90,7 +91,7 @@ kubectl apply -f testpods.yaml
 kubectl wait --for=condition=available deployment $(kubectl get deployments | grep app | awk '{print $1}')
 kubectl wait --for=condition=podscheduled pods $(kubectl get pods -ojsonpath='{range $.items[*]}{@.metadata.name}{"\n"}{end}' | grep app)
 
-sleep 30 # wait for cluster to not be in a weird state after pushing so many pods
+${DIR}/../../shared/scripts/pause.sh 30 # wait for cluster to not be in a weird state after pushing so many pods
          # and get data for cluster without CP load or configuration as control
 
 iwlog "GENERATE CP LOAD"
@@ -98,7 +99,7 @@ ${DIR}/userfactory.sh > user.log # 2>&1 # run in foreground for now so we wait t
 
 iwlog "CP LOAD COMPLETE"
 
-sleep 600 # wait for cluster to level out after CP load, gather data for cluster without
+${DIR}/../../shared/scripts/pause.sh 600 # wait for cluster to level out after CP load, gather data for cluster without
          # CP load but with lots of configuration
 
 # stop monitors
@@ -110,7 +111,7 @@ iwlog "TEST COMPLETE"
 kubectl get nodes --show-labels | awk '{print $1","$2","$6}' > nodeswithlabels.csv
 kubectl get pods -o wide -n istio-system | awk '{print $1","$6","$7}' > instance2pod.csv
 
-sleep 2 # let them quit
+${DIR}/../../shared/scripts/pause.sh 2 # let them quit
 
 
 # collect spans
