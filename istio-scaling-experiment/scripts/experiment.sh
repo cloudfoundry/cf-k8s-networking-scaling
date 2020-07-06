@@ -61,11 +61,11 @@ wlog "Load container up"
 ${DIR}/../../shared/scripts/pause.sh 10
 
 # Enable debug XDS logging for Pilots
-kubectl get pods -n istio-system -l app=istiod -ojsonpath='{range .items[*]}{.metadata.name} {end}' | xargs -n 1 -d ' ' -I {} kubectl exec -n istio-system {} --  curl -sS http:│·························
-//localhost:9876/scopej/ads -X PUT -d '{"output_level":"debug"}'
-
-# Stream logs from pilots
-kubectl logs -n istio-system -l app=istiod --max-log-requests=100 --ignore-errors=true -f > pilot.log &
+kubectl get pods -n istio-system -l app=istiod -ojsonpath='{range .items[*]}{.metadata.name} {end}' | xargs -n 1 -d ' ' -I {} kubectl exec -n istio-system {} -- \
+  curl -sS http://localhost:9876/scopej/ads -X PUT -d '{"output_level":"debug"}'
+# Enable debug XDS logging for Envoy
+kubectl get pods -n istio-system -l app=istio-ingressgateway -ojsonpath='{range .items[*]}{.metadata.name} {end}' | xargs -n 1 -d ' ' -I {} kubectl exec -n istio-system {} -- \
+  curl -sS http://localhost:15000/logging?config=debug -X POST
 
 
 ${DIR}/prometheus_data.sh &
