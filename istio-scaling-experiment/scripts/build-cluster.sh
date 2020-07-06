@@ -1,7 +1,9 @@
 #!/bin/bash
 
-source ../vars.sh
-source ../scripts/utils.sh
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+source $DIR/../vars.sh
+source $DIR/utils.sh
 
 CLUSTER_NAME=$1
 AVAILABILITY_ZONE=$(gcloud compute instances list | grep "$(hostname) " | awk '{print $2}')
@@ -13,9 +15,9 @@ gcloud container clusters create $CLUSTER_NAME \
   --zone $AVAILABILITY_ZONE \
   --enable-ip-alias \
   --project cf-routing-desserts
-  # --create-subnetwork name=$CLUSTER_NAME-network,range=10.5.0.0/16 \
+  # --create-subnetwork name=$CLUSTER_NAME-network,range=10.10.0.0/16 \
   # --cluster-ipv4-cidr=10.0.0.0/14 \
-  # --services-ipv4-cidr=10.4.0.0/16 
+  # --services-ipv4-cidr=10.4.0.0/16 \
 
 gcloud container clusters get-credentials $CLUSTER_NAME \
     --zone $AVAILABILITY_ZONE \
@@ -26,5 +28,3 @@ kubectl create clusterrolebinding cluster-admin-binding \
     --user=$(gcloud config get-value core/account)
 
 kubectl create namespace istio-system
-
-helm repo add istio.io https://storage.googleapis.com/istio-release/releases/$ISTIO_VERSION/charts/

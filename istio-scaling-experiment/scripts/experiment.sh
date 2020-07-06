@@ -2,14 +2,16 @@
 
 # set -ex
 
-source ../vars.sh
-source ../scripts/utils.sh
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+source ${DIR}/../vars.sh
+source ${DIR}/utils.sh
 
 CLUSTER_NAME=$1
 
 echo "stamp,event" > importanttimes.csv
 
-./../scripts/build-cluster.sh $CLUSTER_NAME
+${DIR}/build-cluster.sh $CLUSTER_NAME
 
 # taint nodes for pilot and ingress-gateways
 if [ $NODES_FOR_ISTIO -gt 0 ]; then
@@ -29,16 +31,17 @@ kubectl taint nodes $prometheusnode scalers.istio=prometheus:NoSchedule
 kubectl label nodes $prometheusnode scalers.istio=prometheus
 
 if [ "$ISTIO_USE_OPERATOR" -eq 1 ]; then
-  ./../scripts/install-istio-with-istioctl.sh
-  if [ "$ISTIO_NO_EDS_DEBOUNCE" -eq 1 ]; then
-    kubectl patch -n istio-system deployment istiod --patch "$(cat ../yaml/patch-add-no-pilot-eds-debounce-to-istiod.yaml)"
-  fi
+  ${DIR}/install-istio-with-istioctl.sh
 else
-  ./../scripts/install-istio.sh
+  ${DIR}/install-istio.sh
 fi
 
+helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+helm repo update
+helm install node-exporter stable/prometheus-node-exporter
+
 # schedule the dataplane pod
-kubetpl render ../yaml/service.yaml ../yaml/httpbin-loadtest.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
+kubetpl render ${DIR}/../yaml/service.yaml ${DIR}/../yaml/httpbin-loadtest.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
 kubectl wait --for=condition=available deployment $(kubectl get deployments | grep httpbin | awk '{print $1}')
 kubectl wait --for=condition=podscheduled pods $(kubectl get pods -ojsonpath='{range $.items[*]}{@.metadata.name}{"\n"}{end}' | grep httpbin)
 
@@ -52,13 +55,22 @@ until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -
   export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].port}')
   export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].port}')
   export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
-  sleep 1
+  ${DIR}/../../shared/scripts/pause.sh 1
 done
 wlog "Load container up"
-sleep 10
+${DIR}/../../shared/scripts/pause.sh 10
 
-../scripts/prometheus_data.sh &
-ruby ./../scripts/endpoint_arrival.rb &
+# Enable debug XDS logging for Pilots
+kubectl get pods -n istio-system -l app=istiod -ojsonpath='{range .items[*]}{.metadata.name} {end}' | xargs -n 1 -d ' ' -I {} kubectl exec -n istio-system {} --  curl -sS http:│·························
+//localhost:9876/scopej/ads -X PUT -d '{"output_level":"debug"}'
+
+# Stream logs from pilots
+kubectl logs -n istio-system -l app=istiod --max-log-requests=100 --ignore-errors=true -f > pilot.log &
+
+
+${DIR}/prometheus_data.sh &
+echo "stamp,event,message" > endpoint_arrival_log.csv
+ruby ${DIR}/endpoint_arrival.rb >> endpoint_arrival_log.csv &
 
 iwlog "GENERATE DP LOAD"
 echo "stamp,cpuid,usr,nice,sys,iowate,irq,soft,steal,guest,gnice,idle" > cpustats.csv
@@ -70,30 +82,32 @@ forever memstats  >> memstats.csv &
 echo "stamp,sockets" > time_wait.csv
 forever time_wait  >> time_wait.csv &
 until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -eq 200 ]; do true; done
-sleep 10 # wait because otherwise the dataload sometimes fails to work at first
+${DIR}/../../shared/scripts/pause.sh 10 # wait because otherwise the dataload sometimes fails to work at first
 
 # create data plane load with apib
-./../scripts/dataload.sh http://${GATEWAY_URL}/anything > dataload.csv 2>&1 &
+${DIR}/dataload.sh http://${GATEWAY_URL}/anything > dataload.csv 2>&1 &
 
 podsalive &
 
 iwlog "GENERATE TEST PODS"
-./../scripts/generate-yaml.sh > testpods.yaml
+# ${DIR}/generate-yaml.sh > testpods.yaml
+# kubectl apply -f testpods.yaml
+${DIR}/scenario-rolling/generate.sh > testpods.yaml
 kubectl apply -f testpods.yaml
 
 # wait for all httpbins to be ready
-kubectl wait --for=condition=available deployment $(kubectl get deployments | grep httpbin | awk '{print $1}')
-kubectl wait --for=condition=podscheduled pods $(kubectl get pods -ojsonpath='{range $.items[*]}{@.metadata.name}{"\n"}{end}' | grep htttpin)
+kubectl wait --for=condition=available deployment $(kubectl get deployments | grep app | awk '{print $1}')
+kubectl wait --for=condition=podscheduled pods $(kubectl get pods -ojsonpath='{range $.items[*]}{@.metadata.name}{"\n"}{end}' | grep app)
 
-sleep 30 # wait for cluster to not be in a weird state after pushing so many pods
+${DIR}/../../shared/scripts/pause.sh 30 # wait for cluster to not be in a weird state after pushing so many pods
          # and get data for cluster without CP load or configuration as control
 
 iwlog "GENERATE CP LOAD"
-./../scripts/userfactory.sh > user.log # 2>&1 # run in foreground for now so we wait til they're done
+${DIR}/userfactory.sh > user.log # 2>&1 # run in foreground for now so we wait til they're done
 
 iwlog "CP LOAD COMPLETE"
 
-sleep 600 # wait for cluster to level out after CP load, gather data for cluster without
+${DIR}/../../shared/scripts/pause.sh 600 # wait for cluster to level out after CP load, gather data for cluster without
          # CP load but with lots of configuration
 
 # stop monitors
@@ -105,15 +119,34 @@ iwlog "TEST COMPLETE"
 kubectl get nodes --show-labels | awk '{print $1","$2","$6}' > nodeswithlabels.csv
 kubectl get pods -o wide -n istio-system | awk '{print $1","$6","$7}' > instance2pod.csv
 
-sleep 2 # let them quit
+${DIR}/../../shared/scripts/pause.sh 2 # let them quit
+
+
+# collect spans
+wlog "collecting spans"
+jaeger_port=$(port_forward istio-system svc/tracing 80)
+jaeger_addr="127.0.0.1:${jaeger_port}/jaeger"
+${DIR}/../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_ondiscoveryresponse.csv -jaegerQueryAddr ${jaeger_addr} --operationName "GrpcMuxImpl::onDiscoveryResponse" --service istio-ingressgateway
+${DIR}/../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_pause.csv -jaegerQueryAddr ${jaeger_addr} --operationName "pause" --service istio-ingressgateway
+${DIR}/../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_eds_update.csv -jaegerQueryAddr ${jaeger_addr} --operationName "EdsClusterImpl::onConfigUpdate" --service istio-ingressgateway
+${DIR}/../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_senddiscoveryrequest.csv -jaegerQueryAddr ${jaeger_addr} --operationName "GrpcMuxImpl::sendDiscoveryRequest" --service istio-ingressgateway
+
+# collect pilot logs
+# wlog "collecting Pilot logs, this might take a while"
+# gcloud beta logging read 'resource.type="k8s_container"
+# resource.labels.cluster_name="'"${CLUSTER_NAME}"'"
+# resource.labels.namespace_name="istio-system"
+# resource.labels.pod_name=~"istiod"' --format json > istiod.logs
+
 # make extra sure they quit
 kill -9 $(jobs -p)
 
 # collate and graph
-./../interpret/target/debug/interpret user.log && Rscript ../graph.R
+${DIR}/../interpret/target/debug/interpret user.log && Rscript ${DIR}/../graph.R
 
 wlog "=== TEARDOWN ===="
 
-./../scripts/destroy-cluster.sh $CLUSTER_NAME
+# ${DIR}/../../shared/scripts/pause.sh # let them quit
+${DIR}/../../shared/scripts/destroy-cluster.sh $CLUSTER_NAME
 
 exit

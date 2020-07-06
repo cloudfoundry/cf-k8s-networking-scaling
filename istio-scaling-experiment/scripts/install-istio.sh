@@ -1,9 +1,11 @@
 #!/bin/bash
 
-source ../vars.sh
-source ../scripts/utils.sh
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-PATH_TO_VALUES_TPL=$(pwd)/../values.yaml
+source $DIR/../vars.sh
+source $DIR/utils.sh
+
+PATH_TO_VALUES_TPL=$DIR/../values.yaml
 PATH_TO_VALUES=$(pwd)/values.yaml
 kubetpl render ${PATH_TO_VALUES_TPL} \
   -s ENABLE_GALLEY=${ENABLE_GALLEY} \

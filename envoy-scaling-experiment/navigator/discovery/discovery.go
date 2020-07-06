@@ -51,7 +51,7 @@ func (ds *DiscoverServer) RegisterNode(nodeId string, streamID int64) bool {
 	if !ok {
 		log.Printf("Registering node %s", nodeId)
 		ds.nodes[nodeId] = streamID
-		_ = ds.UpdateNodeRoutes(nodeId, nil, nil, nil)
+		_ = ds.UpdateNodeRoutes(nodeId, nil, nil, nil, false)
 	}
 	return ok
 }
@@ -65,10 +65,10 @@ func (ds *DiscoverServer) DeregisterNodeByStreamID(streamID int64) {
 	}
 }
 
-func (ds *DiscoverServer) UpdateRoutes(clusters []*xdspb.Cluster, loadAssignments []*xdspb.ClusterLoadAssignment, virtualHosts []*routepb.VirtualHost) (int, error) {
+func (ds *DiscoverServer) UpdateRoutes(clusters []*xdspb.Cluster, loadAssignments []*xdspb.ClusterLoadAssignment, virtualHosts []*routepb.VirtualHost, onlyEndpoints bool) (int, error) {
 	updatedNodes := 0
 	for nodeId := range ds.nodes {
-		err := ds.UpdateNodeRoutes(nodeId, clusters, loadAssignments, virtualHosts)
+		err := ds.UpdateNodeRoutes(nodeId, clusters, loadAssignments, virtualHosts, onlyEndpoints)
 		if err != nil {
 			return updatedNodes, err
 		}
@@ -78,15 +78,17 @@ func (ds *DiscoverServer) UpdateRoutes(clusters []*xdspb.Cluster, loadAssignment
 	return updatedNodes, nil
 }
 
-func (ds *DiscoverServer) UpdateNodeRoutes(nodeName string, clusters []*xdspb.Cluster, loadAssignments []*xdspb.ClusterLoadAssignment, virtualHosts []*routepb.VirtualHost) error {
+func (ds *DiscoverServer) UpdateNodeRoutes(nodeName string, clusters []*xdspb.Cluster, loadAssignments []*xdspb.ClusterLoadAssignment, virtualHosts []*routepb.VirtualHost, onlyEndpoints bool) error {
 	var clustersCache, endpointsCache, routesCache, runtimesCache []cache.Resource
 
 	// RDS
-	routesCache = []cache.Resource{
-		&xdspb.RouteConfiguration{
-			Name:         "ingress_80",
-			VirtualHosts: virtualHosts,
-		},
+	if !onlyEndpoints {
+		routesCache = []cache.Resource{
+			&xdspb.RouteConfiguration{
+				Name:         "ingress_80",
+				VirtualHosts: virtualHosts,
+			},
+		}
 	}
 
 	// EDS
@@ -96,9 +98,11 @@ func (ds *DiscoverServer) UpdateNodeRoutes(nodeName string, clusters []*xdspb.Cl
 	}
 
 	// CDS
-	clustersCache = make([]cache.Resource, len(clusters))
-	for i := range clusters {
-		clustersCache[i] = cache.Resource(clusters[i])
+	if !onlyEndpoints {
+		clustersCache = make([]cache.Resource, len(clusters))
+		for i := range clusters {
+			clustersCache[i] = cache.Resource(clusters[i])
+		}
 	}
 
 	version := getVersion()
@@ -152,9 +156,15 @@ func (ds *DiscoverServer) UpdateNodeRoutes(nodeName string, clusters []*xdspb.Cl
 			},
 		}
 		snapshot = cache.NewSnapshot(version, endpointsCache, clustersCache, routesCache, listenersCache, runtimesCache)
-	} else { // Previous snapshot; preserve listeners
+	} else {
 		snapshot = cache.NewSnapshot(version, endpointsCache, clustersCache, routesCache, nil, runtimesCache)
+		// Previous snapshot; preserve listeners
 		snapshot.Resources[cache.Listener] = prevSnapshot.Resources[cache.Listener]
+
+		if onlyEndpoints {
+			snapshot.Resources[cache.Cluster] = prevSnapshot.Resources[cache.Cluster]
+			snapshot.Resources[cache.Route] = prevSnapshot.Resources[cache.Route]
+		}
 	}
 
 	// Tell Jaeger that we are serving a new config version
@@ -194,9 +204,18 @@ func (d *discoveryServerCallbacks) OnStreamRequest(streamID int64, req *xdspb.Di
 	log.Printf("Callback: OnStreamRequest: streamID = %d\nreq = %s\n\n", streamID, req.ResponseNonce)
 	d.discoverServer.RegisterNode(req.Node.Id, streamID)
 
+	typename := req.TypeUrl[strings.LastIndex(req.TypeUrl, ".")+1:]
+	span := opentracing.GlobalTracer().StartSpan("OnStreamRequest")
+	span.SetTag("type", typename)
+	span.SetTag("typeurl", req.TypeUrl)
+	span.SetTag("version", req.VersionInfo)
+	span.SetTag("node", req.Node.Id)
+	span.Finish()
+
 	if spans, ok := d.discoverServer.spans[streamID]; ok {
 		if span, ok := spans[req.ResponseNonce]; ok {
 			span.SetTag("timeout", false)
+			span.SetTag("nonce", req.ResponseNonce)
 			span.Finish()
 			delete(d.discoverServer.spans[streamID], req.ResponseNonce)
 		}
@@ -211,6 +230,13 @@ func (d *discoveryServerCallbacks) OnStreamResponse(streamID int64, req *xdspb.D
 	if typename == "Listener" {
 		return
 	}
+
+	span := opentracing.GlobalTracer().StartSpan("OnStreamResponse")
+	span.SetTag("type", typename)
+	span.SetTag("typeurl", out.TypeUrl)
+	span.SetTag("version", out.VersionInfo)
+	span.SetTag("node", req.Node.Id)
+	span.Finish()
 
 	resourceNames, err := parseResourcesNames(out.Resources, out.TypeUrl)
 	if err != nil {
@@ -230,6 +256,7 @@ func (d *discoveryServerCallbacks) OnStreamResponse(streamID int64, req *xdspb.D
 		"version", out.VersionInfo,
 		"routes", routeNumbersStr,
 		"node", req.Node.Id,
+		"size", out.XXX_Size(),
 	)
 	// This will cause duplicate span ID warning in Jaeger but it will merge all logs together for the last span
 	d.discoverServer.configSpan.Finish()
@@ -246,7 +273,7 @@ func (d *discoveryServerCallbacks) OnStreamResponse(streamID int64, req *xdspb.D
 	d.discoverServer.spans[streamID][out.Nonce] = requestSpan
 
 	go func(streamID int64, nonce string) {
-		for range time.After(2 * time.Minute) {
+		for range time.After(60 * time.Second) {
 			if spans, ok := d.discoverServer.spans[streamID]; ok {
 				if span, ok := spans[nonce]; ok {
 					span.SetTag("timeout", true)

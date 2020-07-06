@@ -34,6 +34,7 @@ img {
   <img src="config.png"></hr>
   <img src="polling.png"></hr>
   <img src="duration.png"></hr>
+  <img src="span_duration_hist.png"></hr>
   <img src="routes.png"></hr>
   <img src="endpoints_arrival.png"></hr>
   <h3> Check that our client VM and k8s cluster are big enough</h3>

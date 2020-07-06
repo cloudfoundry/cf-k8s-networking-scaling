@@ -13,7 +13,7 @@ class Gateway
 
   def generate_route
     print "Generating route for #{@name}..."
-    @pid = spawn("~/istio-1.4.2/bin/istioctl -n istio-system dashboard envoy #{@name}", :out=>"route" )
+    @pid = spawn("istioctl -n istio-system dashboard envoy #{@name}", :out=>"route" )
     sleep(0.5)
     @route = File.read("route").split("\n").first
     puts "#{@route}"
@@ -33,13 +33,13 @@ class Gateway
       next if c.include?('*')
 
       if @endpoints[c].nil?
-        @endpoints[c] = Time.now.to_i
+        @endpoints[c] = (Time.now.to_f * 1e9).to_i
       end
     end
 
     @endpoints.keys.each do |e|
       if !clusters.include?(e)
-        @missing[e] += [Time.now.to_i]
+        @missing[e] += [(Time.now.to_f * 1e9).to_i]
       end
     end
   end
@@ -47,32 +47,50 @@ class Gateway
   def to_csv
     out = []
     @endpoints.keys.each do |e|
-      out << ["#{@endpoints[e]}000000000", @name, e, @route, "appears"].join(',')
+      out << [@endpoints[e], @name, e, @route, "appears"].join(',')
     end
     @missing.keys.each do |m|
       @missing[m].each do |time|
-        out << ["#{time}000000000", @name, m, @route, "missing"].join(',')
+        out << [time, @name, m, @route, "missing"].join(',')
       end
     end
     out.join("\n")
   end
 
+  def get_ip_from_host_endpoint(endpoint)
+    return endpoint&.dig("host_statuses", 0, "address", "socket_address", "address")
+  end
+
   def process_eds
     # get endpoints with IPs only
-    endpoints = `curl -sS "#{@route}/clusters" | grep -P '(\\d{1,3}\\.?){4,4}:\\d{1,}' | awk -F '::' '{print $1}' | uniq 2>&1`.split("\n")
+    clusters_response = `2>&1 curl -sS --max-time 10 -w "%{http_code}" "#{@route}/clusters?format=json"`.split("\n")
+    status_code = clusters_response.pop
+    puts "#{(Time.now.to_f * 1e9).to_i},#{@name},request,#{status_code}"
+
+    clusters = JSON.parse(clusters_response.join("\n"))
+    endpoints = clusters["cluster_statuses"]
+      .select { |cluster| cluster["added_via_api"] }
 
     if endpoints.empty?
-      puts "Failed to reach #{@route}/clusters, retrying"
-      sleep(5)
+      # puts "Failed to reach #{@address}/clusters, retrying"
+      sleep(1)
       process_eds
       return
     end
 
     endpoints.each do |e|
-      next if e.include?('*')
+      next if e["name"].include?('*')
+      ip = get_ip_from_host_endpoint(e) || ""
+      old_ip = get_ip_from_host_endpoint(@envoy_endpoints[e["name"]]&.[]("cluster")) || ""
+      if !@envoy_endpoints[e["name"]].nil? && old_ip != ip
+        puts("#{(Time.now.to_f * 1e9).to_i},#{@name},new_ip,#{e["name"]} #{old_ip} #{ip}")
+      end
 
-      if @envoy_endpoints[e].nil?
-        @envoy_endpoints[e] = Time.now.to_i
+      if @envoy_endpoints[e["name"]].nil? || old_ip != ip
+        @envoy_endpoints[e["name"]] = {
+          "stamp" => (Time.now.to_f * 1e9).to_i,
+          "cluster" => e,
+        }
       end
     end
   end
@@ -80,7 +98,8 @@ class Gateway
   def envoy_endpoints_to_csv
     out = []
     @envoy_endpoints.keys.each do |e|
-      out << ["#{@envoy_endpoints[e]}000000000", @name, e, @route, "appears"].join(',')
+      endpoint = @envoy_endpoints[e]
+      out << [endpoint["stamp"], @name, e, @route, "appears", get_ip_from_host_endpoint(endpoint["cluster"])].join(',')
     end
     out.join("\n")
   end
@@ -107,7 +126,7 @@ begin
     gateways.map(&:process_eds)
 
     open("envoy_endpoint_arrival.csv", 'w') do |f|
-      f.puts "stamp,gateway,route,local_port,event"
+      f.puts "stamp,gateway,route,local_port,event,address"
       f.puts gateways.map(&:envoy_endpoints_to_csv).join("\n")
     end
     sleep(0.25)

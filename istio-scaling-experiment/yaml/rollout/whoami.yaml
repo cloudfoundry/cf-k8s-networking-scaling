@@ -1,0 +1,48 @@
+# kubetpl:syntax:$
+
+# kubetpl:set:NAMESPACE=default
+# kubetpl:set:GROUP=0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $NAME-$VERSION
+  namespace: $NAMESPACE
+  labels:
+    app: $NAME
+    version: $VERSION
+    sidecargroup: group-$GROUP
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 10
+      maxSurge: 10
+  selector:
+    matchLabels:
+      app: $NAME
+      version: $VERSION
+  template:
+    metadata:
+      labels:
+        app: $NAME
+        version: $VERSION
+        sidecargroup: group-$GROUP
+        target: $TARGET
+    spec:
+      containers:
+      - image: docker.io/containous/whoami
+        imagePullPolicy: IfNotPresent
+        name: $NAME
+        ports:
+        - containerPort: 80
+        env:
+          - name: WHOAMI_NAME
+            value: $VERSION
+        resources:
+          requests:
+            memory: 32Mi
+            cpu: 50m
+          limits:
+            memory: 32Mi
+            cpu: 50m

@@ -26,18 +26,42 @@ type Config struct {
 	Resolver
 }
 
+type ConfigGenerator struct {
+	resolver Resolver
+}
+
 type RouteConfig struct {
 	Clusters        []*xdspb.Cluster
 	LoadAssignments []*xdspb.ClusterLoadAssignment
 	VirutalHosts    []*routepb.VirtualHost
 }
 
-func Generate(hostnameFormat string, port uint32, numbers []int, extraClusters []int) (*RouteConfig, error) {
+func NewConfigGenerator() *ConfigGenerator {
+	cg := &ConfigGenerator{
+		NewHostnameResolver(),
+	}
+
+	return cg
+}
+
+func (cg *ConfigGenerator) NewConfig(hostnameFormat string, port uint32, numbers []int) (*Config, error) {
 	err := validateNumbers(numbers)
 	if err != nil {
 		return nil, err
 	}
 
+	c := &Config{
+		hostnameFormat,
+		port,
+		numbers,
+		cg.resolver,
+	}
+
+	return c, nil
+}
+
+func (cg *ConfigGenerator) Generate(hostnameFormat string, port uint32, numbers []int, extraClusters []int) (*RouteConfig, error) {
+	var err error
 	if len(extraClusters) > 0 {
 		err = validateNumbers(extraClusters)
 		if err != nil {
@@ -45,11 +69,9 @@ func Generate(hostnameFormat string, port uint32, numbers []int, extraClusters [
 		}
 	}
 
-	c := Config{
-		hostnameFormat,
-		port,
-		numbers,
-		NewHostnameResolver(),
+	c, err := cg.NewConfig(hostnameFormat, port, numbers)
+	if err != nil {
+		return nil, err
 	}
 	rc := &RouteConfig{}
 
@@ -80,6 +102,23 @@ func Generate(hostnameFormat string, port uint32, numbers []int, extraClusters [
 		rc.Clusters = append(rc.Clusters, extraCls...)
 	}
 
+	return rc, nil
+}
+
+func (cg *ConfigGenerator) GenerateOnlyEndpoints(hostnameFormat string, port uint32, numbers []int) (*RouteConfig, error) {
+	// create new resolver to clean its cache
+	// TODO: find a better way for cleaning cache
+	cg.resolver = NewHostnameResolver()
+	c, err := cg.NewConfig(hostnameFormat, port, numbers)
+	if err != nil {
+		return nil, err
+	}
+	rc := &RouteConfig{}
+	clas, err := c.GenerateLoadAssignments()
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot generate cluster load assignemnts")
+	}
+	rc.LoadAssignments = clas
 	return rc, nil
 }
 

@@ -41,7 +41,7 @@ main() {
     done
   done
 
-  cp "${DIR}/../combine/templates/index.html" "${path}/index.html"
+  # cp "${DIR}/../combine/templates/index.html" "${path}/index.html"
 }
 
 main "${@}"

@@ -92,17 +92,24 @@ print("Control Plane Latency by Percentile")
 controlplane = read_csv(paste(filename, "user_data.csv", sep="")) %>%
   select(`user id`, `start time`, `nanoseconds to first success`, `nanoseconds to last error`) %>%
   extract(`user id`, c("userid","groupid"), "(.+)g(.+)", convert=TRUE)
-# stamp, gateway, route -> they're all group 0, so route = httpbin-USERID-g0.example.com
-gatewaytouser = read_csv(paste(filename, "endpoint_arrival.csv", sep=""), col_types=cols(stamp=col_number())) %>%
+
+# stamp, gateway, route -> they're all user N groups with 1 user, so route = app-0-gGROUP_ID.default.svc.cluster.local
+gatewaytouser = read_csv(paste(filename, "envoy_endpoint_arrival.csv", sep=""), col_types=cols(stamp=col_number())) %>%
+  filter(str_detect(route, "\\|\\|app-\\d+-g\\d+")) %>% # Pilot creates two clustess: with | and with _. We care the one with |
   extract(gateway, "gateway", "istio-ingressgateway-.*-(.+)") %>%
-  extract(route, c("userid","groupid"), "httpbin-(.+)-g(.+).example.com", convert=TRUE)
-gatewaysbyroute = gatewaytouser %>% group_by(stamp, userid, groupid) %>% summarize(gcount=n()) %>%
-  arrange(stamp) %>% group_by(userid, groupid) %>%
+  extract(route, c("userid","groupid"), "app-(\\d+)-g(\\d+)", convert=TRUE) %>%
+  arrange(stamp)
+print(gatewaytouser)
+gatewaysbyroute = gatewaytouser %>%
+  group_by(stamp, userid, groupid) %>% summarize(gcount=n()) %>%
+  group_by(userid, groupid) %>%
   mutate(totalgateways = cumsum(gcount)) %>%
   ungroup() %>%
   select(stamp, userid, groupid, totalgateways) %>%
   semi_join(controlplane, by=c("userid", "groupid")) # only care about stuff with CP latency stats
+print(gatewaysbyroute)
 gatewaygoal = max(gatewaysbyroute$totalgateways) # all the gateways == the most anyone ever has
+
 gateway_startend = gatewaysbyroute %>% group_by(userid, groupid) %>%
   summarize(minGateways = min(totalgateways),
             firstGatewayTime=stamp[which(totalgateways==minGateways)],
@@ -132,7 +139,6 @@ ggplot(gathered.controlplane, aes(x=quantiles, y=latency)) +
   our_theme() %+replace%
     theme(legend.position="bottom")
 ggsave(paste(filename, "controlplane.png", sep=""), width=7, height = 3.5)
-
 print("Errors by User ID")
 # stamp,usernum,groupnum,event,status,logfile
 userlog = read_csv(paste(filename, "user.log", sep=""), col_types=cols(stamp=col_number(),status=col_factor()))
@@ -263,7 +269,7 @@ ggsave(paste(filename, "nodemon.png", sep=""), width=7, height=12)
 
 podcountsbusynodes = podcountsbynodetime %>% right_join(busynodenames) %>%
   filter(podtype != "prometheus-to", podtype != "kube-proxy", podtype != "fluentd-gcp") %>%
-  mutate(podcategory = if_else(str_detect(podtype, "httpbin"), "workload", "system"))
+  mutate(podcategory = if_else(str_detect(podtype, "app"), "workload", "system"))
 
 print("Pods on Busy Nodes")
 experiment_time_x_axis(ggplot(podcountsbusynodes) +

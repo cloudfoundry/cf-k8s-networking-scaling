@@ -1,0 +1,44 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+source $DIR/../vars.sh
+source $DIR//utils.sh
+
+echo "$(udate),$1,$2,STARTED,"
+TARGET_URL=httpbin-$1-g$2.example.com
+
+if [ $NAMESPACES -eq 1 ]; then namespace=ns-$2; else namespace=default; fi
+
+# if [ $STEADY_STATE -eq 1 ]; then
+#   offset=$(expr $NUM_APPS / $NUM_GROUPS / 2)
+#   kubetpl render $DIR/../yaml/gateway.yaml $DIR/../yaml/virtualservice.yaml -s NAME=httpbin-$(expr $1 + $offset)-g$2 -s NAMESPACE=$namespace | kubectl delete -f -
+# fi
+
+# kubetpl render $DIR/../yaml/gateway.yaml $DIR/../yaml/virtualservice.yaml -s NAME=httpbin-$1-g$2 -s NAMESPACE=$namespace | kubectl apply -f -
+
+NAME=httpbin-$1-g$2 NAMESPACE=$namespace $DIR/../yaml/rollout/route.sh v1
+
+until [ $(curl -s -HHost:$TARGET_URL http://$INGRESS_HOST:$INGRESS_PORT | grep -o "Name: ") -eq "Name: v1" ]; do true; done
+
+echo "$(udate),$1,$2,SUCCESS,"
+>&2 wlog "SUCCESS $1-g$2"
+
+lastfail=$(udate)
+timesToPoll=$(echo "120 / $USER_POLL_DELAY" | bc)
+for ((i=$timesToPoll; i>0; i--)); do
+  sleep $USER_POLL_DELAY &
+  out=$(curl -w "%{http_code},$INGRESS_HOST:$INGRESS_PORT-$1g$2-$i.curl\\n" -HHost:$TARGET_URL http://$INGRESS_HOST:$INGRESS_PORT/status/200 2>"curlstuff/$INGRESS_HOST:$INGRESS_PORT-$1g$2-$i.curl")
+  status=$(head -n1 ${out})
+  version=$(echo "${out}" | grep -o "Name: ")
+
+  if [[ $(echo $status | cut -d, -f1) != 200 && ${version} != "v1" ]]; then
+    lastfail=$(udate)
+    echo "$(udate),$1,$2,FAILURE,$status"
+  fi
+  wait
+done
+
+echo "$lastfail,$1,$2,COMPLETED,"
+>&2 wlog "Completed $1-g$2"
+

@@ -1,6 +1,8 @@
 library(tidyverse)
 library(gridExtra)
 
+options(show.error.locations = TRUE)
+
 filename <- "./"
 
 mb_from_bytes <- function(x) {
@@ -55,6 +57,22 @@ our_theme <- function() {
 quantiles = c(0.68, 0.90, 0.99, 0.999, 1)
 mylabels = c("p68", "p90", "p99", "p999", "max")
 fiveSecondsInNanoseconds = 5 * 1000 * 1000 * 1000
+
+# user_polls = read_csv(paste(filename, "user_poll.csv", sep="")) %>%
+#   arrange(stamp) %>%
+#   group_by(runID, groupnum) %>%
+#   mutate(delta = stamp - lag(stamp, default=stamp[1])) %>%
+#   group_by(runID) %>%
+#   summarize(med = median(delta), mean=mean(delta), min=min(delta), max(delta))
+
+# print("med")
+# print(user_polls$med / 1e6)
+# print("mean")
+# print(user_polls$mean / 1e6)
+# print("min")
+# print(user_polls$min)
+# print("max")
+# print(user_polls$max)
 
 # Control Plane Latency by Percentile
 controlplane = read_csv(paste(filename, "user_data.csv", sep="")) %>%
@@ -127,10 +145,9 @@ cplatency.time <- ggplot(gateway_startend, aes(x=uid, y=latency)) +
   scale_colour_brewer(palette = "Set1") +
   our_theme() %+replace% theme(legend.position="bottom")
 
-print("Saving cplantency all")
 ggsave(paste(filename, "controlplane.png", sep=""), arrangeGrob(arrangeGrob(cplatency, zoomed), cplatency.time), height=15, width=7)
 
-# Timestamp vs Avg Latency (ms) for very large numbers of runs
+print("Timestamp vs Avg Latency (ms) for very large numbers of runs")
 dataload = read_csv(paste(filename, "dataload.csv", sep=""))
 max.dataload <- select(dataload, runID, Name, `Max. latency`,`99% Latency`)
 gathered.dataload <- gather(max.dataload, key, milliseconds, -Name, -runID)
@@ -156,7 +173,7 @@ ggsave(paste(filename, "dataload_time.png", sep=""), arrangeGrob(overtime.max, o
 quantiles = c(0.68, 0.90, 0.99, 0.999, 0.9999, 0.99999, 1)
 mylabels = c("p68", "p90", "p99", "p999", "p9999", "p99999", "max")
 
-# Latency (ms) by Percentile
+print("Latency (ms) by Percentile")
 dataload = read_csv(paste(filename, "rawlatencies.txt", sep=""))
 values = quantile(dataload$latency, quantiles)
 dataload = tibble(mylabels, values)
@@ -176,43 +193,44 @@ dataplane.zoomed <- dataplane.max +
 dataplane.zoomed <- dataplane.zoomed + coord_cartesian(ylim=c(0,50))
 ggsave(paste(filename, "dataload_percentile.png", sep=""), arrangeGrob(dataplane.max, dataplane.zoomed), width=7, height=7)
 
-# Sidecar memory usage for large numbers of runs
-sidecar = read_csv(paste(filename, "sidecarstats.csv", sep=""))
-experiment_time_x_axis(ggplot(sidecar) +
-  labs(title = "Envoy Sidecar Memory Usage Over Time") +
-  ylab("Memory (mb)") +
-  lines() + lineLabels() +
-  # add line for goal
-  geom_hline(yintercept = bytes_from_mb(100), color="gray75", linetype=2) +
-  geom_line(mapping = aes(x=timestamp, y=memory, group=interaction(runID,podname)), color="gray15", alpha=0.15) +
-  stat_summary_bin(aes(x=timestamp,y=memory, colour = "max"), fun.y = "max", bins=100, geom="line") +
-  stat_summary_bin(aes(x=timestamp,y=memory, colour = "median"), fun.y = "median", bins=100, geom="line") +
-  geom_text(mapping = aes(y=bytes_from_mb(100), x=0, label="GOAL 100MB added per pod"), size=2, vjust=-0.6, hjust=0.15, color="grey25") +
-  scale_y_continuous(labels=mb_from_bytes) +
-  scale_colour_brewer(palette = "Set1") +
-  our_theme() %+replace%
-    theme(strip.placement = "outside", legend.position="bottom"))
-ggsave(paste(filename, "sidecar.png", sep=""), height=3.5)
+# print("Sidecar memory usage for large numbers of runs")
+# sidecar = read_csv(paste(filename, "sidecarstats.csv", sep=""))
+# experiment_time_x_axis(ggplot(sidecar) +
+#   labs(title = "Envoy Sidecar Memory Usage Over Time") +
+#   ylab("Memory (mb)") +
+#   lines() + lineLabels() +
+#   # add line for goal
+#   geom_hline(yintercept = bytes_from_mb(100), color="gray75", linetype=2) +
+#   geom_line(mapping = aes(x=timestamp, y=memory, group=interaction(runID,podname)), color="gray15", alpha=0.15) +
+#   stat_summary_bin(aes(x=timestamp,y=memory, colour = "max"), fun.y = "max", bins=100, geom="line") +
+#   stat_summary_bin(aes(x=timestamp,y=memory, colour = "median"), fun.y = "median", bins=100, geom="line") +
+#   geom_text(mapping = aes(y=bytes_from_mb(100), x=0, label="GOAL 100MB added per pod"), size=2, vjust=-0.6, hjust=0.15, color="grey25") +
+#   scale_y_continuous(labels=mb_from_bytes) +
+#   scale_colour_brewer(palette = "Set1") +
+#   our_theme() %+replace%
+#     theme(strip.placement = "outside", legend.position="bottom"))
+# ggsave(paste(filename, "sidecar.png", sep=""), height=3.5)
 
 
-# Gateway memory usage for large number of runs
-gateway = read_csv(paste(filename, "gatewaystats.csv", sep=""))
-experiment_time_x_axis(ggplot(gateway) +
-  labs(title = "Gateway Memory Usage over Time") +
-  ylab("Memory (mb)") +
-  lines() + lineLabels() +
-  # add line for goal
-  geom_hline(yintercept = bytes_from_mb(2000), color="gray75", linetype=2) +
-  geom_line(mapping = aes(x=timestamp, y=memory, group=interaction(runID,podname)), color="gray15", alpha=0.15) +
-  stat_summary_bin(aes(x=timestamp,y=memory, colour = "max"), fun.y = "max", bins=100, geom="line") +
-  stat_summary_bin(aes(x=timestamp,y=memory, colour = "median"), fun.y = "median", bins=100, geom="line") +
-  geom_text(mapping = aes(y=bytes_from_mb(2000), x=0, label="GOAL 2GB added per ingressgateway"), size=2, vjust=-0.6, hjust=0.12, color="grey25") +
-  scale_y_continuous(labels=mb_from_bytes) +
-  scale_colour_brewer(palette = "Set1") +
-  our_theme() %+replace%
-    theme(strip.placement = "outside", legend.position="bottom"))
-ggsave(paste(filename, "gateway.png", sep=""), height=3.5)
+# print("Gateway memory usage for large number of runs")
+# gateway = read_csv(paste(filename, "gatewaystats.csv", sep=""))
+# experiment_time_x_axis(ggplot(gateway) +
+#   labs(title = "Gateway Memory Usage over Time") +
+#   ylab("Memory (mb)") +
+#   lines() + lineLabels() +
+#   # add line for goal
+#   geom_hline(yintercept = bytes_from_mb(2000), color="gray75", linetype=2) +
+#   geom_line(mapping = aes(x=timestamp, y=memory, group=interaction(runID,podname)), color="gray15", alpha=0.15) +
+#   stat_summary_bin(aes(x=timestamp,y=memory, colour = "max"), fun.y = "max", bins=100, geom="line") +
+#   stat_summary_bin(aes(x=timestamp,y=memory, colour = "median"), fun.y = "median", bins=100, geom="line") +
+#   geom_text(mapping = aes(y=bytes_from_mb(2000), x=0, label="GOAL 2GB added per ingressgateway"), size=2, vjust=-0.6, hjust=0.12, color="grey25") +
+#   scale_y_continuous(labels=mb_from_bytes) +
+#   scale_colour_brewer(palette = "Set1") +
+#   our_theme() %+replace%
+#     theme(strip.placement = "outside", legend.position="bottom"))
+# ggsave(paste(filename, "gateway.png", sep=""), height=3.5)
 
+print("Number of Pilots over time")
 pilotdata = read_csv(paste(filename, "howmanypilots.csv", sep=""))
 experiment_time_x_axis(ggplot(pilotdata, aes(x=stamp,y=count)) +
   labs(title = "Number of Pilots over time") +
@@ -226,6 +244,7 @@ experiment_time_x_axis(ggplot(pilotdata, aes(x=stamp,y=count)) +
 )
 ggsave(paste(filename, "howmanypilots.png", sep=""), width=7, height=3.5)
 
+print("Node Utilization")
 dataload = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(percent=col_number()))
 experiment_time_x_axis(ggplot(dataload) +
   labs(title = "Node Utilization") +
@@ -240,6 +259,7 @@ experiment_time_x_axis(ggplot(dataload) +
     theme(legend.position="none", axis.title.x=element_blank(), axis.text.x=element_blank()))
 ggsave(paste(filename, "nodemon.png", sep=""), width=7, height=3.5)
 
+print("Client Utilization")
 memstats = read_csv(paste(filename, "memstats.csv", sep="")) %>% mutate(memory = (used/total) * 100) %>% select(runID, timestamp=stamp, memory)
 cpustats = read_csv(paste(filename, "cpustats.csv", sep="")) %>% filter(cpuid == "all") %>% mutate(cpu = (100 - idle)) %>% select(runID, timestamp=stamp, cpuid, cpu)
 clientstats = full_join(memstats, cpustats) %>% gather("metric", "percent", -runID, -cpuid, -timestamp)
@@ -258,6 +278,7 @@ cpu = experiment_time_x_axis(ggplot(clientstats, aes(x=timestamp, y=percent)) +
 
 ggsave(paste(filename, "resources.png", sep=""), width=7, height=3.5)
 
+print("Client Network Utilization")
 ifstats = read_csv(paste(filename, "ifstats.csv", sep="")) %>% gather("direction", "rate", -runID, -stamp) %>% mutate(rate = rate / 1024)
 experiment_time_x_axis(ggplot(ifstats) +
   labs(title = "Client Network Usage") +
