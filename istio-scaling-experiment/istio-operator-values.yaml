@@ -103,7 +103,7 @@ spec:
             name: istio-ingressgateway
             patches:
             - path: .spec.template.spec.containers[name:istio-proxy].image
-              value: gcr.io/cf-routing-desserts/proxyv2:1.6.0
+              value: gcr.io/cf-routing-desserts/proxyv2:1.6.3
         #     - path: .spec.template.spec.containers[name:istio-proxy].volumes[name:custom-bootstrap-config]
         #       value:
         #         name: custom-bootstrap-config

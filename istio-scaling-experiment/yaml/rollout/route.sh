@@ -4,8 +4,5 @@ set -euo pipefail
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-VERSION=${1}
-
-kubetpl render -s NAME=${NAME} -s NAMESPACE=${NAMESPACE} -s VERSION=${VERSION} \
-  ${DIR}/service.yaml
-
+kubectl -n ${NAMESPACE} label --overwrite pods -l "app=${NAME},version=v1" target=live
+kubectl -n ${NAMESPACE} label --overwrite pods -l "app=${NAME},version=v0" target=canary

@@ -60,6 +60,14 @@ done
 wlog "Load container up"
 ${DIR}/../../shared/scripts/pause.sh 10
 
+# Enable debug XDS logging for Pilots
+kubectl get pods -n istio-system -l app=istiod -ojsonpath='{range .items[*]}{.metadata.name} {end}' | xargs -n 1 -d ' ' -I {} kubectl exec -n istio-system {} --  curl -sS http:│·························
+//localhost:9876/scopej/ads -X PUT -d '{"output_level":"debug"}'
+
+# Stream logs from pilots
+kubectl logs -n istio-system -l app=istiod --max-log-requests=100 --ignore-errors=true -f > pilot.log &
+
+
 ${DIR}/prometheus_data.sh &
 echo "stamp,event,message" > endpoint_arrival_log.csv
 ruby ${DIR}/endpoint_arrival.rb >> endpoint_arrival_log.csv &
@@ -115,13 +123,20 @@ ${DIR}/../../shared/scripts/pause.sh 2 # let them quit
 
 
 # collect spans
+wlog "collecting spans"
 jaeger_port=$(port_forward istio-system svc/tracing 80)
 jaeger_addr="127.0.0.1:${jaeger_port}/jaeger"
 ${DIR}/../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_ondiscoveryresponse.csv -jaegerQueryAddr ${jaeger_addr} --operationName "GrpcMuxImpl::onDiscoveryResponse" --service istio-ingressgateway
 ${DIR}/../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_pause.csv -jaegerQueryAddr ${jaeger_addr} --operationName "pause" --service istio-ingressgateway
-${DIR}/../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_pause.csv -jaegerQueryAddr ${jaeger_addr} --operationName "pause" --service ingressgateway
-${DIR}/../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_eds_update.csv -jaegerQueryAddr ${jaeger_addr} --operationName "EdsClusterImpl::onConfigUpdate" --service ingressgateway
-${DIR}/../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_senddiscoveryrequest.csv -jaegerQueryAddr ${jaeger_addr} --operationName "GrpcMuxImpl::sendDiscoveryRequest" --service ingressgateway
+${DIR}/../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_eds_update.csv -jaegerQueryAddr ${jaeger_addr} --operationName "EdsClusterImpl::onConfigUpdate" --service istio-ingressgateway
+${DIR}/../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_senddiscoveryrequest.csv -jaegerQueryAddr ${jaeger_addr} --operationName "GrpcMuxImpl::sendDiscoveryRequest" --service istio-ingressgateway
+
+# collect pilot logs
+# wlog "collecting Pilot logs, this might take a while"
+# gcloud beta logging read 'resource.type="k8s_container"
+# resource.labels.cluster_name="'"${CLUSTER_NAME}"'"
+# resource.labels.namespace_name="istio-system"
+# resource.labels.pod_name=~"istiod"' --format json > istiod.logs
 
 # make extra sure they quit
 kill -9 $(jobs -p)
@@ -131,6 +146,7 @@ ${DIR}/../interpret/target/debug/interpret user.log && Rscript ${DIR}/../graph.R
 
 wlog "=== TEARDOWN ===="
 
+# ${DIR}/../../shared/scripts/pause.sh # let them quit
 ${DIR}/../../shared/scripts/destroy-cluster.sh $CLUSTER_NAME
 
 exit

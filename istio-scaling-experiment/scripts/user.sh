@@ -17,9 +17,9 @@ if [ $NAMESPACES -eq 1 ]; then namespace=ns-$2; else namespace=default; fi
 
 # kubetpl render $DIR/../yaml/gateway.yaml $DIR/../yaml/virtualservice.yaml -s NAME=httpbin-$1-g$2 -s NAMESPACE=$namespace | kubectl apply -f -
 
-NAME=app-$1-g$2 NAMESPACE=$namespace $DIR/../yaml/rollout/route.sh v1 | kubectl apply -f - > /dev/null
+NAME=app-$1-g$2 NAMESPACE=$namespace $DIR/../yaml/rollout/route.sh
 
-until [[ "$(curl -s -HHost:$TARGET_URL http://$GATEWAY_URL | grep -o "Name: .*")" != "Name: v1" ]]; do true; done
+until [[ "$(curl -s -HHost:$TARGET_URL http://$GATEWAY_URL | grep -o "Name: v1")" == "Name: v1" ]]; do true; done
 
 echo "$(udate),$1,$2,SUCCESS,"
 # >&2 wlog "SUCCESS $1-g$2"

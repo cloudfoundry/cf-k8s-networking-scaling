@@ -18,6 +18,7 @@ var headers = []string{
 	"PayloadSize",
 	"NodeID",
 	"Sent",
+	"DidUpdate",
 }
 
 func CreateCSV(events []*Event, out io.Writer) error {
@@ -52,5 +53,6 @@ func toRecord(e *Event) []string {
 		fmt.Sprintf("%f", e.PayloadSize),
 		e.NodeID,
 		e.Sent,
+		e.DidUpdate,
 	}
 }

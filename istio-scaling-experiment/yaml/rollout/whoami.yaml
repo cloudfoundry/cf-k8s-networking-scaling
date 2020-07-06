@@ -10,6 +10,7 @@ metadata:
   namespace: $NAMESPACE
   labels:
     app: $NAME
+    version: $VERSION
     sidecargroup: group-$GROUP
 spec:
   replicas: 1
@@ -19,12 +20,15 @@ spec:
       maxSurge: 10
   selector:
     matchLabels:
-      app: $NAME-$VERSION
+      app: $NAME
+      version: $VERSION
   template:
     metadata:
       labels:
-        app: $NAME-$VERSION
+        app: $NAME
+        version: $VERSION
         sidecargroup: group-$GROUP
+        target: $TARGET
     spec:
       containers:
       - image: docker.io/containous/whoami

@@ -21,6 +21,7 @@ type Event struct {
 	PayloadSize float64
 	NodeID      string
 	Sent        string // Used in Navigator to track cache.responsd
+	DidUpdate   string // Used in Envoy
 }
 
 func ProduceEvents(traces []*Trace, operationName string) []*Event {
@@ -129,6 +130,8 @@ func createEvent(timestamp int64, tags []*Tag, s *Span) *Event {
 			event.NodeID = field.Value.(string)
 		case "sent":
 			event.Sent = field.Value.(string)
+		case "did_update":
+			event.DidUpdate = field.Value.(string)
 		}
 	}
 
