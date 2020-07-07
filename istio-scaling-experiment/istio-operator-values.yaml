@@ -103,7 +103,7 @@ spec:
             name: istio-ingressgateway
             patches:
             - path: .spec.template.spec.containers[name:istio-proxy].image
-              value: gcr.io/cf-routing-desserts/proxyv2:1.6.3
+              value: gcr.io/cf-routing-desserts/proxyv2:1.6.4
         #     - path: .spec.template.spec.containers[name:istio-proxy].volumes[name:custom-bootstrap-config]
         #       value:
         #         name: custom-bootstrap-config
@@ -137,13 +137,13 @@ spec:
     pilot:
       k8s:
         replicaCount: {{ .PILOT_REPLICAS }}
-        overlays:
-          - apiVersion: apps/v1                                                                                                                                                               │·························
-            kind: Deployment
-            name: istiod
-            patches:
-            - path: .spec.template.spec.containers[name:discovery].image
-              value: gcr.io/cf-routing-desserts/pilot:scalerstuff
+        # overlays:
+        #   - apiVersion: apps/v1                                                                                                                                                               │·························
+        #     kind: Deployment
+        #     name: istiod
+        #     patches:
+        #     - path: .spec.template.spec.containers[name:discovery].image
+        #       value: gcr.io/cf-routing-desserts/pilot:scalerstuff
         env:
           - name: JAEGER_SERVICE_NAME
             value: "pilot"
