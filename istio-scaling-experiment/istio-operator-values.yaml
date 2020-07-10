@@ -97,8 +97,11 @@ spec:
       enabled: true
       k8s:
         replicaCount: {{ .GATEWAY_REPLICAS }}
+        env:
+          - name: ISTIO_META_ROUTER_MODE
+            value: "standard"
         overlays:
-          - apiVersion: apps/v1                                                                                                                                                               │·························
+          - apiVersion: apps/v1
             kind: Deployment
             name: istio-ingressgateway
             patches:

@@ -8,7 +8,7 @@ source $DIR/utils.sh
 echo "$(udate),$1,$2,STARTED,"
 TARGET_URL=app-$1-g$2.example.com
 
-if [ $NAMESPACES -eq 1 ]; then namespace=ns-$2; else namespace=default; fi
+if [ $NAMESPACES -eq 1 ]; then namespace=group-$2; else namespace=default; fi
 
 # if [ $STEADY_STATE -eq 1 ]; then
 #   offset=$(expr $NUM_APPS / $NUM_GROUPS / 2)
@@ -18,6 +18,7 @@ if [ $NAMESPACES -eq 1 ]; then namespace=ns-$2; else namespace=default; fi
 # kubetpl render $DIR/../yaml/gateway.yaml $DIR/../yaml/virtualservice.yaml -s NAME=httpbin-$1-g$2 -s NAMESPACE=$namespace | kubectl apply -f -
 
 NAME=app-$1-g$2 NAMESPACE=$namespace $DIR/../yaml/rollout/route.sh
+echo "$(udate),$1,$2,DEPLOYED,"
 
 until [[ "$(curl -s -HHost:$TARGET_URL http://$GATEWAY_URL | grep -o "Name: v1")" == "Name: v1" ]]; do true; done
 

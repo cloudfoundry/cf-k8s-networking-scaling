@@ -26,9 +26,10 @@ fi
 datanode=$(kubectl get nodes | awk 'NR > 1 {print $1}' | tail -n2 | head -n1)
 kubectl taint nodes $datanode scalers.dataplane=httpbin:NoSchedule
 kubectl label nodes $datanode scalers.dataplane=httpbin
-prometheusnode=$(kubectl get nodes | awk 'NR > 1 {print $1}' | tail -n1)
-kubectl taint nodes $prometheusnode scalers.istio=prometheus:NoSchedule
-kubectl label nodes $prometheusnode scalers.istio=prometheus
+# we create a separate node pool for Prometheus with taints and labels in "build-cluster.sh"
+# prometheusnode=$(kubectl get nodes -l "scalers.istio=prometheus")
+# kubectl taint nodes $prometheusnode scalers.istio=prometheus:NoSchedule
+# kubectl label nodes $prometheusnode scalers.istio=prometheus
 
 if [ "$ISTIO_USE_OPERATOR" -eq 1 ]; then
   ${DIR}/install-istio-with-istioctl.sh

@@ -133,6 +133,7 @@ ggplot(gathered.controlplane, aes(x=quantiles, y=latency)) +
   # add line for goal
   geom_hline(yintercept = fiveSecondsInNanoseconds, color="grey80") +
   geom_text(mapping = aes(y=fiveSecondsInNanoseconds, x="p68", label="GOAL 5sec at p95"), size=2, vjust=1.5, hjust=1, color="grey25") +
+  geom_text(vjust = 0, nudge_y = 0.5, aes(label = secondsFromNanoseconds(latency))) +
   scale_y_continuous(labels=secondsFromNanoseconds) +
   scale_x_discrete(limits=mylabels) +
   scale_colour_brewer(palette = "Set1") +

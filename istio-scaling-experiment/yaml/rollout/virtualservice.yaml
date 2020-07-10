@@ -11,7 +11,7 @@ spec:
   hosts:
   - "$NAME.example.com"
   gateways:
-  - apps-gateway
+  - apps-gateway.default
   http:
   - match:
     - uri:
