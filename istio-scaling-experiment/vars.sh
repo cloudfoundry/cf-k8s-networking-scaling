@@ -18,6 +18,7 @@ GALLEY_REPLICAS=0
 
 NUM_APPS=1000 # NUM_APPS >= NUM_USERS * NUM_GROUPS && NUM_APPS % NUM_GROUPS == 0
 NUM_USERS=1000
+PODS_PER_APP=2
 USER_DELAY=0.5 # in seconds
 USER_POLL_DELAY=1 # how often to poll for upness of a route, 1 is fine for USER_DELAY > 10
 
@@ -29,4 +30,4 @@ NUM_GROUPS=1000 # set to 1 for everything in one group or namespace
 STEADY_STATE=1
 
 # blue-green or rolling
-SCENARIO="blue-green"
+SCENARIO="rolling"
