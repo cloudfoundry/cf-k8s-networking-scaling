@@ -122,7 +122,8 @@ first_values = quantile(gateway_startend$`nanoseconds to first success`, quantil
 last_values = quantile(gateway_startend$`nanoseconds to last error`, quantiles, na.rm=TRUE)
 first_gs = quantile(gateway_startend$firstg, quantiles, na.rm = TRUE)
 last_gs = quantile(gateway_startend$allg, quantiles, na.rm=TRUE) # we do not have max gateway value for some users
-controlplane = tibble(quantiles = mylabels, `time to first success` = first_values, `time to last error` = last_values, `time to first gateway` = first_gs, `time to max gateways`=last_gs)
+# controlplane = tibble(quantiles = mylabels, `time to first success` = first_values, `time to last error` = last_values, `time to first gateway` = first_gs, `time to max gateways`=last_gs)
+controlplane = tibble(quantiles = mylabels, `time to first success` = first_values, `time to last error` = last_values)
 gathered.controlplane <- gather(controlplane, event, latency, -quantiles)
 ggplot(gathered.controlplane, aes(x=quantiles, y=latency)) +
   labs(title="Control Plane Latency by Percentile") +
