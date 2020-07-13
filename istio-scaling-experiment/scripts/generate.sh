@@ -16,7 +16,7 @@ for ((group = 0 ; group < $NUM_GROUPS ; group++)); do
     -s GROUP=$group
 
   for ((count = 0; count < $group_size; count++)); do
-    export NAME=app-$count-g$group NAMESPACE=default GROUP=$group
+    export NAME=app-$count-g$group NAMESPACE=default GROUP=$group REPLICAS=${PODS_PER_APP}
 
     if [[ "${SCENARIO}" == "rolling" ]]; then
       ${DIR}/../yaml/rollout/generate.sh

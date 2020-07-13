@@ -2,6 +2,7 @@
 
 # kubetpl:set:NAMESPACE=default
 # kubetpl:set:GROUP=0
+# kubetpl:set:REPLICAS=1
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -13,7 +14,7 @@ metadata:
     version: $VERSION
     sidecargroup: group-$GROUP
 spec:
-  replicas: 1
+  replicas: $REPLICAS
   strategy:
     rollingUpdate:
       maxUnavailable: 10
