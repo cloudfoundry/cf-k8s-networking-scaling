@@ -91,13 +91,7 @@ ${DIR}/dataload.sh http://${GATEWAY_URL}/anything > dataload.csv 2>&1 &
 podsalive &
 
 iwlog "GENERATE TEST PODS"
-# ${DIR}/generate-yaml.sh > testpods.yaml
-# kubectl apply -f testpods.yaml
-if [[ "${SCENARIO}" == "rolling" ]]; then
-  ${DIR}/scenario-rolling/generate.sh > testpods.yaml
-elif [[ "${SCENARIO}" == "blue-green" ]]; then
-  ${DIR}/scenario-blue-green/generate.sh > testpods.yaml
-fi
+${DIR}/generate.sh > testpods.yaml
 kubectl apply -f testpods.yaml
 
 # wait for all httpbins to be ready

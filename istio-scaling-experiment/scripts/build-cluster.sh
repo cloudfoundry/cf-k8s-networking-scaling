@@ -28,6 +28,8 @@ gcloud container node-pools create prometheus-pool \
   --node-labels="scalers.istio=prometheus" \
   --node-taints="scalers.istio=prometheus:NoSchedule"
 
+sleep 300 # wait for GKE
+
 gcloud container clusters get-credentials $CLUSTER_NAME \
     --zone $AVAILABILITY_ZONE \
     --project cf-routing-desserts

@@ -21,6 +21,13 @@ for ((group = 0 ; group < $NUM_GROUPS ; group++)); do
       $DIR/scenario-rolling/user.sh $count $group &
     elif [[ "${SCENARIO}" == "blue-green" ]]; then
       $DIR/scenario-blue-green/user.sh $count $group &
+    elif [[ "${SCENARIO}" == "mixed" ]]; then
+      let cond="$group % 2"
+      if [[ $cond == 0 ]]; then
+        $DIR/scenario-rolling/user.sh $count $group &
+      else
+        $DIR/scenario-blue-green/user.sh $count $group &
+      fi
     fi
 
     sleep $USER_DELAY
