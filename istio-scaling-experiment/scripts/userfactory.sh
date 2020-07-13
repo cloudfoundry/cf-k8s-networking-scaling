@@ -17,7 +17,12 @@ for ((group = 0 ; group < $NUM_GROUPS ; group++)); do
     let i="$group * $group_size + $count"
     draw_progress_bar "${i}" "${num_users_minus_one}" "users" >&2
 
-    $DIR/user.sh $count $group &
+    if [[ "${SCENARIO}" == "rolling" ]]; then
+      $DIR/scenario-rolling/user.sh $count $group &
+    elif [[ "${SCENARIO}" == "blue-green" ]]; then
+      $DIR/scenario-blue-green/user.sh $count $group &
+    fi
+
     sleep $USER_DELAY
   done
 done

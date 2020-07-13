@@ -93,7 +93,11 @@ podsalive &
 iwlog "GENERATE TEST PODS"
 # ${DIR}/generate-yaml.sh > testpods.yaml
 # kubectl apply -f testpods.yaml
-${DIR}/scenario-rolling/generate.sh > testpods.yaml
+if [[ "${SCENARIO}" == "rolling" ]]; then
+  ${DIR}/scenario-rolling/generate.sh > testpods.yaml
+elif [[ "${SCENARIO}" == "blue-green" ]]; then
+  ${DIR}/scenario-blue-green/generate.sh > testpods.yaml
+fi
 kubectl apply -f testpods.yaml
 
 # wait for all httpbins to be ready

@@ -15,10 +15,10 @@ gcloud container clusters create $CLUSTER_NAME \
   --machine-type=$MACHINE_TYPE \
   --zone=${AVAILABILITY_ZONE} \
   --enable-ip-alias \
-  --project cf-routing-desserts \
-  --create-subnetwork name=$CLUSTER_NAME-network,range=10.12.0.0/16 \
-  --cluster-ipv4-cidr=/14 \
-  --services-ipv4-cidr=/16
+  --project cf-routing-desserts
+  # --create-subnetwork name=$CLUSTER_NAME-network,range=10.12.0.0/16 \
+  # --cluster-ipv4-cidr=/14 \
+  # --services-ipv4-cidr=/16
 
 gcloud container node-pools create prometheus-pool \
   --cluster=$CLUSTER_NAME \
