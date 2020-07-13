@@ -2,7 +2,7 @@
 
 source ../vars.sh
 source ../scripts/utils.sh
-source ../scripts/progressbar.sh
+source ../../shared/scripts/progressbar.sh
 
 mkdir -p curlstuff
 

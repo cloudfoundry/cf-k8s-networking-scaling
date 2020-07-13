@@ -10,8 +10,8 @@ COUNT=${2:-3}
 
 # make sure we always have current builds
 make navigator gateway
-make jaegerscrapper combine combinev2
-
+make combine combinev2
+make ../shared
 
 trap "exit" INT TERM ERR
 trap "kill 0" EXIT

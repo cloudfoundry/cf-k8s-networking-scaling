@@ -106,6 +106,9 @@ sleep 30 # so we can see that setup worked on the graphs
 echo "stamp,status" > envoy_requests.csv
 ADMIN_ADDR="${INGRESS_IP}:15000" ruby ./../scripts/endpoint_arrival.rb >> envoy_requests.csv &
 
+./../scripts/stream_kubectl_logs.sh "-n system -l app=navigator" "navigator.log" &
+# ./../scripts/stream_kubectl_logs.sh "-n system -l app=gateway" "gateway.log" &
+
 iwlog "GENERATE CP LOAD"
 
 ./../scripts/cpload.sh "${navigator_addr}" "${last_route}" "${half_routes}" > route-status.csv
@@ -114,15 +117,20 @@ iwlog "CP LOAD COMPLETE"
 
 sleep 10
 
+kubectl -n system cp "$(kubectl get pods -n system -l app=gateway -ojsonpath='{.items[*].metadata.name}'):/var/log/envoy.log" envoy.log
+
+
 JAEGER_QUERY_IP=$(kubectl -n system get services jaeger-query -ojsonpath='{.status.loadBalancer.ingress[0].ip}')
-./../jaegerscrapper/bin/scrapper -csvPath ./jaeger.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName createSnapshot --service navigator
-./../jaegerscrapper/bin/scrapper -csvPath ./sendconfigjaeger.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName sendConfig --service navigator
-./../jaegerscrapper/bin/scrapper -csvPath ./envoy_ondiscoveryresponse.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName "GrpcMuxImpl::onDiscoveryResponse" --service ingressgateway
-./../jaegerscrapper/bin/scrapper -csvPath ./envoy_pause.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName "pause" --service ingressgateway
-./../jaegerscrapper/bin/scrapper -csvPath ./envoy_eds_update.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName "EdsClusterImpl::onConfigUpdate" --service ingressgateway
-./../jaegerscrapper/bin/scrapper -csvPath ./envoy_senddiscoveryrequest.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName "GrpcMuxImpl::sendDiscoveryRequest" --service ingressgateway
-./../jaegerscrapper/bin/scrapper -csvPath ./navigator_onstreamrequest.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName "OnStreamRequest" --service navigator
-./../jaegerscrapper/bin/scrapper -csvPath ./navigator_onstreamresponse.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName "OnStreamResponse" --service navigator
+./../../shared/jaegerscrapper/bin/scrapper -csvPath ./jaeger.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName createSnapshot --service navigator
+./../../shared/jaegerscrapper/bin/scrapper -csvPath ./sendconfigjaeger.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName sendConfig --service navigator
+./../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_ondiscoveryresponse.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName "GrpcMuxImpl::onDiscoveryResponse" --service ingressgateway
+./../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_pause.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName "pause" --service ingressgateway
+./../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_eds_update.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName "EdsClusterImpl::onConfigUpdate" --service ingressgateway
+./../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_senddiscoveryrequest.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName "GrpcMuxImpl::sendDiscoveryRequest" --service ingressgateway
+./../../shared/jaegerscrapper/bin/scrapper -csvPath ./navigator_onstreamrequest.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName "OnStreamRequest" --service navigator
+./../../shared/jaegerscrapper/bin/scrapper -csvPath ./navigator_onstreamresponse.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName "OnStreamResponse" --service navigator
+./../../shared/jaegerscrapper/bin/scrapper -csvPath ./navigator_cache_respond.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName "cache.respond" --service navigator
+./../../shared/jaegerscrapper/bin/scrapper -csvPath ./navigator_setroutes.csv -jaegerQueryAddr $JAEGER_QUERY_IP --operationName "setRoutes" --service navigator
 curl -sS "http://${JAEGER_QUERY_IP}/api/traces?service=GrpcMuxImpl::onDiscoveryResponse&loopback=2d&limit=100000000" > jaeger_traces_envoy_ondiscoveryresponse.json
 
 sleep 10 # wait for cluster to level out after CP load, gather data for cluster without
@@ -145,6 +153,6 @@ Rscript ../graph_scratch.R
 wlog "=== TEARDOWN ===="
 
 # sleep 10000
-./../scripts/destroy-cluster.sh "$CLUSTER_NAME"
+./../../shared/scripts/destroy-cluster.sh "$CLUSTER_NAME"
 
 exit

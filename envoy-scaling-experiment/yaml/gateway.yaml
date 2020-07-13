@@ -138,31 +138,32 @@ spec:
         imagePullPolicy: Always
         name: gateway
         command:
-          - "/usr/local/bin/envoy"
+          - "/bin/bash"
         args:
           - "-c"
-          - "/etc/envoy/config/envoy-bootstrap.yaml"
-          - "--service-cluster"
-          - "ingressgateway"
-          - "--service-node"
-          - "$(POD_NAME)"
-          - "--restart-epoch"
-          - "0"
-          - "--drain-time-s"
-          - "45"
-          - "--parent-shutdown-time-s"
-          - "60"
-          - "--max-obj-name-len"
-          - "189"
-          - "--local-address-ip-version"
-          - "v4"
-          - "--log-format"
-          - "[Envoy (Epoch 0)] [%Y-%m-%d %T.%e][%t][%l][%n] %v"
-          - "-l"
-          - "info"
-          - "--component-log-level"
-          - "misc:error"
-          # - "misc:error,upstream:debug,router:debug"
+          - "2>&1 /usr/local/bin/envoy \
+             -c \
+             /etc/envoy/config/envoy-bootstrap.yaml \
+             --service-cluster \
+             ingressgateway \
+             --service-node \
+             $(POD_NAME) \
+             --restart-epoch \
+             0 \
+             --drain-time-s \
+             45 \
+             --parent-shutdown-time-s \
+             60 \
+             --max-obj-name-len \
+             189 \
+             --local-address-ip-version \
+             v4 \
+             --log-format \
+             \"[Envoy (Epoch 0)] [%Y-%m-%d %T.%e][%t][%l][%n] %v\" \
+             -l \
+             trace \
+             --component-log-level \
+             misc:error | tee /var/log/envoy.log"
         resources: {}
         ports:
           - containerPort: 80
@@ -200,11 +201,11 @@ spec:
       nodeSelector:
         scalers.cp: dedicated
       affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchLabels: { "app": "gateway" }
-            topologyKey: "kubernetes.io/hostname"
+        # podAntiAffinity:
+        #   requiredDuringSchedulingIgnoredDuringExecution:
+        #   - labelSelector:
+        #       matchLabels: { "app": "gateway" }
+        #     topologyKey: "kubernetes.io/hostname"
 # mount boostrap config
 # (optinal) mount cert/key pair
 #
