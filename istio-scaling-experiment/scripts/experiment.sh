@@ -15,7 +15,7 @@ ${DIR}/build-cluster.sh $CLUSTER_NAME
 
 # taint nodes for pilot and ingress-gateways
 if [ $NODES_FOR_ISTIO -gt 0 ]; then
-  nodes=$(kubectl get nodes | awk 'NR > 1 {print $1}' | head -n$NODES_FOR_ISTIO)
+  nodes=$(kubectl get nodes -l 'scalers.istio != prometheus' | awk 'NR > 1 {print $1}' | head -n$NODES_FOR_ISTIO)
   if [ "$ISTIO_TAINT" -eq 1 ]; then
     kubectl taint nodes $nodes scalers.istio=dedicated:NoSchedule
   fi
@@ -23,7 +23,7 @@ if [ $NODES_FOR_ISTIO -gt 0 ]; then
 fi
 
 # taint a node for the dataplane pod
-datanode=$(kubectl get nodes | awk 'NR > 1 {print $1}' | tail -n2 | head -n1)
+datanode=$(kubectl get nodes -l 'scalers.istio notin (prometheus,dedicated)'| awk 'NR > 1 {print $1}' | tail -n2 | head -n1)
 kubectl taint nodes $datanode scalers.dataplane=httpbin:NoSchedule
 kubectl label nodes $datanode scalers.dataplane=httpbin
 # we create a separate node pool for Prometheus with taints and labels in "build-cluster.sh"
@@ -47,6 +47,7 @@ kubectl wait --for=condition=available deployment $(kubectl get deployments | gr
 kubectl wait --for=condition=podscheduled pods $(kubectl get pods -ojsonpath='{range $.items[*]}{@.metadata.name}{"\n"}{end}' | grep httpbin)
 
 wlog "Curling to see if load test container is up"
+
 export INGRESS_HOST=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].port}')
 export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].port}')
@@ -56,7 +57,7 @@ until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -
   export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].port}')
   export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].port}')
   export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
-  ${DIR}/../../shared/scripts/pause.sh 1
+  sleep 1
 done
 wlog "Load container up"
 ${DIR}/../../shared/scripts/pause.sh 10

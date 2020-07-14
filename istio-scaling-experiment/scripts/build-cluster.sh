@@ -27,7 +27,8 @@ gcloud container node-pools create prometheus-pool \
   --machine-type "e2-highmem-16" \
   --node-labels="scalers.istio=prometheus" \
   --node-taints="scalers.istio=prometheus:NoSchedule" \
-  --metadata disable-legacy-endpoints=true
+  --metadata disable-legacy-endpoints=true \
+  --no-enable-autoupgrade
 
 gcloud container clusters get-credentials $CLUSTER_NAME \
     --zone $AVAILABILITY_ZONE \
