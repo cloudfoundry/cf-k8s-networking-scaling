@@ -26,13 +26,25 @@ gcloud container node-pools create prometheus-pool \
   --num-nodes=1 \
   --machine-type "e2-highmem-16" \
   --node-labels="scalers.istio=prometheus" \
-  --node-taints="scalers.istio=prometheus:NoSchedule"
-
-sleep 300 # wait for GKE
+  --node-taints="scalers.istio=prometheus:NoSchedule" \
+  --metadata disable-legacy-endpoints=true
 
 gcloud container clusters get-credentials $CLUSTER_NAME \
     --zone $AVAILABILITY_ZONE \
     --project cf-routing-desserts
+
+wlog "Waiting for GKE cluster"
+while true; do
+  if [[ "$(gcloud container clusters list | grep ${CLUSTER_NAME} | awk '{print $8}')" == "RUNNING" \
+    && "$(kubectl get nodes | tail +2 | wc -l)" > 0 \
+    && "$(kubectl get nodes | tail +2 | awk '{print $2}' | grep -v 'Ready')" == ""
+  ]]; then
+    break
+  fi
+
+  echo "Still waiting..."
+  sleep 10
+done
 
 kubectl create clusterrolebinding cluster-admin-binding \
     --clusterrole=cluster-admin \
