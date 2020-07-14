@@ -5,7 +5,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source $DIR/../../vars.sh
 source $DIR/../utils.sh
 
-echo "$(udate),$1,$2,STARTED,"
+echo "$(udate),$1,$2,PREPARING,"
 
 # cf create-route
 kubetpl render -s NAME="app-$1-g$2-green" -s HOSTNAME="app-$1-g$2-green" \
@@ -17,6 +17,7 @@ until [[ "$(curl -s -o=/dev/null -w "%{http_code}" -HHost:$TARGET_URL http://$GA
 echo "$(udate),$1,$2,GREEN_SUCCESS,"
 
 # cf map-route
+echo "$(udate),$1,$2,STARTED,"
 kubetpl render -s NAME="app-$1-g$2-blue" \
   -s NAMEBLUE="app-$1-g$2-blue" \
   -s NAMEGREEN="app-$1-g$2-green" \

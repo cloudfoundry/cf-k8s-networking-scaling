@@ -99,7 +99,6 @@ gatewaytouser = read_csv(paste(filename, "envoy_endpoint_arrival.csv", sep=""), 
   extract(gateway, "gateway", "istio-ingressgateway-.*-(.+)") %>%
   extract(route, c("userid","groupid"), "app-(\\d+)-g(\\d+)", convert=TRUE) %>%
   arrange(stamp)
-print(gatewaytouser)
 gatewaysbyroute = gatewaytouser %>%
   group_by(stamp, userid, groupid) %>% summarize(gcount=n()) %>%
   group_by(userid, groupid) %>%
@@ -143,8 +142,13 @@ ggplot(gathered.controlplane, aes(x=quantiles, y=latency)) +
 ggsave(paste(filename, "controlplane.png", sep=""), width=7, height = 3.5)
 print("Errors by User ID")
 # stamp,usernum,groupnum,event,status,logfile
-userlog = read_csv(paste(filename, "user.log", sep=""), col_types=cols(stamp=col_number(),status=col_factor()))
-userstarts = userlog %>% filter(event == "STARTED") %>% select(stamp, usernum, groupnum)
+userlog = read_csv(paste(filename, "user.log", sep=""),
+                   col_types=cols(stamp=col_number(),
+                                  status=col_factor(),
+                                  groupnum=col_number(),
+                                  usernum=col_number())) %>%
+  drop_na(stamp, usernum, groupnum)
+userstarts = userlog %>% filter(event == "GREEN_SUCCESS") %>% select(stamp, usernum, groupnum)
 maxUser = max((userlog %>% filter(groupnum == 0))$usernum) + 1
 usererrors = userlog %>% filter(event == "FAILURE")%>%
   select(stamp, usernum, groupnum, status) %>%
