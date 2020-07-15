@@ -36,7 +36,7 @@ mv $EXPERIMENT_NAME-* $EXPERIMENT_NAME/
 
 pushd $EXPERIMENT_NAME
   ./../combine/target/debug/combine . # for html files
-  ./../combinev2/combine .
+  ./../../shared/combinev2/combine .
   Rscript ../graphMany.R
 popd
 
