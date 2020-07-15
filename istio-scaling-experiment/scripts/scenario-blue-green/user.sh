@@ -35,6 +35,9 @@ TARGET_URL=app-$1-g$2-blue.example.com
 until [[ -n "$(curl -s -HHost:$TARGET_URL http://$GATEWAY_URL | grep -o "Hostname: app-$1-g$2-green.*")" ]]; do true; done
 echo "$(udate),$1,$2,SUCCESS,"
 
+# remove green route
+kubectl delete vs "app-$1-g$2-green" > /dev/null &
+
 lastfail=$(udate)
 timesToPoll=$(echo "120 / $USER_POLL_DELAY" | bc)
 for ((i=$timesToPoll; i>0; i--)); do
@@ -44,7 +47,6 @@ for ((i=$timesToPoll; i>0; i--)); do
   hname=$(echo "${out}" | grep -o "Hostname: app-$1-g$2-green.*")
 
   if [[ "$(echo $status | cut -d, -f1)" != "200" || "${hname}" == "" ]]; then
-    echo "${out}"
     lastfail=$(udate)
     echo "$(udate),$1,$2,FAILURE,$status"
   fi
