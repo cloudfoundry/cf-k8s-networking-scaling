@@ -140,13 +140,15 @@ spec:
     pilot:
       k8s:
         replicaCount: {{ .PILOT_REPLICAS }}
-        # overlays:
-        #   - apiVersion: apps/v1                                                                                                                                                               │·························
-        #     kind: Deployment
-        #     name: istiod
-        #     patches:
-        #     - path: .spec.template.spec.containers[name:discovery].image
-        #       value: gcr.io/cf-routing-desserts/pilot:scalerstuff
+        overlays:
+          - apiVersion: apps/v1                                                                                                                                                               │·························
+            kind: Deployment
+            name: istiod
+            patches:
+            - path: .spec.template.spec.containers[name:discovery].image
+              value: gcr.io/cf-routing-desserts/pilot:1.6.5
+            - path: .spec.template.spec.containers[name:discovery].imagePullPolicy
+              value: Always
         env:
           - name: JAEGER_SERVICE_NAME
             value: "pilot"

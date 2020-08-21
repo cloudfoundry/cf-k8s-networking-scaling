@@ -14,8 +14,7 @@ gcloud container clusters create $CLUSTER_NAME \
   --num-nodes $NUM_NODES \
   --machine-type=$MACHINE_TYPE \
   --zone=${AVAILABILITY_ZONE} \
-  --enable-ip-alias \
-  --project cf-routing-desserts
+  --enable-ip-alias
   # --create-subnetwork name=$CLUSTER_NAME-network,range=10.12.0.0/16 \
   # --cluster-ipv4-cidr=/14 \
   # --services-ipv4-cidr=/16
@@ -31,8 +30,7 @@ gcloud container node-pools create prometheus-pool \
   --no-enable-autoupgrade
 
 gcloud container clusters get-credentials $CLUSTER_NAME \
-    --zone $AVAILABILITY_ZONE \
-    --project cf-routing-desserts
+    --zone $AVAILABILITY_ZONE
 
 wlog "Waiting for GKE cluster"
 while true; do

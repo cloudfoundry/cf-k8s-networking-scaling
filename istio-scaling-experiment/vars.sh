@@ -1,5 +1,5 @@
 CLUSTER_VERSION=1.14.10-gke.45
-NUM_NODES=100
+NUM_NODES=103
 MACHINE_TYPE=n1-standard-8
 DATAPLANE_NUM_CONNECTIONS=10
 
@@ -16,10 +16,10 @@ PILOT_REPLICAS=20
 GATEWAY_REPLICAS=20
 GALLEY_REPLICAS=0
 
-NUM_APPS=1000 # NUM_APPS >= NUM_USERS * NUM_GROUPS && NUM_APPS % NUM_GROUPS == 0
+NUM_APPS=1000 # == NUM_USERS; actual pods will be 2 * NUM_APPS * PODS_PER_APP
 NUM_USERS=1000
-PODS_PER_APP=2
-USER_DELAY=0.5 # in seconds
+PODS_PER_APP=1
+USER_DELAY=10 # in seconds
 USER_POLL_DELAY=1 # how often to poll for upness of a route, 1 is fine for USER_DELAY > 10
 
 NAMESPACES=0 # if 0, groups within the default namespace will be used

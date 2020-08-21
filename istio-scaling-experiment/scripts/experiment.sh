@@ -124,12 +124,15 @@ ${DIR}/../../shared/scripts/pause.sh 2 # let them quit
 
 # collect spans
 wlog "collecting spans"
-jaeger_port=$(port_forward istio-system svc/tracing 80)
+jaeger_port=$(port_forward istio-system svc/tracing :80)
 jaeger_addr="127.0.0.1:${jaeger_port}/jaeger"
 ${DIR}/../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_ondiscoveryresponse.csv -jaegerQueryAddr ${jaeger_addr} --operationName "GrpcMuxImpl::onDiscoveryResponse" --service istio-ingressgateway
 ${DIR}/../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_pause.csv -jaegerQueryAddr ${jaeger_addr} --operationName "pause" --service istio-ingressgateway
 ${DIR}/../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_eds_update.csv -jaegerQueryAddr ${jaeger_addr} --operationName "EdsClusterImpl::onConfigUpdate" --service istio-ingressgateway
 ${DIR}/../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_senddiscoveryrequest.csv -jaegerQueryAddr ${jaeger_addr} --operationName "GrpcMuxImpl::sendDiscoveryRequest" --service istio-ingressgateway
+
+python3 ${DIR}/parse_jaeger.py --jaeger_url=${jaeger_addr} --service "pilot" pilot_traces.csv
+python3 ${DIR}/parse_jaeger.py --jaeger_url=${jaeger_addr} --service "istio-ingressgateway" envoy_traces.csv
 
 # collect pilot logs
 # wlog "collecting Pilot logs, this might take a while"
