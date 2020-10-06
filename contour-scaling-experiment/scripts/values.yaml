@@ -1,0 +1,73 @@
+---
+galley:
+  nodeSelector:
+    scalers.istio: dedicated
+  podAntiAffinityTermLabelSelector:
+  - key: istio
+    operator: In
+    topologyKey: kubernetes.io/hostname
+    values: galley
+  replicaCount: 0
+  tolerations:
+  - effect: NoSchedule
+    key: scalers.istio
+    operator: Equal
+    value: dedicated
+gateways:
+  istio-ingressgateway:
+    autoscaleEnabled: false
+    nodeSelector:
+      scalers.istio: dedicated
+    podAntiAffinityTermLabelSelector:
+    - key: istio
+      operator: In
+      topologyKey: kubernetes.io/hostname
+      values: ingressgateway
+    replicaCount: 20
+    tolerations:
+    - effect: NoSchedule
+      key: scalers.istio
+      operator: Equal
+      value: dedicated
+global:
+  useMCP: false
+grafana:
+  enabled: true
+  mtls:
+    auto: false
+  nodeSelector:
+    scalers.istio: prometheus
+  tolerations:
+  - effect: NoSchedule
+    key: scalers.istio
+    operator: Equal
+    value: prometheus
+mixer:
+  policy:
+    enabled: false
+  telemetry:
+    enabled: false
+pilot:
+  autoscaleEnabled: false
+  nodeSelector:
+    scalers.istio: dedicated
+  podAntiAffinityTermLabelSelector:
+  - key: istio
+    operator: In
+    topologyKey: kubernetes.io/hostname
+    values: pilot
+  replicaCount: 20
+  tolerations:
+  - effect: NoSchedule
+    key: scalers.istio
+    operator: Equal
+    value: dedicated
+prometheus:
+  nodeSelector:
+    scalers.istio: prometheus
+  tolerations:
+  - effect: NoSchedule
+    key: scalers.istio
+    operator: Equal
+    value: prometheus
+
