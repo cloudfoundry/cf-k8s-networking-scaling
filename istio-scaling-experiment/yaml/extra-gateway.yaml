@@ -1,0 +1,19 @@
+# kubetpl:syntax:$
+
+# kubetpl:set:NAMESPACE=default
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: $NAME-n$N-gateway
+  namespace: $NAMESPACE
+spec:
+  selector:
+    istio: ingressgateway # use Istio default gateway implementation
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "$NAME-n$N.example.com"

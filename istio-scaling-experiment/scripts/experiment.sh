@@ -46,6 +46,11 @@ kubetpl render ${DIR}/../yaml/service.yaml ${DIR}/../yaml/httpbin-loadtest.yaml 
 kubectl wait --for=condition=available deployment $(kubectl get deployments | grep httpbin | awk '{print $1}')
 kubectl wait --for=condition=podscheduled pods $(kubectl get pods -ojsonpath='{range $.items[*]}{@.metadata.name}{"\n"}{end}' | grep httpbin)
 
+# for >1 pod per route, add extra routes to maintain route to pod ratio.
+kubetpl render $DIR/../yaml/extra-virtualservice.yaml $DIR/../yaml/extra-gateway.yaml -s NAME=httpbin-loadtest -s N=0 | kubectl apply -f -
+wlog "HEY HEY HEY"
+sleep 300
+
 wlog "Curling to see if load test container is up"
 
 export INGRESS_HOST=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
