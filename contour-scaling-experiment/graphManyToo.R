@@ -110,7 +110,7 @@ controlplane = read_csv(paste(filename, "user_data.csv", sep="")) %>%
          `start time`) %>%
   extract(userid, c("userid","groupid"), "(.+)g(.+)", convert=TRUE)
 # stamp, gateway, route -> they're all group 0, so route = httpbin-USERID-g0.example.com
-gatewaytouser = read_csv(paste(filename, "endpoint_arrival.csv", sep=""), col_types=cols(stamp=col_number())) %>%
+gatewaytouser = read_csv(paste(filename, "envoy_endpoint_arrival.csv", sep=""), col_types=cols(stamp=col_number())) %>%
   extract(gateway, "gateway", "istio-ingressgateway-.*-(.+)") %>%
   extract(route, c("userid","groupid"), "httpbin-(.+)-g(.+).example.com", convert=TRUE)
 gatewaysbyroute = gatewaytouser %>% group_by(stamp, runID, userid, groupid) %>% summarize(gcount=n()) %>%

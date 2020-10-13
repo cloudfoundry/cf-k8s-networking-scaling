@@ -10,10 +10,10 @@ kubetpl render ${DIR}/../yaml/rollout/gateway.yaml  \
   -s NAMESPACE=default
 
 for ((group = 0 ; group < $NUM_GROUPS ; group++)); do
-  kubetpl render ${DIR}/../yaml/sidecar.yaml  \
-    -s NAME=group-$group \
-    -s NAMESPACE=default \
-    -s GROUP=$group
+  # kubetpl render ${DIR}/../yaml/sidecar.yaml  \
+  #   -s NAME=group-$group \
+  #   -s NAMESPACE=default \
+  #   -s GROUP=$group
 
   for ((count = 0; count < $group_size; count++)); do
     export NAME=app-$count-g$group NAMESPACE=default GROUP=$group REPLICAS=${PODS_PER_APP}

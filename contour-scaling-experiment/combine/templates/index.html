@@ -1,0 +1,57 @@
+<head>
+<style>
+body {
+  max-width: 950px;
+  margin: 20px auto;
+  padding: 0 15px;
+  font-size: 22px;
+  line-height: 1.4;
+}
+a {
+  text-decoration: none;
+  color: #2874A6;
+}
+a:hover {
+  text-decoration: underline;
+}
+</style>
+</head>
+
+<body>
+  <h1>Experiment Results</h1>
+
+  <p>Variables used for this series of tests:</p>
+
+  <h3>vars.sh</h3>
+  <pre>{{vars}}</pre>
+
+  <h3> Check if we hit our goal of 5sec at 95% for creating new routes </h3>
+  <img width="100%" height="auto" src="controlplane.png"><hr>
+  <h3> Check if the dataplane latency is around 20ms and in-line with published Istio numbers</h3>
+  <img width="100%" height="auto" src="dataload_time.png">
+  <img width="100%" height="auto" src="dataload_percentile.png"><hr>
+  <h3> Check that autoscaling is working and that the resource usage isn't crazy</h3>
+  <img width="100%" height="auto" src="sidecar.png">
+  <img width="100%" height="auto" src="gateway.png">
+  <img width="100%" height="auto" src="howmanypilots.png"><hr>
+  <h3> Check that our client VM and k8s cluster are big enough</h3>
+  <img width="100%" height="auto" src="nodemon.png">
+  <img width="100%" height="auto" src="resources.png">
+  <img width="100%" height="auto" src="ifstats.png"><hr>
+
+  <h3>Individual Results</h3>
+
+  <ul>
+  {% for t in tests %}
+    <li><a href={{t}}>{{t}}</a></li>
+  {% endfor %}
+  </ul>
+
+  <h3>Raw Data for Download</h3>
+
+  <ul>
+  {% for f in files %}
+    <li><a href={{f}}>{{f}}</a></li>
+  {% endfor %}
+  </ul>
+</body>

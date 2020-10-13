@@ -1,0 +1,501 @@
+stamp,usernum,event
+1572457775,0,STARTED
+gateway.networking.istio.io/httpbin-0-gateway created
+virtualservice.networking.istio.io/httpbin-0 created
+1572457776,1,STARTED
+gateway.networking.istio.io/httpbin-1-gateway created
+1572457777,2,STARTED
+1572457777,0,SUCCESS
+virtualservice.networking.istio.io/httpbin-1 created
+gateway.networking.istio.io/httpbin-2-gateway created
+1572457778,3,STARTED
+virtualservice.networking.istio.io/httpbin-2 created
+1572457778,1,SUCCESS
+gateway.networking.istio.io/httpbin-3-gateway created
+1572457779,4,STARTED
+virtualservice.networking.istio.io/httpbin-3 created
+1572457779,2,SUCCESS
+gateway.networking.istio.io/httpbin-4-gateway created
+1572457780,5,STARTED
+1572457780,3,SUCCESS
+virtualservice.networking.istio.io/httpbin-4 created
+gateway.networking.istio.io/httpbin-5-gateway created
+1572457781,6,STARTED
+virtualservice.networking.istio.io/httpbin-5 created
+1572457781,4,SUCCESS
+gateway.networking.istio.io/httpbin-6-gateway created
+1572457782,7,STARTED
+virtualservice.networking.istio.io/httpbin-6 created
+1572457783,5,SUCCESS
+gateway.networking.istio.io/httpbin-7-gateway created
+1572457783,8,STARTED
+virtualservice.networking.istio.io/httpbin-7 created
+gateway.networking.istio.io/httpbin-8-gateway created
+1572457784,9,STARTED
+1572457784,6,SUCCESS
+gateway.networking.istio.io/httpbin-9-gateway created
+virtualservice.networking.istio.io/httpbin-8 created
+1572457785,10,STARTED
+1572457785,7,SUCCESS
+virtualservice.networking.istio.io/httpbin-9 created
+gateway.networking.istio.io/httpbin-10-gateway created
+1572457786,11,STARTED
+1572457786,8,SUCCESS
+1572457786,9,SUCCESS
+1572457787,12,STARTED
+virtualservice.networking.istio.io/httpbin-10 created
+gateway.networking.istio.io/httpbin-11-gateway created
+1572457788,13,STARTED
+gateway.networking.istio.io/httpbin-12-gateway created
+virtualservice.networking.istio.io/httpbin-11 created
+1572457789,10,SUCCESS
+1572457789,14,STARTED
+virtualservice.networking.istio.io/httpbin-12 created
+gateway.networking.istio.io/httpbin-13-gateway created
+1572457790,11,SUCCESS
+1572457790,15,STARTED
+gateway.networking.istio.io/httpbin-14-gateway created
+virtualservice.networking.istio.io/httpbin-13 created
+1572457791,16,STARTED
+1572457791,12,SUCCESS
+gateway.networking.istio.io/httpbin-15-gateway created
+virtualservice.networking.istio.io/httpbin-14 created
+1572457792,17,STARTED
+gateway.networking.istio.io/httpbin-16-gateway created
+virtualservice.networking.istio.io/httpbin-15 created
+1572457792,14,SUCCESS
+1572457792,13,SUCCESS
+1572457793,18,STARTED
+gateway.networking.istio.io/httpbin-17-gateway created
+virtualservice.networking.istio.io/httpbin-16 created
+1572457794,15,SUCCESS
+1572457794,19,STARTED
+gateway.networking.istio.io/httpbin-18-gateway created
+virtualservice.networking.istio.io/httpbin-17 created
+1572457795,20,STARTED
+1572457795,16,SUCCESS
+gateway.networking.istio.io/httpbin-19-gateway created
+virtualservice.networking.istio.io/httpbin-18 created
+1572457796,21,STARTED
+gateway.networking.istio.io/httpbin-20-gateway created
+1572457796,17,SUCCESS
+virtualservice.networking.istio.io/httpbin-19 created
+1572457797,22,STARTED
+1572457797,19,SUCCESS
+1572457797,18,SUCCESS
+gateway.networking.istio.io/httpbin-21-gateway created
+virtualservice.networking.istio.io/httpbin-20 created
+1572457798,23,STARTED
+gateway.networking.istio.io/httpbin-22-gateway created
+virtualservice.networking.istio.io/httpbin-21 created
+1572457799,20,SUCCESS
+1572457799,24,STARTED
+virtualservice.networking.istio.io/httpbin-22 created
+gateway.networking.istio.io/httpbin-23-gateway created
+1572457800,25,STARTED
+1572457800,22,SUCCESS
+1572457800,21,SUCCESS
+gateway.networking.istio.io/httpbin-24-gateway created
+virtualservice.networking.istio.io/httpbin-23 created
+1572457801,26,STARTED
+gateway.networking.istio.io/httpbin-25-gateway created
+virtualservice.networking.istio.io/httpbin-24 created
+1572457802,27,STARTED
+1572457802,23,SUCCESS
+gateway.networking.istio.io/httpbin-26-gateway created
+virtualservice.networking.istio.io/httpbin-25 created
+1572457803,28,STARTED
+1572457803,25,SUCCESS
+1572457803,24,SUCCESS
+gateway.networking.istio.io/httpbin-27-gateway created
+1572457804,29,STARTED
+gateway.networking.istio.io/httpbin-28-gateway created
+virtualservice.networking.istio.io/httpbin-26 created
+virtualservice.networking.istio.io/httpbin-27 created
+1572457805,30,STARTED
+1572457805,26,SUCCESS
+gateway.networking.istio.io/httpbin-29-gateway created
+virtualservice.networking.istio.io/httpbin-28 created
+1572457806,31,STARTED
+1572457807,27,SUCCESS
+1572457807,28,SUCCESS
+gateway.networking.istio.io/httpbin-30-gateway created
+1572457807,32,STARTED
+1572457777,0,COMPLETED
+virtualservice.networking.istio.io/httpbin-29 created
+gateway.networking.istio.io/httpbin-31-gateway created
+1572457808,33,STARTED
+1572457808,29,SUCCESS
+1572457778,1,COMPLETED
+gateway.networking.istio.io/httpbin-32-gateway created
+virtualservice.networking.istio.io/httpbin-30 created
+1572457809,34,STARTED
+virtualservice.networking.istio.io/httpbin-31 created
+1572457779,2,COMPLETED
+gateway.networking.istio.io/httpbin-33-gateway created
+1572457810,35,STARTED
+1572457780,3,COMPLETED
+virtualservice.networking.istio.io/httpbin-32 created
+1572457811,31,SUCCESS
+1572457811,30,SUCCESS
+gateway.networking.istio.io/httpbin-34-gateway created
+1572457811,36,STARTED
+1572457781,4,COMPLETED
+virtualservice.networking.istio.io/httpbin-33 created
+1572457812,37,STARTED
+gateway.networking.istio.io/httpbin-35-gateway created
+1572457812,32,SUCCESS
+virtualservice.networking.istio.io/httpbin-34 created
+gateway.networking.istio.io/httpbin-36-gateway created
+1572457783,5,COMPLETED
+1572457813,38,STARTED
+1572457813,33,SUCCESS
+1572457813,34,SUCCESS
+gateway.networking.istio.io/httpbin-37-gateway created
+1572457814,39,STARTED
+virtualservice.networking.istio.io/httpbin-35 created
+1572457784,6,COMPLETED
+gateway.networking.istio.io/httpbin-38-gateway created
+virtualservice.networking.istio.io/httpbin-36 created
+1572457815,40,STARTED
+1572457816,35,SUCCESS
+1572457816,36,SUCCESS
+1572457785,7,COMPLETED
+virtualservice.networking.istio.io/httpbin-37 created
+1572457816,41,STARTED
+gateway.networking.istio.io/httpbin-39-gateway created
+1572457786,8,COMPLETED
+1572457786,9,COMPLETED
+virtualservice.networking.istio.io/httpbin-38 created
+gateway.networking.istio.io/httpbin-40-gateway created
+1572457817,42,STARTED
+1572457818,37,SUCCESS
+1572457818,38,SUCCESS
+gateway.networking.istio.io/httpbin-41-gateway created
+1572457818,43,STARTED
+virtualservice.networking.istio.io/httpbin-39 created
+gateway.networking.istio.io/httpbin-42-gateway created
+1572457819,44,STARTED
+1572457789,10,COMPLETED
+virtualservice.networking.istio.io/httpbin-40 created
+1572457790,11,COMPLETED
+1572457820,39,SUCCESS
+1572457820,45,STARTED
+virtualservice.networking.istio.io/httpbin-41 created
+gateway.networking.istio.io/httpbin-43-gateway created
+1572457821,40,SUCCESS
+1572457821,46,STARTED
+1572457791,12,COMPLETED
+virtualservice.networking.istio.io/httpbin-42 created
+gateway.networking.istio.io/httpbin-44-gateway created
+1572457822,41,SUCCESS
+1572457822,47,STARTED
+gateway.networking.istio.io/httpbin-45-gateway created
+1572457792,14,COMPLETED
+1572457792,13,COMPLETED
+1572457823,42,SUCCESS
+1572457823,48,STARTED
+virtualservice.networking.istio.io/httpbin-43 created
+gateway.networking.istio.io/httpbin-46-gateway created
+virtualservice.networking.istio.io/httpbin-44 created
+1572457794,15,COMPLETED
+1572457824,49,STARTED
+gateway.networking.istio.io/httpbin-47-gateway created
+1572457825,43,SUCCESS
+virtualservice.networking.istio.io/httpbin-45 created
+1572457825,50,STARTED
+1572457795,16,COMPLETED
+1572457826,44,SUCCESS
+gateway.networking.istio.io/httpbin-48-gateway created
+1572457826,51,STARTED
+virtualservice.networking.istio.io/httpbin-46 created
+1572457827,45,SUCCESS
+1572457796,17,COMPLETED
+gateway.networking.istio.io/httpbin-49-gateway created
+virtualservice.networking.istio.io/httpbin-47 created
+1572457827,52,STARTED
+gateway.networking.istio.io/httpbin-50-gateway created
+1572457797,19,COMPLETED
+1572457797,18,COMPLETED
+1572457828,47,SUCCESS
+1572457828,46,SUCCESS
+1572457828,53,STARTED
+virtualservice.networking.istio.io/httpbin-48 created
+gateway.networking.istio.io/httpbin-51-gateway created
+1572457799,20,COMPLETED
+1572457829,54,STARTED
+virtualservice.networking.istio.io/httpbin-49 created
+1572457829,48,SUCCESS
+gateway.networking.istio.io/httpbin-52-gateway created
+virtualservice.networking.istio.io/httpbin-50 created
+1572457830,55,STARTED
+1572457830,49,SUCCESS
+gateway.networking.istio.io/httpbin-53-gateway created
+1572457800,21,COMPLETED
+1572457800,22,COMPLETED
+virtualservice.networking.istio.io/httpbin-51 created
+1572457831,56,STARTED
+1572457832,51,SUCCESS
+gateway.networking.istio.io/httpbin-54-gateway created
+1572457832,50,SUCCESS
+virtualservice.networking.istio.io/httpbin-52 created
+1572457832,57,STARTED
+gateway.networking.istio.io/httpbin-55-gateway created
+1572457802,23,COMPLETED
+virtualservice.networking.istio.io/httpbin-53 created
+1572457833,58,STARTED
+1572457833,52,SUCCESS
+gateway.networking.istio.io/httpbin-56-gateway created
+1572457803,25,COMPLETED
+1572457803,24,COMPLETED
+virtualservice.networking.istio.io/httpbin-54 created
+1572457834,59,STARTED
+1572457834,54,SUCCESS
+1572457834,53,SUCCESS
+gateway.networking.istio.io/httpbin-57-gateway created
+virtualservice.networking.istio.io/httpbin-55 created
+1572457835,60,STARTED
+gateway.networking.istio.io/httpbin-58-gateway created
+1572457805,26,COMPLETED
+virtualservice.networking.istio.io/httpbin-56 created
+1572457836,61,STARTED
+1572457837,55,SUCCESS
+gateway.networking.istio.io/httpbin-59-gateway created
+virtualservice.networking.istio.io/httpbin-57 created
+1572457807,27,COMPLETED
+1572457807,28,COMPLETED
+1572457837,62,STARTED
+virtualservice.networking.istio.io/httpbin-58 created
+gateway.networking.istio.io/httpbin-60-gateway created
+1572457838,56,SUCCESS
+1572457838,57,SUCCESS
+1572457838,63,STARTED
+1572457808,29,COMPLETED
+gateway.networking.istio.io/httpbin-61-gateway created
+virtualservice.networking.istio.io/httpbin-59 created
+1572457839,58,SUCCESS
+1572457839,64,STARTED
+gateway.networking.istio.io/httpbin-62-gateway created
+virtualservice.networking.istio.io/httpbin-60 created
+1572457840,59,SUCCESS
+1572457840,65,STARTED
+gateway.networking.istio.io/httpbin-63-gateway created
+virtualservice.networking.istio.io/httpbin-61 created
+1572457811,31,COMPLETED
+1572457811,30,COMPLETED
+1572457842,66,STARTED
+1572457842,60,SUCCESS
+virtualservice.networking.istio.io/httpbin-62 created
+gateway.networking.istio.io/httpbin-64-gateway created
+1572457843,67,STARTED
+1572457812,32,COMPLETED
+gateway.networking.istio.io/httpbin-65-gateway created
+virtualservice.networking.istio.io/httpbin-63 created
+1572457843,61,SUCCESS
+1572457843,62,SUCCESS
+1572457844,68,STARTED
+1572457813,33,COMPLETED
+1572457813,34,COMPLETED
+gateway.networking.istio.io/httpbin-66-gateway created
+virtualservice.networking.istio.io/httpbin-64 created
+1572457845,69,STARTED
+1572457845,63,SUCCESS
+gateway.networking.istio.io/httpbin-67-gateway created
+virtualservice.networking.istio.io/httpbin-65 created
+1572457846,70,STARTED
+1572457846,64,SUCCESS
+gateway.networking.istio.io/httpbin-68-gateway created
+1572457816,36,COMPLETED
+virtualservice.networking.istio.io/httpbin-66 created
+1572457816,35,COMPLETED
+1572457847,71,STARTED
+1572457847,65,SUCCESS
+gateway.networking.istio.io/httpbin-69-gateway created
+virtualservice.networking.istio.io/httpbin-67 created
+1572457848,72,STARTED
+1572457848,66,SUCCESS
+gateway.networking.istio.io/httpbin-70-gateway created
+1572457818,37,COMPLETED
+1572457818,38,COMPLETED
+virtualservice.networking.istio.io/httpbin-68 created
+1572457849,73,STARTED
+1572457849,67,SUCCESS
+gateway.networking.istio.io/httpbin-71-gateway created
+1572457850,74,STARTED
+virtualservice.networking.istio.io/httpbin-69 created
+gateway.networking.istio.io/httpbin-72-gateway created
+1572457850,68,SUCCESS
+virtualservice.networking.istio.io/httpbin-70 created
+1572457820,39,COMPLETED
+1572457851,75,STARTED
+gateway.networking.istio.io/httpbin-73-gateway created
+1572457851,70,SUCCESS
+1572457851,69,SUCCESS
+1572457821,40,COMPLETED
+virtualservice.networking.istio.io/httpbin-71 created
+1572457852,76,STARTED
+gateway.networking.istio.io/httpbin-74-gateway created
+virtualservice.networking.istio.io/httpbin-72 created
+1572457853,77,STARTED
+1572457822,41,COMPLETED
+1572457853,71,SUCCESS
+gateway.networking.istio.io/httpbin-75-gateway created
+virtualservice.networking.istio.io/httpbin-73 created
+1572457823,42,COMPLETED
+1572457854,78,STARTED
+gateway.networking.istio.io/httpbin-76-gateway created
+1572457854,73,SUCCESS
+1572457854,72,SUCCESS
+virtualservice.networking.istio.io/httpbin-74 created
+1572457855,79,STARTED
+gateway.networking.istio.io/httpbin-77-gateway created
+virtualservice.networking.istio.io/httpbin-75 created
+1572457825,43,COMPLETED
+1572457856,80,STARTED
+1572457856,74,SUCCESS
+gateway.networking.istio.io/httpbin-78-gateway created
+1572457826,44,COMPLETED
+virtualservice.networking.istio.io/httpbin-76 created
+1572457857,75,SUCCESS
+1572457857,81,STARTED
+gateway.networking.istio.io/httpbin-79-gateway created
+virtualservice.networking.istio.io/httpbin-77 created
+1572457827,45,COMPLETED
+1572457858,82,STARTED
+gateway.networking.istio.io/httpbin-80-gateway created
+1572457858,76,SUCCESS
+1572457858,77,SUCCESS
+virtualservice.networking.istio.io/httpbin-78 created
+1572457828,46,COMPLETED
+1572457828,47,COMPLETED
+1572457859,83,STARTED
+gateway.networking.istio.io/httpbin-81-gateway created
+virtualservice.networking.istio.io/httpbin-79 created
+1572457859,78,SUCCESS
+1572457860,84,STARTED
+1572457829,48,COMPLETED
+gateway.networking.istio.io/httpbin-82-gateway created
+virtualservice.networking.istio.io/httpbin-80 created
+1572457860,79,SUCCESS
+1572457861,85,STARTED
+gateway.networking.istio.io/httpbin-83-gateway created
+1572457831,49,COMPLETED
+virtualservice.networking.istio.io/httpbin-81 created
+1572457861,81,SUCCESS
+1572457862,80,SUCCESS
+1572457862,86,STARTED
+gateway.networking.istio.io/httpbin-84-gateway created
+1572457832,51,COMPLETED
+1572457832,50,COMPLETED
+virtualservice.networking.istio.io/httpbin-82 created
+1572457863,87,STARTED
+virtualservice.networking.istio.io/httpbin-83 created
+gateway.networking.istio.io/httpbin-85-gateway created
+1572457863,82,SUCCESS
+1572457864,88,STARTED
+1572457833,52,COMPLETED
+gateway.networking.istio.io/httpbin-86-gateway created
+virtualservice.networking.istio.io/httpbin-84 created
+1572457864,83,SUCCESS
+1572457864,84,SUCCESS
+1572457865,89,STARTED
+gateway.networking.istio.io/httpbin-87-gateway created
+1572457834,54,COMPLETED
+1572457834,53,COMPLETED
+virtualservice.networking.istio.io/httpbin-85 created
+1572457866,90,STARTED
+gateway.networking.istio.io/httpbin-88-gateway created
+virtualservice.networking.istio.io/httpbin-86 created
+1572457867,85,SUCCESS
+1572457867,91,STARTED
+gateway.networking.istio.io/httpbin-89-gateway created
+1572457837,55,COMPLETED
+virtualservice.networking.istio.io/httpbin-87 created
+1572457868,92,STARTED
+1572457868,86,SUCCESS
+gateway.networking.istio.io/httpbin-90-gateway created
+virtualservice.networking.istio.io/httpbin-88 created
+1572457838,57,COMPLETED
+1572457838,56,COMPLETED
+1572457869,93,STARTED
+1572457869,87,SUCCESS
+gateway.networking.istio.io/httpbin-91-gateway created
+virtualservice.networking.istio.io/httpbin-89 created
+1572457870,94,STARTED
+1572457839,58,COMPLETED
+1572457870,88,SUCCESS
+1572457870,89,SUCCESS
+gateway.networking.istio.io/httpbin-92-gateway created
+1572457840,59,COMPLETED
+virtualservice.networking.istio.io/httpbin-90 created
+1572457871,95,STARTED
+gateway.networking.istio.io/httpbin-93-gateway created
+virtualservice.networking.istio.io/httpbin-91 created
+1572457872,96,STARTED
+1572457872,90,SUCCESS
+1572457842,60,COMPLETED
+gateway.networking.istio.io/httpbin-94-gateway created
+virtualservice.networking.istio.io/httpbin-92 created
+1572457873,97,STARTED
+gateway.networking.istio.io/httpbin-95-gateway created
+1572457873,91,SUCCESS
+virtualservice.networking.istio.io/httpbin-93 created
+1572457843,61,COMPLETED
+1572457843,62,COMPLETED
+1572457874,98,STARTED
+gateway.networking.istio.io/httpbin-96-gateway created
+1572457875,92,SUCCESS
+1572457875,93,SUCCESS
+1572457875,99,STARTED
+virtualservice.networking.istio.io/httpbin-94 created
+1572457845,63,COMPLETED
+gateway.networking.istio.io/httpbin-97-gateway created
+1572457876,94,SUCCESS
+virtualservice.networking.istio.io/httpbin-95 created
+1572457846,64,COMPLETED
+gateway.networking.istio.io/httpbin-98-gateway created
+virtualservice.networking.istio.io/httpbin-96 created
+1572457877,95,SUCCESS
+gateway.networking.istio.io/httpbin-99-gateway created
+1572457847,65,COMPLETED
+virtualservice.networking.istio.io/httpbin-97 created
+virtualservice.networking.istio.io/httpbin-98 created
+1572457848,66,COMPLETED
+1572457879,96,SUCCESS
+virtualservice.networking.istio.io/httpbin-99 created
+1572457849,67,COMPLETED
+1572457880,98,SUCCESS
+1572457880,97,SUCCESS
+1572457850,68,COMPLETED
+1572457881,99,SUCCESS
+1572457851,70,COMPLETED
+1572457851,69,COMPLETED
+1572457853,71,COMPLETED
+1572457854,73,COMPLETED
+1572457854,72,COMPLETED
+1572457856,74,COMPLETED
+1572457857,75,COMPLETED
+1572457858,76,COMPLETED
+1572457858,77,COMPLETED
+1572457860,78,COMPLETED
+1572457860,79,COMPLETED
+1572457862,81,COMPLETED
+1572457862,80,COMPLETED
+1572457863,82,COMPLETED
+1572457864,83,COMPLETED
+1572457864,84,COMPLETED
+1572457867,85,COMPLETED
+1572457868,86,COMPLETED
+1572457869,87,COMPLETED
+1572457870,88,COMPLETED
+1572457870,89,COMPLETED
+1572457872,90,COMPLETED
+1572457873,91,COMPLETED
+1572457875,93,COMPLETED
+1572457875,92,COMPLETED
+1572457876,94,COMPLETED
+1572457877,95,COMPLETED
+1572457879,96,COMPLETED
+1572457880,98,COMPLETED
+1572457880,97,COMPLETED
+1572457881,99,COMPLETED

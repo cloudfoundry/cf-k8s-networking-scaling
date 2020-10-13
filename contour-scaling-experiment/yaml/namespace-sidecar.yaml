@@ -1,0 +1,13 @@
+# kubetpl:syntax:$
+
+# kubetpl:set:NAMESPACE=istio-system
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: $NAME
+  namespace: $NAMESPACE
+spec:
+  egress:
+  - hosts:
+    - $HOST

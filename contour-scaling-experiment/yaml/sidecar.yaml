@@ -1,0 +1,20 @@
+# kubetpl:syntax:$
+
+# kubetpl:set:NAMESPACE=default
+# kubetpl:set:GROUP=0
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: $NAME
+  namespace: $NAMESPACE
+spec:
+  workloadSelector:
+    labels:
+      sidecargroup: group-$GROUP
+  egress:
+  - hosts:
+    - "*/*-g$GROUP.$NAMESPACE.svc.cluster.local"
+    - "*/*-g$GROUP-blue.$NAMESPACE.svc.cluster.local"
+    - "*/*-g$GROUP-green.$NAMESPACE.svc.cluster.local"

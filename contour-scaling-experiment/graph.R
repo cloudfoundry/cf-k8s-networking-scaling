@@ -53,40 +53,40 @@ quantiles = c(0.68, 0.90, 0.99, 0.999, 1)
 mylabels = c("p68", "p90", "p99", "p999", "max")
 fiveSecondsInNanoseconds = 5 * 1000 * 1000 * 1000
 
-print("pilot proxy convergence")
-# stamp, count
-pilot_proxy_max = read_csv(paste(filename, "100convergence.csv", sep="")) %>%
-  add_column(pvalue = "max")
-pilot_proxy_p99 = read_csv(paste(filename, "99convergence.csv", sep="")) %>%
-  add_column(pvalue = "p99")
-pilot_proxy_p90 = read_csv(paste(filename, "90convergence.csv", sep="")) %>%
-  add_column(pvalue = "p90")
-pilot_proxy_p68 = read_csv(paste(filename, "68convergence.csv", sep="")) %>%
-  add_column(pvalue = "p68")
-pilot_proxy = bind_rows(pilot_proxy_max, pilot_proxy_p99, pilot_proxy_p90, pilot_proxy_p68)
+# print("pilot proxy convergence")
+# # stamp, count
+# pilot_proxy_max = read_csv(paste(filename, "100convergence.csv", sep="")) %>%
+#   add_column(pvalue = "max")
+# pilot_proxy_p99 = read_csv(paste(filename, "99convergence.csv", sep="")) %>%
+#   add_column(pvalue = "p99")
+# pilot_proxy_p90 = read_csv(paste(filename, "90convergence.csv", sep="")) %>%
+#   add_column(pvalue = "p90")
+# pilot_proxy_p68 = read_csv(paste(filename, "68convergence.csv", sep="")) %>%
+#   add_column(pvalue = "p68")
+# pilot_proxy = bind_rows(pilot_proxy_max, pilot_proxy_p99, pilot_proxy_p90, pilot_proxy_p68)
 
-pilotproxy_plot = experiment_time_x_axis(ggplot(pilot_proxy) +
-  labs(title="Proxy-Pilot Convergence Latency over Time") +
-  ylab("Latency (s)") +
-  lines() +
-  geom_line(mapping=aes(x=stamp, y=count, color=pvalue)) +
-  scale_colour_brewer(palette = "Set1") +
-  our_theme() %+replace%
-    theme(legend.position="bottom"))
+# pilotproxy_plot = experiment_time_x_axis(ggplot(pilot_proxy) +
+#   labs(title="Proxy-Pilot Convergence Latency over Time") +
+#   ylab("Latency (s)") +
+#   lines() +
+#   geom_line(mapping=aes(x=stamp, y=count, color=pvalue)) +
+#   scale_colour_brewer(palette = "Set1") +
+#   our_theme() %+replace%
+#     theme(legend.position="bottom"))
 
-pilot_xds = read_csv(paste(filename, "pilot_xds.csv", sep=""))
-pilotxds_plot = experiment_time_x_axis(ggplot(pilot_xds, aes(x=stamp, y=count)) +
-  labs(title="Pilot XDS over Time") +
-  ylab("Count of Envoys Connected") +
-  lineLabels() + lines() +
-  geom_line(mapping=aes(group=instance), color="black", alpha=0.2) +
-  stat_summary_bin(aes(colour="max"), fun.y = "max", bins=100, geom="line") +
-  stat_summary_bin(aes(colour="median"), fun.y = "median", bins=100, geom="line") +
-  scale_colour_brewer(palette = "Set1") +
-  our_theme() %+replace%
-    theme(legend.position="bottom"))
+# pilot_xds = read_csv(paste(filename, "pilot_xds.csv", sep=""))
+# pilotxds_plot = experiment_time_x_axis(ggplot(pilot_xds, aes(x=stamp, y=count)) +
+#   labs(title="Pilot XDS over Time") +
+#   ylab("Count of Envoys Connected") +
+#   lineLabels() + lines() +
+#   geom_line(mapping=aes(group=instance), color="black", alpha=0.2) +
+#   stat_summary_bin(aes(colour="max"), fun.y = "max", bins=100, geom="line") +
+#   stat_summary_bin(aes(colour="median"), fun.y = "median", bins=100, geom="line") +
+#   scale_colour_brewer(palette = "Set1") +
+#   our_theme() %+replace%
+#     theme(legend.position="bottom"))
 
-ggsave(paste(filename, "convergence.png", sep=""), arrangeGrob(pilotproxy_plot, pilotxds_plot))
+# ggsave(paste(filename, "convergence.png", sep=""), arrangeGrob(pilotproxy_plot, pilotxds_plot))
 
 print("Control Plane Latency by Percentile")
 controlplane = read_csv(paste(filename, "user_data.csv", sep="")) %>%
@@ -95,8 +95,8 @@ controlplane = read_csv(paste(filename, "user_data.csv", sep="")) %>%
 
 # stamp, gateway, route -> they're all user N groups with 1 user, so route = app-0-gGROUP_ID.default.svc.cluster.local
 gatewaytouser = read_csv(paste(filename, "envoy_endpoint_arrival.csv", sep=""), col_types=cols(stamp=col_number())) %>%
-  filter(str_detect(route, "\\|\\|app-\\d+-g\\d+")) %>% # Pilot creates two clustess: with | and with _. We care the one with |
-  extract(gateway, "gateway", "istio-ingressgateway-.*-(.+)") %>%
+  filter(str_detect(route, "default/app-\\d+-g\\d+")) %>%
+  extract(gateway, "gateway", "envoy-(.+)") %>%
   extract(route, c("userid","groupid"), "app-(\\d+)-g(\\d+)", convert=TRUE) %>%
   arrange(stamp)
 gatewaysbyroute = gatewaytouser %>%
@@ -106,6 +106,7 @@ gatewaysbyroute = gatewaytouser %>%
   ungroup() %>%
   select(stamp, userid, groupid, totalgateways) %>%
   semi_join(controlplane, by=c("userid", "groupid")) # only care about stuff with CP latency stats
+print(gatewaytouser)
 print(gatewaysbyroute)
 gatewaygoal = max(gatewaysbyroute$totalgateways) # all the gateways == the most anyone ever has
 
@@ -140,6 +141,10 @@ ggplot(gathered.controlplane, aes(x=quantiles, y=latency)) +
   our_theme() %+replace%
     theme(legend.position="bottom")
 ggsave(paste(filename, "controlplane.png", sep=""), width=7, height = 3.5)
+
+
+
+
 print("Errors by User ID")
 # stamp,usernum,groupnum,event,status,logfile
 userlog = read_csv(paste(filename, "user.log", sep=""),
@@ -207,86 +212,86 @@ bypercent <- ggplot(dataload, aes(x=mylabels, y=values)) +
 
 ggsave(paste(filename, "dataload.png", sep=""), arrangeGrob(overtime, bypercent))
 
-print("Sidecar Memory")
-sidecar = read_csv(paste(filename, "sidecarstats.csv", sep=""))
-experiment_time_x_axis(ggplot(sidecar) +
-  labs(title = "Envoy Sidecar Memory Usage Over Time") +
-  ylab("Memory (mb)") + lines() +
-  geom_line(mapping = aes(x=timestamp, y=memory, group=podname), alpha=0.25, color="black") +
-  scale_y_continuous(labels=mb_from_bytes) +
-  our_theme() %+replace%
-    theme(strip.background = element_blank(), strip.placement = "outside"))
-ggsave(paste(filename, "sidecar.png", sep=""), width=7, height=5)
+# print("Sidecar Memory")
+# sidecar = read_csv(paste(filename, "sidecarstats.csv", sep=""))
+# experiment_time_x_axis(ggplot(sidecar) +
+#   labs(title = "Envoy Sidecar Memory Usage Over Time") +
+#   ylab("Memory (mb)") + lines() +
+#   geom_line(mapping = aes(x=timestamp, y=memory, group=podname), alpha=0.25, color="black") +
+#   scale_y_continuous(labels=mb_from_bytes) +
+#   our_theme() %+replace%
+#     theme(strip.background = element_blank(), strip.placement = "outside"))
+# ggsave(paste(filename, "sidecar.png", sep=""), width=7, height=5)
 
-print("Gateway Memory")
-gateway = read_csv(paste(filename, "gatewaystats.csv", sep=""))
-experiment_time_x_axis(ggplot(gateway) +
-  labs(title = "Gateway Memory Usage over Time") +
-  ylab("Memory (mb)") + lines() +
-  geom_line(rename(gateway, pod=podname), mapping = aes(x=timestamp, y = memory, group=pod, color=pod), alpha=0.25, color="black") +
-  scale_y_continuous(labels=mb_from_bytes) +
-  lineLabels() +
-  our_theme() %+replace%
-    theme(legend.position="none"))
-ggsave(paste(filename, "gateway.png", sep=""), width=7, height=3.5)
+# print("Gateway Memory")
+# gateway = read_csv(paste(filename, "gatewaystats.csv", sep=""))
+# experiment_time_x_axis(ggplot(gateway) +
+#   labs(title = "Gateway Memory Usage over Time") +
+#   ylab("Memory (mb)") + lines() +
+#   geom_line(rename(gateway, pod=podname), mapping = aes(x=timestamp, y = memory, group=pod, color=pod), alpha=0.25, color="black") +
+#   scale_y_continuous(labels=mb_from_bytes) +
+#   lineLabels() +
+#   our_theme() %+replace%
+#     theme(legend.position="none"))
+# ggsave(paste(filename, "gateway.png", sep=""), width=7, height=3.5)
 
-print("Pilot Count")
-dataload = read_csv(paste(filename, "howmanypilots.csv", sep=""))
-experiment_time_x_axis(ggplot(dataload) +
-  labs(title = "Number of Pilots over time") +
-  geom_line(mapping=aes(x=stamp,y=count)) +
-  lineLabels() + lines() +
-  our_theme())
-ggsave(paste(filename, "howmanypilots.png", sep=""), width=7, height=3.5)
+# print("Pilot Count")
+# dataload = read_csv(paste(filename, "howmanypilots.csv", sep=""))
+# experiment_time_x_axis(ggplot(dataload) +
+#   labs(title = "Number of Pilots over time") +
+#   geom_line(mapping=aes(x=stamp,y=count)) +
+#   lineLabels() + lines() +
+#   our_theme())
+# ggsave(paste(filename, "howmanypilots.png", sep=""), width=7, height=3.5)
 
-print("Reading in pod-by-node data")
-# Read in timestamp-node-pod data
-nodes4pods = read_csv(paste(filename, "nodes4pods.csv", sep="")) %>%
-  extract(pod, "podtype", "([A-Za-z][A-Za-z0-9]+-?[A-Za-z]+)", remove=FALSE) %>%
-  extract(node, "nodename", "gke-.+-([A-Za-z0-9]+)")
-podcountsbynodetime = nodes4pods %>% select(-pod) %>% group_by(nodename, podtype, stamp) %>% summarize(n=n())
-podtypesbynode = nodes4pods %>% select(nodename, podtype) %>% distinct() %>% group_by(nodename) %>% summarize(podtypes = str_c(podtype, collapse=":"))
+# print("Reading in pod-by-node data")
+# # Read in timestamp-node-pod data
+# nodes4pods = read_csv(paste(filename, "nodes4pods.csv", sep="")) %>%
+#   extract(pod, "podtype", "([A-Za-z][A-Za-z0-9]+-?[A-Za-z]+)", remove=FALSE) %>%
+#   extract(node, "nodename", "gke-.+-([A-Za-z0-9]+)")
+# podcountsbynodetime = nodes4pods %>% select(-pod) %>% group_by(nodename, podtype, stamp) %>% summarize(n=n())
+# podtypesbynode = nodes4pods %>% select(nodename, podtype) %>% distinct() %>% group_by(nodename) %>% summarize(podtypes = str_c(podtype, collapse=":"))
 
-print("Reading in node cpu/mem data")
-# Read in timestamp-node-cpu-mem data
-nodeusage = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(percent=col_number())) %>%
-  extract(nodename, "nodename", "gke-.+-([A-Za-z0-9]+)") %>%
-  pivot_wider(names_from=type, values_from=percent, values_fn = list(percent = max)) %>%
-  left_join(podtypesbynode, by="nodename", name="podtypes") %>%
-  mutate(hasIstio = if_else(str_detect(podtypes, "istio"), "with istio", "without istio"))
+# print("Reading in node cpu/mem data")
+# # Read in timestamp-node-cpu-mem data
+# nodeusage = read_csv(paste(filename, "nodemon.csv", sep=""), col_types=cols(percent=col_number())) %>%
+#   extract(nodename, "nodename", "gke-.+-([A-Za-z0-9]+)") %>%
+#   pivot_wider(names_from=type, values_from=percent, values_fn = list(percent = max)) %>%
+#   left_join(podtypesbynode, by="nodename", name="podtypes") %>%
+#   mutate(hasIstio = if_else(str_detect(podtypes, "istio"), "with istio", "without istio"))
 
-print("Picking busiest nodes")
-busynodenames = nodeusage %>% group_by(nodename) %>% summarize(maxcpu = max(cpu, na.rm=TRUE)) %>% top_n(3,maxcpu)
-busynodes = busynodenames %>% left_join(nodeusage) %>% select(timestamp, nodename, cpu, memory, hasIstio)
+# print("Picking busiest nodes")
+# busynodenames = nodeusage %>% group_by(nodename) %>% summarize(maxcpu = max(cpu, na.rm=TRUE)) %>% top_n(3,maxcpu)
+# busynodes = busynodenames %>% left_join(nodeusage) %>% select(timestamp, nodename, cpu, memory, hasIstio)
 
-nodeusage = nodeusage %>% gather(type, percent, -nodename, -timestamp, -hasIstio, -podtypes)
-busynodes = busynodes %>% gather(type, percent, -nodename, -timestamp, -hasIstio)
+# nodeusage = nodeusage %>% gather(type, percent, -nodename, -timestamp, -hasIstio, -podtypes)
+# busynodes = busynodes %>% gather(type, percent, -nodename, -timestamp, -hasIstio)
 
-print("Usage by Node")
-experiment_time_x_axis(ggplot(nodeusage) +
-  labs(title = "Node Utilization", subtitle="100% = utilizing the whole machine") +
-  ylab("Utilization %") + ylim(0,100) + lines() +
-  facet_wrap(vars(hasIstio, type), ncol=1) +
-  geom_line(mapping = aes(x=timestamp,y=percent, group=nodename), color="gray15", alpha=0.15) +
-  geom_line(busynodes, mapping=aes(x=timestamp,y=percent, color=nodename), alpha=0.75) +
-  our_theme() %+replace%
-    theme(legend.position="bottom"))
-ggsave(paste(filename, "nodemon.png", sep=""), width=7, height=12)
+# print("Usage by Node")
+# experiment_time_x_axis(ggplot(nodeusage) +
+#   labs(title = "Node Utilization", subtitle="100% = utilizing the whole machine") +
+#   ylab("Utilization %") + ylim(0,100) + lines() +
+#   facet_wrap(vars(hasIstio, type), ncol=1) +
+#   geom_line(mapping = aes(x=timestamp,y=percent, group=nodename), color="gray15", alpha=0.15) +
+#   geom_line(busynodes, mapping=aes(x=timestamp,y=percent, color=nodename), alpha=0.75) +
+#   our_theme() %+replace%
+#     theme(legend.position="bottom"))
+# ggsave(paste(filename, "nodemon.png", sep=""), width=7, height=12)
 
-podcountsbusynodes = podcountsbynodetime %>% right_join(busynodenames) %>%
-  filter(podtype != "prometheus-to", podtype != "kube-proxy", podtype != "fluentd-gcp") %>%
-  mutate(podcategory = if_else(str_detect(podtype, "app"), "workload", "system"))
+# podcountsbusynodes = podcountsbynodetime %>% right_join(busynodenames) %>%
+#   filter(podtype != "prometheus-to", podtype != "kube-proxy", podtype != "fluentd-gcp") %>%
+#   mutate(podcategory = if_else(str_detect(podtype, "app"), "workload", "system"))
 
-print("Pods on Busy Nodes")
-experiment_time_x_axis(ggplot(podcountsbusynodes) +
-  labs(title = "Pods by Node over Time") + lines() +
-  facet_wrap(vars(nodename), ncol=1) +
-  geom_count(mapping=aes(x=stamp,y=podtype,size=n,color=podtype), alpha=0.5) +
-  scale_size_area() +
-  our_theme() %+replace%
-    theme(legend.position="bottom"))
-numberofbusynodes = n_distinct(podcountsbusynodes$nodename)
-ggsave(paste(filename, "nodes4pods.png", sep=""), width=7, height=2.5 * numberofbusynodes)
+# print("Pods on Busy Nodes")
+# experiment_time_x_axis(ggplot(podcountsbusynodes) +
+#   labs(title = "Pods by Node over Time") + lines() +
+#   facet_wrap(vars(nodename), ncol=1) +
+#   geom_count(mapping=aes(x=stamp,y=podtype,size=n,color=podtype), alpha=0.5) +
+#   scale_size_area() +
+#   our_theme() %+replace%
+#     theme(legend.position="bottom"))
+# numberofbusynodes = n_distinct(podcountsbusynodes$nodename)
+# ggsave(paste(filename, "nodes4pods.png", sep=""), width=7, height=2.5 * numberofbusynodes)
 
 print("Client Usage")
 memstats = read_csv(paste(filename, "memstats.csv", sep=""))
@@ -315,41 +320,41 @@ experiment_time_x_axis(ggplot(ifstats) +
      theme(legend.position="bottom"))
 ggsave(paste(filename, "ifstats.png", sep=""), width=7, height=3.5)
 
-print("Gateway config")
-controlplane = read_csv(paste(filename, "user_data.csv", sep="")) %>%
-  select(userid=`user id`,start =`start time`) %>%
-  extract(userid, c("userid","groupid"), "(.+)g(.+)", convert=TRUE)
-maxUserid = max(controlplane$userid) + 1
-controlplane = controlplane %>% mutate(uid= maxUserid * groupid + userid)
+# print("Gateway config")
+# controlplane = read_csv(paste(filename, "user_data.csv", sep="")) %>%
+#   select(userid=`user id`,start =`start time`) %>%
+#   extract(userid, c("userid","groupid"), "(.+)g(.+)", convert=TRUE)
+# maxUserid = max(controlplane$userid) + 1
+# controlplane = controlplane %>% mutate(uid= maxUserid * groupid + userid)
 
-gatewaysbyroute_fromstart = gatewaysbyroute %>%
-  left_join(controlplane, by=c("userid","groupid")) %>%
-  mutate(fromstart = stamp - start)
+# gatewaysbyroute_fromstart = gatewaysbyroute %>%
+#   left_join(controlplane, by=c("userid","groupid")) %>%
+#   mutate(fromstart = stamp - start)
 
-trajectories = ggplot(gatewaysbyroute_fromstart) +
-  labs(title = "Gateways per User Routes by time since creation") +
-  xlab("Time (seconds)") + scale_x_continuous(labels=secondsFromNanoseconds) +
-  scale_colour_distiller(palette="Spectral") +
-  geom_line(mapping=aes(x=fromstart, y=totalgateways, group=uid, color=uid), alpha=0.05) +
-  our_theme() %+replace%
-    theme(legend.position="bottom")
+# trajectories = ggplot(gatewaysbyroute_fromstart) +
+#   labs(title = "Gateways per User Routes by time since creation") +
+#   xlab("Time (seconds)") + scale_x_continuous(labels=secondsFromNanoseconds) +
+#   scale_colour_distiller(palette="Spectral") +
+#   geom_line(mapping=aes(x=fromstart, y=totalgateways, group=uid, color=uid), alpha=0.05) +
+#   our_theme() %+replace%
+#     theme(legend.position="bottom")
 
-gateway_startend = ungroup(gateway_startend) %>%
-  mutate(uid= (maxUserid * groupid) + userid) %>%
-  select(uid, firstsuccess = `nanoseconds to first success`,
-         lasterror = `nanoseconds to last error`,
-         firstg, allg)
+# gateway_startend = ungroup(gateway_startend) %>%
+#   mutate(uid= (maxUserid * groupid) + userid) %>%
+#   select(uid, firstsuccess = `nanoseconds to first success`,
+#          lasterror = `nanoseconds to last error`,
+#          firstg, allg)
 
-oneline = ggplot(gateway_startend, aes(x=uid)) +
-  labs(title = "Latency by Userid") +
-  ylab("Time (seconds)") + scale_y_continuous(labels=secondsFromNanoseconds) +
-  scale_colour_brewer(palette = "Set1") +
-  geom_line(mapping=aes(y=firstsuccess, color="First Success"), alpha=0.6) +
-  geom_line(mapping=aes(y=lasterror, color="Last Error"), alpha=0.6) +
-  geom_line(mapping=aes(y=firstg, color="First Gateway"), alpha=0.6) +
-  geom_line(mapping=aes(y=allg, color="All Gateways"), alpha=0.6) +
-  our_theme() %+replace%
-    theme(legend.position="bottom")
-ggsave(paste(filename, "endpoint_arrival.png", sep=""), arrangeGrob(trajectories, oneline), width=7, height=8)
+# oneline = ggplot(gateway_startend, aes(x=uid)) +
+#   labs(title = "Latency by Userid") +
+#   ylab("Time (seconds)") + scale_y_continuous(labels=secondsFromNanoseconds) +
+#   scale_colour_brewer(palette = "Set1") +
+#   geom_line(mapping=aes(y=firstsuccess, color="First Success"), alpha=0.6) +
+#   geom_line(mapping=aes(y=lasterror, color="Last Error"), alpha=0.6) +
+#   geom_line(mapping=aes(y=firstg, color="First Gateway"), alpha=0.6) +
+#   geom_line(mapping=aes(y=allg, color="All Gateways"), alpha=0.6) +
+#   our_theme() %+replace%
+#     theme(legend.position="bottom")
+# ggsave(paste(filename, "endpoint_arrival.png", sep=""), arrangeGrob(trajectories, oneline), width=7, height=8)
 
 print("All done.")

@@ -1,0 +1,21 @@
+# kubetpl:syntax:$
+
+# kubetpl:set:NAMESPACE=default
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: $NAME
+  namespace: $NAMESPACE
+spec:
+  virtualhost:
+    fqdn: "$NAME.example.com"
+  routes:
+    - conditions:
+      - prefix: /
+      services:
+        - name: $NAMEBLUE
+          port: 8000
+        - name: $NAMEGREEN
+          port: 8000
+

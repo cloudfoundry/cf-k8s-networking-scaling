@@ -13,10 +13,17 @@ class Gateway
 
   def generate_route
     print "Generating route for #{@name}..."
-    @pid = spawn("istioctl -n istio-system dashboard envoy #{@name}", :out=>"route" )
+    @pid = spawn("kubectl port-forward -n projectcontour #{@name} :9001", :out=>"route" )
     sleep(0.5)
-    @route = File.read("route").split("\n").first
-    puts "#{@route}"
+    while true
+      begin
+        @route = File.read("route").split("\n").first.scan(/(127.0.0.1:\d+)/).first.first
+        break
+      rescue
+        sleep(1)
+      end
+    end
+    puts "#{@route.inspect}"
   end
 
   def process_endpoints
@@ -105,7 +112,7 @@ class Gateway
   end
 end
 
-gateway_names = `kubectl get pods -n istio-system | grep ingressgateway | awk '{print $1}'`.split("\n")
+gateway_names = `kubectl get pods -n projectcontour -oname | grep envoy`.split("\n")
 
 gateways = []
 gateway_names.each do |gw|

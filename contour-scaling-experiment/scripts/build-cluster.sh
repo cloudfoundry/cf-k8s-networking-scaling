@@ -19,15 +19,15 @@ gcloud container clusters create $CLUSTER_NAME \
   # --cluster-ipv4-cidr=/14 \
   # --services-ipv4-cidr=/16
 
-gcloud container node-pools create prometheus-pool \
-  --cluster=$CLUSTER_NAME \
-  --zone ${AVAILABILITY_ZONE} \
-  --num-nodes=1 \
-  --machine-type "e2-highmem-16" \
-  --node-labels="scalers.istio=prometheus" \
-  --node-taints="scalers.istio=prometheus:NoSchedule" \
-  --metadata disable-legacy-endpoints=true \
-  --no-enable-autoupgrade
+# gcloud container node-pools create prometheus-pool \
+#   --cluster=$CLUSTER_NAME \
+#   --zone ${AVAILABILITY_ZONE} \
+#   --num-nodes=1 \
+#   --machine-type "e2-highmem-16" \
+#   --node-labels="scalers.istio=prometheus" \
+#   --node-taints="scalers.istio=prometheus:NoSchedule" \
+#   --metadata disable-legacy-endpoints=true \
+#   --no-enable-autoupgrade
 
 gcloud container clusters get-credentials $CLUSTER_NAME \
     --zone $AVAILABILITY_ZONE
@@ -49,4 +49,5 @@ kubectl create clusterrolebinding cluster-admin-binding \
     --clusterrole=cluster-admin \
     --user=$(gcloud config get-value core/account)
 
-kubectl create namespace istio-system
+# TODO does contour need us to create a namespace? no
+# kubectl create namespace istio-system

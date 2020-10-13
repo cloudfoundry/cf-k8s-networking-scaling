@@ -1,0 +1,62 @@
+# kubetpl:syntax:$
+
+# kubetpl:set:NAMESPACE=default
+# kubetpl:set:GROUP=0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $NAME
+  namespace: $NAMESPACE
+  labels:
+    app: $NAME
+    sidecargroup: group-$GROUP
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 10
+      maxSurge: 10
+  selector:
+    matchLabels:
+      app: $NAME
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: $NAME
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        name: $NAME
+        ports:
+        - containerPort: 80
+        # resources:
+        #   requests:
+        #     memory: 32Mi
+        #     cpu: 50m
+        #   limits:
+        #     memory: 32Mi
+        #     cpu: 50m
+      nodeSelector:
+        scalers.dataplane: httpbin
+      tolerations:
+      - key: "scalers.dataplane"
+        operator: "Equal"
+        value: "httpbin"
+        effect: "NoSchedule"
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: $NAME
+  namespace: $NAMESPACE
+spec:
+  virtualhost:
+    fqdn: "$NAME.example.com"
+  routes:
+    - services:
+        - name: $NAME
+          port: 8000

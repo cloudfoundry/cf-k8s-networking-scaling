@@ -13,69 +13,63 @@ echo "stamp,event" > importanttimes.csv
 
 ${DIR}/build-cluster.sh $CLUSTER_NAME
 
+# TODO make contour envoys land on their own nodes
 # taint nodes for pilot and ingress-gateways
-if [ $NODES_FOR_ISTIO -gt 0 ]; then
-  nodes=$(kubectl get nodes -l 'scalers.istio != prometheus' | awk 'NR > 1 {print $1}' | head -n$NODES_FOR_ISTIO)
-  if [ "$ISTIO_TAINT" -eq 1 ]; then
-    kubectl taint nodes $nodes scalers.istio=dedicated:NoSchedule
-  fi
-  kubectl label nodes $nodes scalers.istio=dedicated
-fi
+# if [ $NODES_FOR_ISTIO -gt 0 ]; then
+#   nodes=$(kubectl get nodes -l 'scalers.istio != prometheus' | awk 'NR > 1 {print $1}' | head -n$NODES_FOR_ISTIO)
+#   if [ "$ISTIO_TAINT" -eq 1 ]; then
+#     kubectl taint nodes $nodes scalers.istio=dedicated:NoSchedule
+#   fi
+#   kubectl label nodes $nodes scalers.istio=dedicated
+# fi
 
 # taint a node for the dataplane pod
 datanode=$(kubectl get nodes -l 'scalers.istio notin (prometheus,dedicated)'| awk 'NR > 1 {print $1}' | tail -n2 | head -n1)
 kubectl taint nodes $datanode scalers.dataplane=httpbin:NoSchedule
 kubectl label nodes $datanode scalers.dataplane=httpbin
+
+# TODO deploy prometheus
 # we create a separate node pool for Prometheus with taints and labels in "build-cluster.sh"
 # prometheusnode=$(kubectl get nodes -l "scalers.istio=prometheus")
-# kubectl taint nodes $prometheusnode scalers.istio=prometheus:NoSchedule
-# kubectl label nodes $prometheusnode scalers.istio=prometheus
 
-if [ "$ISTIO_USE_OPERATOR" -eq 1 ]; then
-  ${DIR}/install-istio-with-istioctl.sh
-else
-  ${DIR}/install-istio.sh
-fi
+wlog "=== Deploying Contour ==="
+# replcae envoy DaemonSet with Deployment and set desired amount of replicas
+curl -sSL https://projectcontour.io/quickstart/contour.yaml | sed '/DaemonSet/,/---/{s/^spec:/spec:\n  replicas: '${ENVOY_REPLICAS}'/};{s/DaemonSet/Deployment/}' | kubectl apply -f - --validate=false
 
-helm repo add stable https://kubernetes-charts.storage.googleapis.com/
-helm repo update
-helm install node-exporter stable/prometheus-node-exporter
+
+# TODO do we need helm?
+# helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+# helm repo update
+# helm install node-exporter stable/prometheus-node-exporter
 
 # schedule the dataplane pod
 kubetpl render ${DIR}/../yaml/service.yaml ${DIR}/../yaml/httpbin-loadtest.yaml -s NAME=httpbin-loadtest | kubectl apply -f -
 kubectl wait --for=condition=available deployment $(kubectl get deployments | grep httpbin | awk '{print $1}')
 kubectl wait --for=condition=podscheduled pods $(kubectl get pods -ojsonpath='{range $.items[*]}{@.metadata.name}{"\n"}{end}' | grep httpbin)
 
-# for >1 pod per route, add extra routes to maintain route to pod ratio.
-kubetpl render $DIR/../yaml/extra-virtualservice.yaml $DIR/../yaml/extra-gateway.yaml -s NAME=httpbin-loadtest -s N=0 | kubectl apply -f -
-wlog "HEY HEY HEY"
-sleep 300
-
+# curl -s -H"Host:httpbin-loadtest.example.com" http://104.155.162.193:80/anything -v
 wlog "Curling to see if load test container is up"
-
-export INGRESS_HOST=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].port}')
-export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].port}')
+export INGRESS_HOST=$(kubectl -n projectcontour get service envoy -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+export INGRESS_PORT=$(kubectl -n projectcontour get service envoy -o jsonpath='{.spec.ports[?(@.name=="http")].port}')
+export SECURE_INGRESS_PORT=$(kubectl -n projectcontour get service envoy -o jsonpath='{.spec.ports[?(@.name=="https")].port}')
 export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
-until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -eq 200 ]; do
-  export INGRESS_HOST=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-  export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].port}')
-  export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].port}')
+until [ $(curl -s -o /dev/null -w "%{http_code}" -H"Host: httpbin-loadtest.example.com" http://$GATEWAY_URL/anything) -eq 200 ]; do
+  export INGRESS_HOST=$(kubectl -n projectcontour get service envoy -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  export INGRESS_PORT=$(kubectl -n projectcontour get service envoy -o jsonpath='{.spec.ports[?(@.name=="http")].port}')
+  export SECURE_INGRESS_PORT=$(kubectl -n projectcontour get service envoy -o jsonpath='{.spec.ports[?(@.name=="https")].port}')
   export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
   sleep 1
 done
 wlog "Load container up"
 ${DIR}/../../shared/scripts/pause.sh 10
 
-# Enable debug XDS logging for Pilots
-kubectl get pods -n istio-system -l app=istiod -ojsonpath='{range .items[*]}{.metadata.name} {end}' | xargs -n 1 -d ' ' -I {} kubectl exec -n istio-system {} -- \
-  curl -sS http://localhost:9876/scopej/ads -X PUT -d '{"output_level":"debug"}'
-# Enable debug XDS logging for Envoy
-kubectl get pods -n istio-system -l app=istio-ingressgateway -ojsonpath='{range .items[*]}{.metadata.name} {end}' | xargs -n 1 -d ' ' -I {} kubectl exec -n istio-system {} -- \
-  curl -sS http://localhost:15000/logging?config=debug -X POST
+# TODO Enable debug XDS logging for Envoy
+# kubectl get pods -n projectcontour -l app=envoy -ojsonpath='{range .items[*]}{.metadata.name} {end}' | xargs -n 1 -d ' ' -I {} kubectl exec -n projectcontour {} -c envoy \
+#   -- curl -sS http://localhost:15000/logging?config=debug -X POST
 
 
-${DIR}/prometheus_data.sh &
+# TODO collect prometheus data if we think it's needed
+# ${DIR}/prometheus_data.sh &
 echo "stamp,event,message" > endpoint_arrival_log.csv
 ruby ${DIR}/endpoint_arrival.rb >> endpoint_arrival_log.csv &
 
@@ -88,7 +82,7 @@ echo "stamp,total,used,free,shared,buff,available" > memstats.csv
 forever memstats  >> memstats.csv &
 echo "stamp,sockets" > time_wait.csv
 forever time_wait  >> time_wait.csv &
-until [ $(curl -s -o /dev/null -w "%{http_code}" http://$GATEWAY_URL/anything) -eq 200 ]; do true; done
+until [ $(curl -s -o /dev/null -w "%{http_code}" -H"Host: httpbin-loadtest.example.com" http://$GATEWAY_URL/anything) -eq 200 ]; do true; done
 ${DIR}/../../shared/scripts/pause.sh 10 # wait because otherwise the dataload sometimes fails to work at first
 
 # create data plane load with apib
@@ -103,7 +97,6 @@ kubectl apply -f testpods.yaml
 # wait for all httpbins to be ready
 kubectl wait --for=condition=available deployment $(kubectl get deployments | grep app | awk '{print $1}')
 kubectl wait --for=condition=podscheduled pods $(kubectl get pods -ojsonpath='{range $.items[*]}{@.metadata.name}{"\n"}{end}' | grep app)
-
 ${DIR}/../../shared/scripts/pause.sh 30 # wait for cluster to not be in a weird state after pushing so many pods
          # and get data for cluster without CP load or configuration as control
 
@@ -122,22 +115,10 @@ iwlog "TEST COMPLETE"
 
 # dump the list of nodes with their labels, only gotta do this once
 kubectl get nodes --show-labels | awk '{print $1","$2","$6}' > nodeswithlabels.csv
-kubectl get pods -o wide -n istio-system | awk '{print $1","$6","$7}' > instance2pod.csv
+# kubectl get pods -o wide -n istio-system | awk '{print $1","$6","$7}' > instance2pod.csv
 
 ${DIR}/../../shared/scripts/pause.sh 2 # let them quit
 
-
-# collect spans
-wlog "collecting spans"
-jaeger_port=$(port_forward istio-system svc/tracing :80)
-jaeger_addr="127.0.0.1:${jaeger_port}/jaeger"
-${DIR}/../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_ondiscoveryresponse.csv -jaegerQueryAddr ${jaeger_addr} --operationName "GrpcMuxImpl::onDiscoveryResponse" --service istio-ingressgateway
-${DIR}/../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_pause.csv -jaegerQueryAddr ${jaeger_addr} --operationName "pause" --service istio-ingressgateway
-${DIR}/../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_eds_update.csv -jaegerQueryAddr ${jaeger_addr} --operationName "EdsClusterImpl::onConfigUpdate" --service istio-ingressgateway
-${DIR}/../../shared/jaegerscrapper/bin/scrapper -csvPath ./envoy_senddiscoveryrequest.csv -jaegerQueryAddr ${jaeger_addr} --operationName "GrpcMuxImpl::sendDiscoveryRequest" --service istio-ingressgateway
-
-python3 ${DIR}/parse_jaeger.py --jaeger_url=${jaeger_addr} --service "pilot" pilot_traces.csv
-python3 ${DIR}/parse_jaeger.py --jaeger_url=${jaeger_addr} --service "istio-ingressgateway" envoy_traces.csv
 
 # collect pilot logs
 # wlog "collecting Pilot logs, this might take a while"

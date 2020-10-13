@@ -9,7 +9,7 @@ echo "$(udate),$1,$2,PREPARING,"
 
 # cf create-route
 kubetpl render -s NAME="app-$1-g$2-green" -s HOSTNAME="app-$1-g$2-green" \
-  $DIR/../../yaml/blue-green/virtualservice.yaml | kubectl apply -f -
+  $DIR/../../yaml/blue-green/httpproxy.yaml | kubectl apply -f -
 echo "$(udate),$1,$2,GREEN_ROUTED,"
 
 TARGET_URL=app-$1-g$2-green.example.com
@@ -21,14 +21,14 @@ echo "$(udate),$1,$2,STARTED,"
 kubetpl render -s NAME="app-$1-g$2-blue" \
   -s NAMEBLUE="app-$1-g$2-blue" \
   -s NAMEGREEN="app-$1-g$2-green" \
-  $DIR/../../yaml/blue-green/virtualservice-two-apps.yaml | kubectl apply -f -
+  $DIR/../../yaml/blue-green/httpproxy-two-apps.yaml | kubectl apply -f -
 
 # pretending to be cf CLI
 sleep 1
 
 # cf map-route
 kubetpl render -s NAME="app-$1-g$2-blue" -s HOSTNAME="app-$1-g$2-green" \
-  $DIR/../../yaml/blue-green/virtualservice.yaml | kubectl apply -f -
+  $DIR/../../yaml/blue-green/httpproxy.yaml | kubectl apply -f -
 echo "$(udate),$1,$2,BLUE_REMOVED,"
 
 TARGET_URL=app-$1-g$2-blue.example.com
@@ -36,7 +36,7 @@ until [[ -n "$(curl -s -HHost:$TARGET_URL http://$GATEWAY_URL | grep -o "Hostnam
 echo "$(udate),$1,$2,SUCCESS,"
 
 # remove green route
-kubectl delete vs "app-$1-g$2-green" > /dev/null &
+kubectl delete httpproxy "app-$1-g$2-green" > /dev/null &
 
 lastfail=$(udate)
 timesToPoll=$(echo "120 / $USER_POLL_DELAY" | bc)

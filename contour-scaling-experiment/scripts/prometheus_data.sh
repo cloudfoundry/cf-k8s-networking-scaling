@@ -105,34 +105,9 @@ do
   queryprom '100 - (node_memory_MemFree_bytes / node_memory_MemTotal_bytes * 100)* on(instance) group_left(nodename) node_uname_info' |
      jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) + [.metric.nodename] + ["memory"]) | @csv' >> nodemon.csv
 
-  # Number of pilots
-  queryprom "sum(pilot_info)" | \
-    jq -r '(.data.result[] | .values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) | @csv' >> howmanypilots.csv
-
   # Gateway memory usage
   queryprom 'envoy_server_memory_allocated{app="istio-ingressgateway"}' | \
     jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) + [.metric.pod_name]) | @csv' >> gatewaystats.csv
-
-  # Sidecar memory usage (sample 20 sidecars)
-  for ((i=1;i<=20;i++));
-  do
-    app=$(kubectl get deployments --all-namespaces | sort -R | head -n1 | awk '{print $2}')
-    queryprom "envoy_server_memory_allocated{app=\"$app\"}" | \
-      jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) + [.metric.pod_name]) | @csv' >> sidecarstats.csv
-  done
-
-  # Proxy convergence
-  queryprom "histogram_quantile(0.68, sum(rate(pilot_proxy_convergence_time_bucket[1m])) by (le))" | \
-     jq -r '(.data.result[] | .values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) | @csv' >> 68convergence.csv
-
-  queryprom "histogram_quantile(0.90, sum(rate(pilot_proxy_convergence_time_bucket[1m])) by (le))" | \
-     jq -r '(.data.result[] | .values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) | @csv' >> 90convergence.csv
-
-  queryprom "histogram_quantile(0.99, sum(rate(pilot_proxy_convergence_time_bucket[1m])) by (le))" | \
-     jq -r '(.data.result[] | .values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) | @csv' >> 99convergence.csv
-
-  queryprom "histogram_quantile(1, sum(rate(pilot_proxy_convergence_time_bucket[1m])) by (le))" | \
-     jq -r '(.data.result[] | .values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) | @csv' >> 100convergence.csv
 
   # Envoy clusters
   queryprom 'envoy_cluster_manager_active_clusters' | \
@@ -142,20 +117,6 @@ do
   echo "stamp,node,pod" > nodes4pods.csv
   queryprom 'sum(container_tasks_state{pod_name!=""}) by (instance,pod_name)' | \
      jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber)]) + [.metric.instance, .metric.pod_name]) | @csv' >> nodes4pods.csv
-
-  queryprom 'pilot_xds' | \
-    jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), (.[1]|tonumber)]) + [.metric.instance]) | @csv' >> pilot_xds.csv
-
-  queryprom 'galley_validation_passed' | \
-    jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), .[1]]) + ["passed",.metric.instance, .metric.resource, .metric.version]) | @csv' >> galley_validation.csv
-  queryprom 'galley_validation_failed' | \
-    jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), .[1]]) + ["failed",.metric.instance, .metric.resource, .metric.version]) | @csv' >> galley_validation.csv
-
-  queryprom 'galley_runtime_processor_snapshots_published_total' | \
-    jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), .[1]]) + [.metric.instance]) | @csv' >> galley_runtime_psp.csv
-
-  queryprom 'galley_runtime_strategy_on_change_total' | \
-    jq -r '(.data.result[] | (.values[] | [((.[0]|tostring) + "000000000"|tonumber), .[1]]) + [.metric.instance]) | @csv' >> galley_runtime_strat.csv
 
   echo "Prometheus data collected"
   START=$END
